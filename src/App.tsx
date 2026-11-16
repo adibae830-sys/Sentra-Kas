@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { User } from 'firebase/auth';
 import {
+  AlertCircle,
   ArrowDownLeft,
   ArrowUpRight,
   BarChart3,
@@ -9,6 +10,7 @@ import {
   ExternalLink,
   FileSpreadsheet,
   LayoutDashboard,
+  Lock,
   LogOut,
   Menu,
   RefreshCw,
@@ -182,12 +184,19 @@ export default function App() {
         setNeedsGoogleAuth(false);
         await refreshDataset(res.accessToken);
       }
-    } catch (err) {
-      setSheetError(
-        err instanceof Error
-          ? err.message
-          : 'Gagal masuk dengan akun Google. Periksa izin popup browser.'
-      );
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code || '';
+      const rawMsg = err instanceof Error ? err.message : '';
+      if (code === 'auth/unauthorized-domain' || rawMsg.includes('unauthorized-domain')) {
+        const host = window.location.hostname;
+        setSheetError(
+          `Domain "${host}" belum didaftarkan pada Firebase Authentication -> Settings -> Authorized domains.`
+        );
+      } else {
+        setSheetError(
+          rawMsg || 'Gagal masuk dengan akun Google. Periksa izin popup browser.'
+        );
+      }
     } finally {
       setIsGoogleSigningIn(false);
     }
@@ -969,10 +978,15 @@ export default function App() {
         <OfflineIndicator />
 
         {toast && (
-          <div className="fixed right-5 bottom-5 z-50 max-w-sm rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-lg">
+          <div className="fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm shadow-lg">
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-700" />
+            )}
             <p
               className={`font-medium ${
-                toast.type === 'success' ? 'text-emerald-700' : 'text-red-600'
+                toast.type === 'success' ? 'text-stone-900' : 'text-red-700'
               }`}
             >
               {toast.message}
@@ -984,20 +998,51 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen bg-[#F6F7F5] text-stone-900">
       {/* Sidebar Desktop */}
-      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <p className="text-lg font-bold tracking-tight text-slate-900">Sentra Kas</p>
-          <p className="truncate text-xs text-slate-500">{dataset.spreadsheetTitle}</p>
+      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-[#08201A] bg-[#0B2821] text-stone-100 lg:flex">
+        <div className="border-b border-white/10 px-5 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E5C178]/35 bg-white/8 text-[#E5C178]">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4.5 w-4.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 8v8m-3-5h6"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="font-editorial truncate text-lg font-semibold tracking-tight text-white">
+                Sentra Kas
+              </p>
+              <p className="truncate text-[11px] text-emerald-100/65">
+                {dataset.spreadsheetTitle}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="border-b border-slate-100 px-5 py-3.5">
-          <p className="text-xs text-slate-500">Masuk sebagai</p>
-          <p className="truncate text-sm font-semibold text-slate-900">
+        <div className="border-b border-white/10 px-5 py-4">
+          <p className="text-[11px] font-medium tracking-wider text-emerald-200/60 uppercase">
+            Akun Aktif
+          </p>
+          <p className="mt-0.5 truncate text-sm font-semibold text-white">
             {sessionUser.nama}
           </p>
-          <p className="text-xs font-medium text-emerald-700">{sessionUser.role}</p>
+          <p className="mt-0.5 text-xs font-medium text-[#E5C178]">{sessionUser.role}</p>
         </div>
 
         <nav className="flex-1 space-y-1 p-3">
@@ -1008,37 +1053,43 @@ export default function App() {
                 key={item.id}
                 type="button"
                 onClick={() => setActivePage(item.id)}
-                className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-emerald-50 text-emerald-800'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    ? 'border border-white/12 bg-white/12 text-white shadow-xs'
+                    : 'border border-transparent text-emerald-100/75 hover:bg-white/7 hover:text-white'
                 }`}
               >
-                {item.icon}
+                <span className={isActive ? 'text-[#E5C178]' : 'text-emerald-200/70'}>
+                  {item.icon}
+                </span>
                 <span className="truncate">{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        <div className="border-t border-slate-200 p-3 space-y-2">
+        <div className="space-y-2 border-t border-white/10 p-3">
           <a
             href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:bg-white/10"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
+            <ExternalLink className="h-3.5 w-3.5 text-[#E5C178]" />
             Buka Spreadsheet
           </a>
           <button
             type="button"
             onClick={() => setSessionUser(null)}
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100/85 transition-colors hover:bg-white/8 hover:text-white"
           >
             <LogOut className="h-3.5 w-3.5" />
             Keluar Akun
           </button>
+          <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-emerald-100/50">
+            <Lock className="h-3 w-3" />
+            Sinkronisasi Google Sheets
+          </p>
         </div>
       </aside>
 
@@ -1046,48 +1097,69 @@ export default function App() {
       {mobileMenuOpen && (
         <div className="no-print fixed inset-0 z-50 flex lg:hidden">
           <div
-            className="fixed inset-0 bg-slate-900/40"
+            className="fixed inset-0 bg-stone-950/60 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <span className="text-lg font-bold text-slate-900">Sentra Kas</span>
+          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-[#0B2821] text-stone-100 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div className="min-w-0">
+                <span className="font-editorial text-lg font-semibold text-white">
+                  Sentra Kas
+                </span>
+                <p className="truncate text-[11px] text-emerald-100/65">
+                  {sessionUser.nama} · {sessionUser.role}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
+                className="rounded-lg p-1.5 text-emerald-100/75 hover:bg-white/10 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setActivePage(item.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
-                    activePage === item.id
-                      ? 'bg-emerald-50 text-emerald-800'
-                      : 'text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {navItems.map((item) => {
+                const isActive = activePage === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActivePage(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'border border-white/12 bg-white/12 text-white'
+                        : 'border border-transparent text-emerald-100/75 hover:bg-white/7 hover:text-white'
+                    }`}
+                  >
+                    <span className={isActive ? 'text-[#E5C178]' : 'text-emerald-200/70'}>
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </nav>
-            <div className="border-t border-slate-200 p-3">
+            <div className="space-y-2 border-t border-white/10 p-3">
+              <a
+                href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-stone-100"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-[#E5C178]" />
+                Buka Spreadsheet
+              </a>
               <button
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setSessionUser(null);
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-emerald-100/85 hover:bg-white/8"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Keluar Akun
@@ -1099,36 +1171,38 @@ export default function App() {
 
       {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top Bar Contract */}
-        <header className="no-print flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-3.5">
-          <div className="flex items-center gap-3 min-w-0">
+        {/* Top Bar */}
+        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-stone-200/90 bg-white/95 px-5 py-3.5 backdrop-blur-md lg:px-7">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 lg:hidden"
+              className="rounded-lg border border-stone-200 p-2 text-stone-600 hover:bg-stone-50 lg:hidden"
               aria-label="Buka menu navigasi"
             >
               <Menu className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-2 truncate text-sm">
-              <span className="text-slate-400">Sentra Kas</span>
-              <span className="text-slate-300">/</span>
-              <h1 className="truncate font-semibold text-slate-900">
+            <div className="flex items-center gap-2 truncate">
+              <span className="hidden text-xs font-medium tracking-wide text-stone-400 uppercase sm:inline">
+                Sentra Kas
+              </span>
+              <span className="hidden text-stone-300 sm:inline">/</span>
+              <h1 className="font-editorial truncate text-lg font-semibold tracking-tight text-stone-900">
                 {currentNavLabel}
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex shrink-0 items-center gap-2.5">
             <PWAInstallButton />
             <button
               type="button"
               onClick={() => refreshDataset()}
               disabled={isLoadingSheet}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-stone-50"
             >
               <RefreshCw
-                className={`h-3.5 w-3.5 ${isLoadingSheet ? 'animate-spin' : ''}`}
+                className={`h-3.5 w-3.5 text-stone-600 ${isLoadingSheet ? 'animate-spin' : ''}`}
               />
               Sinkronkan Sheet
             </button>
@@ -1139,46 +1213,85 @@ export default function App() {
         <main className="mx-auto w-full max-w-7xl flex-1 p-5 lg:p-7">
           {activePage === 'dashboard' && adminMetrics && (
             <div className="space-y-6">
-              {/* KPI Strip */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Anggota Aktif</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-slate-900">
-                    {adminMetrics.anggotaAktif}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Dari total {adminMetrics.anggotaTotal} terdaftar
-                  </p>
+              {/* Focal Treasury + Supporting KPIs */}
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+                <div className="flex flex-col justify-between rounded-2xl bg-[#0B2821] p-6 text-white shadow-sm lg:col-span-5">
+                  <div>
+                    <p className="text-[11px] font-semibold tracking-[0.14em] text-[#E5C178] uppercase">
+                      Perbendaharaan Kelompok
+                    </p>
+                    <p className="mt-1.5 text-xs text-emerald-100/75">
+                      Saldo Kas Bersih Tercatat
+                    </p>
+                    <p className="mt-2 font-mono text-3xl font-bold tracking-tight tabular-nums text-white sm:text-4xl">
+                      {rupiah(adminMetrics.saldo)}
+                    </p>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/12 pt-4">
+                    <div>
+                      <p className="text-[11px] font-medium text-emerald-200/70">
+                        Total Kas Masuk
+                      </p>
+                      <p className="mt-1 font-mono text-sm font-semibold tabular-nums text-emerald-200 sm:text-base">
+                        {rupiah(adminMetrics.masuk)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-emerald-200/70">
+                        Total Kas Keluar
+                      </p>
+                      <p className="mt-1 font-mono text-sm font-semibold tabular-nums text-amber-200 sm:text-base">
+                        {rupiah(adminMetrics.keluar)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Saldo Kas Kelompok</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-700">
-                    {rupiah(adminMetrics.saldo)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Selisih total masuk & keluar
-                  </p>
-                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7">
+                  <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5">
+                    <div>
+                      <p className="text-xs font-medium text-stone-500">Anggota Aktif</p>
+                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
+                        {adminMetrics.anggotaAktif}
+                      </p>
+                    </div>
+                    <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
+                      Dari total {adminMetrics.anggotaTotal} anggota terdaftar
+                    </p>
+                  </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Total Kas Masuk</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-slate-900">
-                    {rupiah(adminMetrics.masuk)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Keluar: {rupiah(adminMetrics.keluar)}
-                  </p>
-                </div>
+                  <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5">
+                    <div>
+                      <p className="text-xs font-medium text-stone-500">
+                        Total Piutang Pinjaman
+                      </p>
+                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-amber-700">
+                        {rupiah(adminMetrics.piutang)}
+                      </p>
+                    </div>
+                    <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
+                      {adminMetrics.pinjamanStatusCounts.Berjalan} pinjaman berstatus berjalan
+                    </p>
+                  </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Total Piutang Pinjaman</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-amber-700">
-                    {rupiah(adminMetrics.piutang)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {adminMetrics.pinjamanStatusCounts.Berjalan} pinjaman berjalan
-                  </p>
+                  <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5">
+                    <div>
+                      <p className="text-xs font-medium text-stone-500">
+                        Menunggu Persetujuan
+                      </p>
+                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
+                        {adminMetrics.pinjamanStatusCounts.Menunggu}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActivePage('pinjaman')}
+                      className="mt-4 border-t border-stone-100 pt-3 text-left text-xs font-semibold text-emerald-800 hover:underline"
+                    >
+                      Tinjau antrean ACC →
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1188,37 +1301,37 @@ export default function App() {
                   <CashflowChart series={cashflowSeries} />
                 </div>
 
-                <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 lg:col-span-4">
+                <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-6 lg:col-span-4">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900">
+                    <h3 className="font-editorial text-lg font-semibold text-stone-900">
                       Status Pinjaman & Laporan
                     </h3>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      Ringkasan pengajuan serta aksi akhir bulan.
+                    <p className="mt-0.5 text-xs text-stone-500">
+                      Ringkasan pengajuan serta aksi rekap akhir bulan.
                     </p>
 
-                    <dl className="mt-4 divide-y divide-slate-100 text-sm">
+                    <dl className="mt-5 divide-y divide-stone-100 text-sm">
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-slate-600">Menunggu ACC</dt>
+                        <dt className="text-stone-600">Menunggu ACC</dt>
                         <dd className="font-mono font-semibold tabular-nums text-amber-700">
                           {adminMetrics.pinjamanStatusCounts.Menunggu}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-slate-600">Pinjaman Berjalan</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-slate-900">
+                        <dt className="text-stone-600">Pinjaman Berjalan</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-stone-900">
                           {adminMetrics.pinjamanStatusCounts.Berjalan}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-slate-600">Lunas</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-emerald-700">
+                        <dt className="text-stone-600">Lunas</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-emerald-800">
                           {adminMetrics.pinjamanStatusCounts.Lunas}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-slate-600">Ditolak</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-slate-500">
+                        <dt className="text-stone-600">Ditolak</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-stone-500">
                           {adminMetrics.pinjamanStatusCounts.Ditolak}
                         </dd>
                       </div>
@@ -1228,33 +1341,33 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setActivePage('laporan')}
-                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
                   >
-                    <BarChart3 className="h-4 w-4" />
+                    <BarChart3 className="h-4 w-4 text-[#E5C178]" />
                     Buka Laporan Bulanan & WA
                   </button>
                 </div>
               </div>
 
               {/* Ringkasan Anggota Table */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <div className="rounded-2xl border border-stone-200/90 bg-white p-6">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900">
+                    <h3 className="font-editorial text-lg font-semibold text-stone-900">
                       Ringkasan Keuangan Per Anggota
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-stone-500">
                       Akumulasi simpanan, sisa pinjaman, dan saldo bersih setiap anggota.
                     </p>
                   </div>
                   <div className="relative w-full max-w-xs">
-                    <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
+                    <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
                     <input
                       type="text"
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                       placeholder="Cari nama atau ID anggota..."
-                      className="w-full rounded-lg border border-slate-300 py-1.5 pr-3 pl-9 text-sm"
+                      className="w-full rounded-xl border border-stone-300 bg-white py-2 pr-3 pl-9 text-sm text-stone-900 placeholder:text-stone-400"
                     />
                   </div>
                 </div>
@@ -1262,7 +1375,7 @@ export default function App() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+                      <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
                         <th className="py-2.5 pr-3">ID Anggota</th>
                         <th className="py-2.5 pr-3">Nama</th>
                         <th className="py-2.5 pr-3 text-right">Total Simpanan</th>
@@ -1273,38 +1386,38 @@ export default function App() {
                         <th className="py-2.5 text-right">Sisa Angsuran</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-stone-100">
                       {filteredMemberSummaries.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
+                          <td colSpan={8} className="py-8 text-center text-sm text-stone-400">
                             Tidak ada data anggota.
                           </td>
                         </tr>
                       ) : (
                         filteredMemberSummaries.map((m) => (
-                          <tr key={m.idAnggota} className="hover:bg-slate-50/80">
-                            <td className="py-2.5 pr-3 font-mono text-xs text-slate-600">
+                          <tr key={m.idAnggota} className="hover:bg-stone-50/80">
+                            <td className="py-3 pr-3 font-mono text-xs text-stone-500">
                               {m.idAnggota}
                             </td>
-                            <td className="py-2.5 pr-3 font-medium text-slate-900">
+                            <td className="py-3 pr-3 font-medium text-stone-900">
                               {m.nama}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-emerald-700">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-800">
                               {rupiah(m.totalSimpanan)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-amber-700">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-amber-700">
                               {rupiah(m.totalSisaPinjaman)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono font-semibold tabular-nums text-slate-900">
+                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-stone-900">
                               {rupiah(m.saldoAnggotaSaatIni)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-600">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-600">
                               {rupiah(m.totalPinjaman)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-slate-600">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-600">
                               {rupiah(m.totalDibayar)}
                             </td>
-                            <td className="py-2.5 text-right font-mono text-xs tabular-nums text-slate-700">
+                            <td className="py-3 text-right font-mono text-xs tabular-nums text-stone-700">
                               {m.totalSisaAngsuran} kali
                             </td>
                           </tr>
@@ -1365,43 +1478,54 @@ export default function App() {
           {activePage === 'anggotaSaya' && anggotaMetrics && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Total Saldo Kelompok</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-slate-900">
-                    {rupiah(anggotaMetrics.saldoKelompok)}
+                <div className="rounded-2xl bg-[#0B2821] p-6 text-white shadow-sm">
+                  <p className="text-[11px] font-semibold tracking-[0.14em] text-[#E5C178] uppercase">
+                    Posisi Bersih Anda
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">Saldo kas seluruh anggota</p>
+                  <p className="mt-1 text-xs text-emerald-100/75">
+                    Saldo Anggota Saat Ini
+                  </p>
+                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-white sm:text-3xl">
+                    {rupiah(anggotaMetrics.saldoAnggotaSaatIni)}
+                  </p>
+                  <p className="mt-4 border-t border-white/12 pt-3 text-xs text-emerald-100/80">
+                    Sisa pinjaman aktif: {rupiah(anggotaMetrics.totalSisaPinjaman)}
+                  </p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Total Simpanan Saya</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-700">
-                    {rupiah(anggotaMetrics.simpananSaya)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-6">
+                  <div>
+                    <p className="text-xs font-medium text-stone-500">Total Simpanan Saya</p>
+                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-emerald-800">
+                      {rupiah(anggotaMetrics.simpananSaya)}
+                    </p>
+                  </div>
+                  <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
                     Kekurangan target iuran: {rupiah(anggotaMetrics.kekuranganIuran)}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-emerald-200 bg-white p-5">
-                  <p className="text-xs font-medium text-slate-500">Saldo Anggota Saat Ini</p>
-                  <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-700">
-                    {rupiah(anggotaMetrics.saldoAnggotaSaatIni)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Sisa pinjaman aktif: {rupiah(anggotaMetrics.totalSisaPinjaman)}
+                <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-6">
+                  <div>
+                    <p className="text-xs font-medium text-stone-500">Total Saldo Kelompok</p>
+                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
+                      {rupiah(anggotaMetrics.saldoKelompok)}
+                    </p>
+                  </div>
+                  <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
+                    Akumulasi saldo kas seluruh anggota
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <h3 className="mb-3 text-base font-semibold text-slate-900">
+              <div className="rounded-2xl border border-stone-200/90 bg-white p-6">
+                <h3 className="font-editorial mb-4 text-lg font-semibold text-stone-900">
                   Pinjaman Saya
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+                      <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
                         <th className="py-2.5 pr-3">ID Pinjaman</th>
                         <th className="py-2.5 pr-3">Tanggal</th>
                         <th className="py-2.5 pr-3 text-right">Jumlah</th>
@@ -1410,32 +1534,32 @@ export default function App() {
                         <th className="py-2.5">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-stone-100">
                       {anggotaMetrics.pinjamanSaya.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-6 text-center text-sm text-slate-400">
+                          <td colSpan={6} className="py-8 text-center text-sm text-stone-400">
                             Anda tidak memiliki catatan pinjaman.
                           </td>
                         </tr>
                       ) : (
                         anggotaMetrics.pinjamanSaya.map((p) => (
-                          <tr key={p.idPinjaman}>
-                            <td className="py-2.5 pr-3 font-mono text-xs text-slate-700">
+                          <tr key={p.idPinjaman} className="hover:bg-stone-50/80">
+                            <td className="py-3 pr-3 font-mono text-xs text-stone-600">
                               {p.idPinjaman}
                             </td>
-                            <td className="py-2.5 pr-3 text-xs text-slate-500">
+                            <td className="py-3 pr-3 text-xs text-stone-500">
                               {formatTanggalId(p.tanggal)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono tabular-nums">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-900">
                               {rupiah(p.jumlah)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-emerald-700">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-800">
                               {rupiah(p.totalDibayar)}
                             </td>
-                            <td className="py-2.5 pr-3 text-right font-mono font-semibold tabular-nums">
+                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-stone-900">
                               {rupiah(p.sisa)}
                             </td>
-                            <td className="py-2.5 text-xs font-semibold text-slate-800">
+                            <td className="py-3 text-xs font-semibold text-stone-800">
                               {p.status}
                             </td>
                           </tr>
@@ -1449,17 +1573,17 @@ export default function App() {
           )}
 
           {activePage === 'ajukanPinjaman' && (
-            <div className="max-w-lg rounded-xl border border-slate-200 bg-white p-6">
-              <h3 className="text-base font-semibold text-slate-900">
+            <div className="max-w-lg rounded-2xl border border-stone-200/90 bg-white p-6">
+              <h3 className="font-editorial text-lg font-semibold text-stone-900">
                 Form Pengajuan Pinjaman Anggota
               </h3>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-stone-500">
                 Pengajuan akan masuk ke antrean Administrator untuk disetujui (ACC) atau ditolak.
               </p>
 
               <form onSubmit={handleAjukanPinjamanAnggota} className="mt-5 space-y-4">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  <label className="mb-1 block text-xs font-semibold text-stone-700">
                     Jumlah Pinjaman (Rp)
                   </label>
                   <input
@@ -1469,12 +1593,12 @@ export default function App() {
                     value={ajuJumlah}
                     onChange={(e) => setAjuJumlah(e.target.value)}
                     placeholder="1000000"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+                    className="w-full rounded-xl border border-stone-300 px-3 py-2.5 font-mono text-sm text-stone-900"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  <label className="mb-1 block text-xs font-semibold text-stone-700">
                     Tenor (Jumlah Bulan Angsuran)
                   </label>
                   <input
@@ -1484,14 +1608,14 @@ export default function App() {
                     value={ajuTenor}
                     onChange={(e) => setAjuTenor(e.target.value)}
                     placeholder="10"
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+                    className="w-full rounded-xl border border-stone-300 px-3 py-2.5 font-mono text-sm text-stone-900"
                   />
                 </div>
 
                 {Number(ajuJumlah) > 0 && Number(ajuTenor) > 0 && (
-                  <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs">
-                    <span className="text-slate-600">Estimasi Angsuran/Bulan</span>
-                    <span className="font-mono font-semibold tabular-nums text-slate-900">
+                  <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs">
+                    <span className="text-stone-600">Estimasi Angsuran/Bulan</span>
+                    <span className="font-mono font-semibold tabular-nums text-stone-900">
                       {rupiah(Number(ajuJumlah) / Number(ajuTenor))}
                     </span>
                   </div>
@@ -1499,7 +1623,7 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                  className="w-full rounded-xl bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
                 >
                   Kirim Pengajuan Pinjaman
                 </button>
@@ -1509,17 +1633,17 @@ export default function App() {
 
           {activePage === 'pengaturan' && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-              <div className="rounded-xl border border-slate-200 bg-white p-6 lg:col-span-6">
-                <h3 className="text-base font-semibold text-slate-900">
+              <div className="rounded-2xl border border-stone-200/90 bg-white p-6 lg:col-span-6">
+                <h3 className="font-editorial text-lg font-semibold text-stone-900">
                   Ubah Username & Password Akun
                 </h3>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-stone-500">
                   Mengubah kredensial akun yang sedang login pada sheet Users.
                 </p>
 
                 <form onSubmit={handleUpdateAkun} className="mt-4 space-y-3.5">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1 block text-xs font-semibold text-stone-700">
                       Username Baru
                     </label>
                     <input
@@ -1527,11 +1651,11 @@ export default function App() {
                       required
                       value={usernameBaru}
                       onChange={(e) => setUsernameBaru(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-900"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1 block text-xs font-semibold text-stone-700">
                       Password Lama
                     </label>
                     <input
@@ -1539,11 +1663,11 @@ export default function App() {
                       required
                       value={passwordLama}
                       onChange={(e) => setPasswordLama(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-900"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1 block text-xs font-semibold text-stone-700">
                       Password Baru
                     </label>
                     <input
@@ -1551,43 +1675,43 @@ export default function App() {
                       required
                       value={passwordBaru}
                       onChange={(e) => setPasswordBaru(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-900"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                    className="rounded-xl bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
                   >
                     Simpan Perubahan Akun
                   </button>
                 </form>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-6 lg:col-span-6">
-                <h3 className="text-base font-semibold text-slate-900">
+              <div className="rounded-2xl border border-stone-200/90 bg-white p-6 lg:col-span-6">
+                <h3 className="font-editorial text-lg font-semibold text-stone-900">
                   Koneksi Spreadsheet Database
                 </h3>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-stone-500">
                   Spreadsheet aktif yang terhubung ke sistem keuangan ini.
                 </p>
 
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1 block text-xs font-semibold text-stone-700">
                       Tautan / ID Spreadsheet
                     </label>
                     <input
                       type="text"
                       value={spreadsheetInput}
                       onChange={(e) => setSpreadsheetInput(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs"
+                      className="w-full rounded-xl border border-stone-300 px-3 py-2 font-mono text-xs text-stone-900"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2.5">
                     <button
                       type="button"
                       onClick={() => refreshDataset()}
-                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 transition-colors hover:bg-stone-50"
                     >
                       Muat Ulang Data
                     </button>
@@ -1595,15 +1719,15 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleRequestSetupDatabase}
-                        className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                        className="rounded-xl bg-[#0B2821] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#12382E]"
                       >
                         Verifikasi & Setup Tab Sheet
                       </button>
                     )}
                   </div>
-                  <div className="border-t border-slate-100 pt-3 text-xs text-slate-500">
+                  <div className="border-t border-stone-100 pt-3 text-xs text-stone-500">
                     Tab terdeteksi:{' '}
-                    <span className="font-mono text-slate-700">
+                    <span className="font-mono text-stone-700">
                       {dataset.availableTabs.join(', ') || '-'}
                     </span>
                   </div>
@@ -1635,17 +1759,17 @@ export default function App() {
 
       {toast && (
         <div
-          className="no-print fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-lg"
+          className="no-print fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm shadow-lg"
           role="status"
         >
-          <CheckCircle2
-            className={`h-4 w-4 shrink-0 ${
-              toast.type === 'success' ? 'text-emerald-600' : 'text-red-600'
-            }`}
-          />
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+          ) : (
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-700" />
+          )}
           <p
             className={`font-medium ${
-              toast.type === 'success' ? 'text-slate-900' : 'text-red-700'
+              toast.type === 'success' ? 'text-stone-900' : 'text-red-700'
             }`}
           >
             {toast.message}

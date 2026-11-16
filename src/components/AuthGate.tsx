@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Database,
   ExternalLink,
+  Lock,
   LogOut,
   RefreshCw,
   ShieldCheck,
@@ -92,46 +93,116 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   const quickUsers: AppUser[] = dataset?.users.filter((u) => u.status === 'Aktif') || [];
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-5xl">
-        {/* Clean Brand Header */}
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+    <div className="min-h-screen bg-[#F6F7F5] lg:grid lg:grid-cols-12">
+      {/* Left Institutional Trust Panel */}
+      <aside className="relative flex flex-col justify-between overflow-hidden bg-[#0B2821] px-7 py-10 text-stone-100 lg:col-span-5 lg:px-12 lg:py-12">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+            backgroundSize: '44px 44px',
+          }}
+        />
+
+        <div className="relative">
+          {/* Brand Emblem */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#C59B49]/40 bg-[#12382E]">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 text-[#E5C178]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M3 20h18M5 20V10m14 10V10M3 10l9-6 9 6M9 20v-6h6v6" />
+              </svg>
+            </div>
+            <span className="font-editorial text-xl font-semibold tracking-tight text-white">
               Sentra Kas
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              Sistem Keuangan Anggota · Laporan Bulanan Otomatis & Notifikasi WhatsApp
-            </p>
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <PWAInstallButton />
-            <a
-              href={`https://docs.google.com/spreadsheets/d/${resolvedId}/edit`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Buka Spreadsheet
-            </a>
+
+          <h1 className="font-editorial mt-10 max-w-md text-3xl leading-snug font-semibold tracking-tight text-balance text-white sm:text-4xl">
+            Tata Kelola Kas Kelompok yang Transparan dan Terpercaya.
+          </h1>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-emerald-100/80">
+            Sistem pencatatan simpanan, pinjaman, laporan keuangan bulanan otomatis, serta distribusi ringkasan pengeluaran anggota yang terhubung langsung ke buku besar kelompok Anda.
+          </p>
+
+          <div className="mt-10 divide-y divide-white/10 border-y border-white/10">
+            <div className="py-4">
+              <p className="text-xs font-semibold tracking-wide text-[#E5C178]">
+                01. Buku Besar Terpusat
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-100/75">
+                Setiap simpanan, pengeluaran, pinjaman, dan angsuran tercatat rapi dan langsung tersinkronisasi dengan Google Sheets kelompok.
+              </p>
+            </div>
+            <div className="py-4">
+              <p className="text-xs font-semibold tracking-wide text-[#E5C178]">
+                02. Laporan Akhir Bulan Otomatis
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-100/75">
+                Rekapitulasi surplus/defisit dan rincian kategori pengeluaran tersusun otomatis setiap periode dengan arsip audit dan cetak PDF.
+              </p>
+            </div>
+            <div className="py-4">
+              <p className="text-xs font-semibold tracking-wide text-[#E5C178]">
+                03. Transparansi via WhatsApp
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-100/75">
+                Anggota menerima ringkasan pengeluaran kelompok serta posisi simpanan dan pinjaman pribadi setiap akhir bulan.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Kolom Kiri: Koneksi Google Sheets */}
-          <div className="space-y-5 lg:col-span-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700">
+        <div className="relative mt-10 flex items-center gap-2.5 text-xs text-emerald-100/65">
+          <Lock className="h-3.5 w-3.5 shrink-0 text-[#E5C178]" />
+          <span>
+            Akses dilindungi otorisasi resmi akun Google dan verifikasi peran pengguna.
+          </span>
+        </div>
+      </aside>
+
+      {/* Right Interactive Workspace */}
+      <main className="flex flex-col justify-between px-5 py-8 sm:px-8 lg:col-span-7 lg:px-14 lg:py-10">
+        <div className="mx-auto w-full max-w-xl">
+          {/* Top Utility Row */}
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-stone-200/80 pb-4">
+            <span className="text-xs font-semibold text-stone-500">
+              Portal Akses Pengurus & Anggota
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <PWAInstallButton />
+              <a
+                href={`https://docs.google.com/spreadsheets/d/${resolvedId}/edit`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-stone-50"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Buka Spreadsheet
+              </a>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {/* Step 1: Google Sheets Authorization */}
+            <section className="rounded-xl border border-stone-200/90 bg-white p-6 shadow-xs">
+              <div className="flex items-start gap-3.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-900/15 bg-emerald-50 text-[#065F46]">
                   <Database className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-slate-900">
-                    01. Hubungkan Google Spreadsheet
+                  <h2 className="text-base font-semibold text-stone-900">
+                    Langkah 1 · Hubungkan Buku Besar Spreadsheet
                   </h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Masuk dengan akun Google yang memiliki akses edit ke spreadsheet catatan keuangan kelompok Anda.
+                  <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                    Masuk menggunakan akun Google yang memiliki izin akses ke spreadsheet keuangan kelompok Anda.
                   </p>
                 </div>
               </div>
@@ -140,7 +211,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                 <div>
                   <label
                     htmlFor="sheet-url-input"
-                    className="mb-1.5 block text-xs font-semibold text-slate-700"
+                    className="mb-1.5 block text-xs font-semibold text-stone-700"
                   >
                     Tautan atau ID Google Spreadsheet
                   </label>
@@ -151,14 +222,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                       value={spreadsheetInput}
                       onChange={(e) => onSpreadsheetInputChange(e.target.value)}
                       placeholder="https://docs.google.com/spreadsheets/d/..."
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs text-slate-800 focus-visible:outline-2 focus-visible:outline-emerald-600"
+                      className="w-full rounded-lg border border-stone-300 bg-stone-50/50 px-3 py-2 font-mono text-xs text-stone-800"
                     />
                     {!needsGoogleAuth && (
                       <button
                         type="button"
                         onClick={onReloadSheet}
                         disabled={isLoadingSheet}
-                        className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50"
                       >
                         <RefreshCw
                           className={`h-3.5 w-3.5 ${isLoadingSheet ? 'animate-spin' : ''}`}
@@ -167,13 +238,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                       </button>
                     )}
                   </div>
-                  <p className="mt-1.5 font-mono text-[11px] text-slate-500">
+                  <p className="mt-1.5 font-mono text-[11px] text-stone-400">
                     ID aktif: {resolvedId}
                   </p>
                 </div>
 
                 {needsGoogleAuth ? (
-                  <div className="pt-1">
+                  <div className="space-y-3 pt-1">
                     <GoogleSignInButton
                       onClick={onGoogleLogin}
                       disabled={isGoogleSigningIn}
@@ -183,23 +254,28 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                           : 'Sign in with Google'
                       }
                     />
+                    {sheetError && (
+                      <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
+                        {sheetError}
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4">
+                  <div className="space-y-3 rounded-lg border border-emerald-900/15 bg-emerald-50/50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#065F46]" />
                         <div className="text-xs">
-                          <p className="font-semibold text-slate-900">
-                            Terhubung sebagai {googleUser?.displayName || googleUser?.email}
+                          <p className="font-semibold text-stone-900">
+                            Terhubung · {googleUser?.displayName || googleUser?.email}
                           </p>
-                          <p className="text-slate-600">{googleUser?.email}</p>
+                          <p className="text-stone-600">{googleUser?.email}</p>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={onGoogleLogout}
-                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-stone-300 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
                       >
                         <LogOut className="h-3.5 w-3.5" />
                         Ganti Akun
@@ -207,8 +283,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                     </div>
 
                     {isLoadingSheet && (
-                      <p className="text-xs font-medium text-slate-600">
-                        Membaca struktur sheet dan data transaksi...
+                      <p className="text-xs font-medium text-stone-600">
+                        Memverifikasi struktur tabel dan memuat transaksi...
                       </p>
                     )}
 
@@ -219,16 +295,16 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                     )}
 
                     {dataset && !isLoadingSheet && !sheetError && (
-                      <div className="space-y-2 border-t border-emerald-200/80 pt-3 text-xs text-slate-700">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Nama File:</span>
-                          <span className="font-semibold text-slate-900">
+                      <div className="space-y-2 border-t border-emerald-900/10 pt-3 text-xs text-stone-700">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-stone-500">Dokumen Terhubung:</span>
+                          <span className="truncate font-semibold text-stone-900">
                             {dataset.spreadsheetTitle}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600">Data Terbaca:</span>
-                          <span className="font-mono tabular-nums text-slate-900">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-stone-500">Rekap Data:</span>
+                          <span className="font-mono tabular-nums text-stone-900">
                             {dataset.anggota.length} anggota · {dataset.kasMasuk.length} kas masuk ·{' '}
                             {dataset.kasKeluar.length} kas keluar
                           </span>
@@ -244,7 +320,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                             <button
                               type="button"
                               onClick={onRequestSetupDatabase}
-                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800"
+                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#B45309] px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800"
                             >
                               Setup Struktur Sheet & Admin Otomatis
                             </button>
@@ -255,94 +331,70 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </section>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-5 text-xs leading-relaxed text-slate-600">
-              <p className="font-semibold text-slate-900">
-                Fitur Utama Aplikasi Sentra Kas
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                <li>
-                  • Sinkronisasi langsung dengan data kelompok (<code className="font-mono">Anggota</code>,{' '}
-                  <code className="font-mono">KasMasuk</code>,{' '}
-                  <code className="font-mono">KasKeluar</code>,{' '}
-                  <code className="font-mono">Pinjaman</code>,{' '}
-                  <code className="font-mono">Angsuran</code>,{' '}
-                  <code className="font-mono">Users</code>).
-                </li>
-                <li>
-                  • Laporan bulanan otomatis dengan rincian pengeluaran per kategori dan grafik arus kas 6 bulan.
-                </li>
-                <li>
-                  • Pengiriman ringkasan pengeluaran akhir bulan langsung ke WhatsApp seluruh anggota.
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Kolom Kanan: Login Role / Daftar Anggota */}
-          <div className="lg:col-span-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-6">
-              <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700">
-                    {mode === 'login' ? (
-                      <ShieldCheck className="h-5 w-5" />
-                    ) : (
-                      <UserPlus className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-base font-semibold text-slate-900">
-                      {mode === 'login'
-                        ? '02. Masuk ke Sistem Keuangan'
-                        : '02. Pendaftaran Anggota Baru'}
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      {mode === 'login'
-                        ? 'Gunakan akun Administrator, Bendahara, atau Anggota dari sheet Users.'
-                        : 'Akun dan ID anggota akan ditambahkan ke Google Sheet.'}
-                    </p>
-                  </div>
+            {/* Step 2: Role Sign-In / Member Registration */}
+            <section className="rounded-xl border border-stone-200/90 bg-white p-6 shadow-xs">
+              <div className="mb-5 flex items-center gap-3.5 border-b border-stone-100 pb-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-stone-50 text-stone-700">
+                  {mode === 'login' ? (
+                    <ShieldCheck className="h-5 w-5" />
+                  ) : (
+                    <UserPlus className="h-5 w-5" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-stone-900">
+                    {mode === 'login'
+                      ? 'Langkah 2 · Masuk ke Akun Peran'
+                      : 'Langkah 2 · Pendaftaran Anggota Baru'}
+                  </h2>
+                  <p className="text-xs text-stone-500">
+                    {mode === 'login'
+                      ? 'Masuk sebagai Administrator, Bendahara, atau Anggota sesuai sheet Users.'
+                      : 'Data dan ID anggota akan langsung tersimpan di buku besar.'}
+                  </p>
                 </div>
               </div>
 
               {needsGoogleAuth || !dataset ? (
-                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                  <p className="text-sm font-medium text-slate-700">
-                    Hubungkan akun Google Anda terlebih dahulu di panel sebelah kiri.
+                <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50/70 p-7 text-center">
+                  <p className="text-sm font-medium text-stone-700">
+                    Menunggu otorisasi Google Spreadsheet pada Langkah 1.
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Setelah spreadsheet terbaca, form login peran (Administrator / Bendahara / Anggota) akan aktif secara otomatis.
+                  <p className="mt-1 text-xs text-stone-500">
+                    Setelah terhubung, formulir login peran akan aktif secara otomatis.
                   </p>
                 </div>
               ) : mode === 'login' ? (
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                      Username
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Contoh: admin"
-                      className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-emerald-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Masukkan password"
-                      className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus-visible:outline-2 focus-visible:outline-emerald-600"
-                    />
+                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-stone-700">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Contoh: admin"
+                        className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm text-stone-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-stone-700">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Masukkan password"
+                        className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm text-stone-900"
+                      />
+                    </div>
                   </div>
 
                   {loginError && (
@@ -353,16 +405,16 @@ export const AuthGate: React.FC<AuthGateProps> = ({
 
                   <button
                     type="submit"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
                   >
                     Masuk ke Dashboard
                     <ArrowRight className="h-4 w-4" />
                   </button>
 
                   {quickUsers.length > 0 && (
-                    <div className="border-t border-slate-100 pt-4">
-                      <p className="mb-2 text-xs font-medium text-slate-500">
-                        Akun aktif di sheet Users (klik untuk mengisi username):
+                    <div className="border-t border-stone-100 pt-4">
+                      <p className="mb-2 text-xs font-medium text-stone-500">
+                        Akun aktif terdeteksi (klik untuk mengisi username):
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {quickUsers.slice(0, 6).map((u) => (
@@ -370,29 +422,29 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                             key={u.username}
                             type="button"
                             onClick={() => setUsername(u.username)}
-                            className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
+                            className="rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1.5 text-xs font-medium text-stone-700 transition-colors hover:border-emerald-700/40 hover:bg-emerald-50/70"
                           >
-                            {u.nama} · <span className="text-slate-500">{u.role}</span>
+                            {u.nama} · <span className="text-stone-500">{u.role}</span>
                           </button>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <div className="border-t border-slate-100 pt-4 text-center">
+                  <div className="border-t border-stone-100 pt-4 text-center">
                     <button
                       type="button"
                       onClick={() => setMode('register')}
-                      className="text-xs font-semibold text-emerald-700 hover:underline"
+                      className="text-xs font-semibold text-[#065F46] hover:underline"
                     >
-                      Belum punya akun anggota? Daftar Anggota Mandiri
+                      Belum memiliki akun anggota? Daftar Anggota Mandiri
                     </button>
                   </div>
                 </form>
               ) : (
-                <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    <label className="mb-1 block text-xs font-semibold text-stone-700">
                       Nama Lengkap
                     </label>
                     <input
@@ -400,12 +452,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                       required
                       value={regNama}
                       onChange={(e) => setRegNama(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                     />
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                      <label className="mb-1 block text-xs font-semibold text-stone-700">
                         No HP / WhatsApp
                       </label>
                       <input
@@ -414,24 +466,24 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                         value={regNohp}
                         onChange={(e) => setRegNohp(e.target.value)}
                         placeholder="0812..."
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                      <label className="mb-1 block text-xs font-semibold text-stone-700">
                         Alamat
                       </label>
                       <input
                         type="text"
                         value={regAlamat}
                         onChange={(e) => setRegAlamat(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                      <label className="mb-1 block text-xs font-semibold text-stone-700">
                         Username
                       </label>
                       <input
@@ -439,11 +491,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                         required
                         value={regUsername}
                         onChange={(e) => setRegUsername(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                      <label className="mb-1 block text-xs font-semibold text-stone-700">
                         Password
                       </label>
                       <input
@@ -451,7 +503,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                         required
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                       />
                     </div>
                   </div>
@@ -466,23 +518,27 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                     <button
                       type="button"
                       onClick={() => setMode('login')}
-                      className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      className="flex-1 rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-50"
                     >
                       Kembali
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                      className="flex-1 rounded-lg bg-[#065F46] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0B2821]"
                     >
                       Daftar Sekarang
                     </button>
                   </div>
                 </form>
               )}
-            </div>
+            </section>
           </div>
         </div>
-      </div>
+
+        <footer className="mx-auto mt-8 w-full max-w-xl text-center text-[11px] text-stone-400">
+          Sentra Kas · Sistem Manajemen Keuangan & Transparansi Kelompok
+        </footer>
+      </main>
     </div>
   );
 };

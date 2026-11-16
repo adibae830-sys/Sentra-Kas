@@ -46,11 +46,10 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Form Tambah Anggota */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
-        <h3 className="text-base font-semibold text-slate-900">Tambah Anggota Baru</h3>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Menambahkan anggota ke sheet Anggota dengan ID otomatis.
+      <div className="rounded-xl border border-stone-200/90 bg-white p-6">
+        <h3 className="text-base font-semibold text-stone-900">Tambah Anggota Baru</h3>
+        <p className="mt-0.5 text-xs text-stone-500">
+          Mendaftarkan anggota baru ke buku besar dengan ID anggota otomatis.
         </p>
 
         <form
@@ -63,14 +62,14 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             placeholder="Nama lengkap"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-4"
+            className="rounded-lg border border-stone-300 px-3 py-2 text-sm md:col-span-4"
           />
           <input
             type="text"
             value={alamat}
             onChange={(e) => setAlamat(e.target.value)}
             placeholder="Alamat"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-4"
+            className="rounded-lg border border-stone-300 px-3 py-2 text-sm md:col-span-4"
           />
           <input
             type="tel"
@@ -78,11 +77,11 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
             value={nohp}
             onChange={(e) => setNohp(e.target.value)}
             placeholder="No HP / WhatsApp (08...)"
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2"
+            className="rounded-lg border border-stone-300 px-3 py-2 text-sm md:col-span-2"
           />
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 md:col-span-2"
+            className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#0B2821] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#12382E] md:col-span-2"
           >
             <Plus className="h-4 w-4" />
             Simpan
@@ -90,21 +89,20 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
         </form>
       </div>
 
-      {/* Tabel Anggota */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <div className="rounded-xl border border-stone-200/90 bg-white p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
+            <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari nama, ID, atau No HP..."
-              className="w-full rounded-lg border border-slate-300 py-2 pr-3 pl-9 text-sm"
+              className="w-full rounded-lg border border-stone-300 py-2 pr-3 pl-9 text-sm"
             />
           </div>
 
-          <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-stone-100 p-1">
             {(['Semua', 'Aktif', 'Nonaktif'] as const).map((tab) => (
               <button
                 key={tab}
@@ -112,8 +110,8 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
                 onClick={() => setStatusFilter(tab)}
                 className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                   statusFilter === tab
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-stone-900 shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 {tab}
@@ -125,7 +123,7 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+              <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
                 <th className="py-2.5 pr-3">ID Anggota</th>
                 <th className="py-2.5 pr-3">Nama</th>
                 <th className="py-2.5 pr-3">Alamat</th>
@@ -135,38 +133,38 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
                 <th className="py-2.5 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-stone-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-sm text-stone-400">
                     Tidak ada data anggota yang cocok.
                   </td>
                 </tr>
               ) : (
                 filtered.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50/80">
-                    <td className="py-3 pr-3 font-mono text-xs text-slate-600">{a.id}</td>
-                    <td className="py-3 pr-3 font-medium text-slate-900">{a.nama}</td>
-                    <td className="py-3 pr-3 text-slate-600">{a.alamat || '-'}</td>
-                    <td className="py-3 pr-3 font-mono text-xs text-slate-700">{a.nohp}</td>
-                    <td className="py-3 pr-3 text-xs text-slate-500">
+                  <tr key={a.id} className="hover:bg-stone-50/90">
+                    <td className="py-3.5 pr-3 font-mono text-xs text-stone-500">{a.id}</td>
+                    <td className="py-3.5 pr-3 font-semibold text-stone-900">{a.nama}</td>
+                    <td className="py-3.5 pr-3 text-stone-600">{a.alamat || '-'}</td>
+                    <td className="py-3.5 pr-3 font-mono text-xs text-stone-700">{a.nohp}</td>
+                    <td className="py-3.5 pr-3 text-xs text-stone-500">
                       {formatTanggalId(a.tanggal)}
                     </td>
-                    <td className="py-3 pr-3 text-xs font-medium">
+                    <td className="py-3.5 pr-3 text-xs font-semibold">
                       <span
                         className={
-                          a.status === 'Aktif' ? 'text-emerald-700' : 'text-slate-500'
+                          a.status === 'Aktif' ? 'text-[#065F46]' : 'text-stone-400'
                         }
                       >
                         {a.status}
                       </span>
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="py-3.5 text-right">
                       <div className="inline-flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => setEditing(a)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                           Edit
@@ -189,60 +187,59 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
         </div>
       </div>
 
-      {/* Modal Edit Anggota */}
       {editing && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40 p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-stone-950/45 p-4 backdrop-blur-xs"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-semibold text-slate-900">
+              <h3 className="text-base font-semibold text-stone-900">
                 Edit Data Anggota · {editing.id}
               </h3>
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-1 text-stone-400 hover:bg-stone-100"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Nama</label>
+                <label className="mb-1 block text-xs font-semibold text-stone-700">Nama</label>
                 <input
                   type="text"
                   value={editing.nama}
                   onChange={(e) => setEditing({ ...editing, nama: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Alamat</label>
+                <label className="mb-1 block text-xs font-semibold text-stone-700">Alamat</label>
                 <input
                   type="text"
                   value={editing.alamat}
                   onChange={(e) => setEditing({ ...editing, alamat: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">No HP / WA</label>
+                <label className="mb-1 block text-xs font-semibold text-stone-700">No HP / WA</label>
                 <input
                   type="text"
                   value={editing.nohp}
                   onChange={(e) => setEditing({ ...editing, nohp: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-700">Status</label>
+                <label className="mb-1 block text-xs font-semibold text-stone-700">Status</label>
                 <select
                   value={editing.status}
                   onChange={(e) => setEditing({ ...editing, status: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
                 >
                   <option value="Aktif">Aktif</option>
                   <option value="Nonaktif">Nonaktif</option>
@@ -253,7 +250,7 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50"
               >
                 Batal
               </button>
@@ -264,7 +261,7 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
                   setEditing(null);
                   onUpdateAnggota(target);
                 }}
-                className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                className="rounded-lg bg-[#0B2821] px-4 py-2 text-sm font-semibold text-white hover:bg-[#12382E]"
               >
                 Simpan Perubahan
               </button>
@@ -335,19 +332,19 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       <div className="lg:col-span-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h3 className="text-base font-semibold text-slate-900">Input Kas Masuk</h3>
-          <p className="mt-0.5 text-xs text-slate-500">
+        <div className="rounded-xl border border-stone-200/90 bg-white p-6">
+          <h3 className="text-base font-semibold text-stone-900">Input Kas Masuk</h3>
+          <p className="mt-0.5 text-xs text-stone-500">
             Mencatat simpanan, angsuran, denda, atau pemasukan lain.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Anggota</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">Anggota</label>
               <select
                 value={idAnggota}
                 onChange={(e) => setIdAnggota(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               >
                 <option value="">-- Pilih Anggota (Opsional untuk umum) --</option>
                 {activeMembers.map((m) => (
@@ -359,11 +356,11 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Jenis</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">Jenis</label>
               <select
                 value={jenis}
                 onChange={(e) => setJenis(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               >
                 <option value="Simpanan">Simpanan</option>
                 <option value="Angsuran">Angsuran</option>
@@ -373,7 +370,7 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Jumlah (Rp)</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">Jumlah (Rp)</label>
               <input
                 type="number"
                 min={1}
@@ -381,24 +378,24 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
                 value={jumlah}
                 onChange={(e) => setJumlah(e.target.value)}
                 placeholder="100000"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Keterangan</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">Keterangan</label>
               <textarea
                 rows={2}
                 value={keterangan}
                 onChange={(e) => setKeterangan(e.target.value)}
                 placeholder="Simpanan wajib bulan..."
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              className="w-full rounded-lg bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
             >
               Simpan Kas Masuk
             </button>
@@ -407,19 +404,19 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
       </div>
 
       <div className="lg:col-span-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="rounded-xl border border-stone-200/90 bg-white p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-slate-900">
+            <h3 className="text-base font-semibold text-stone-900">
               Riwayat Kas Masuk ({rows.length})
             </h3>
             <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
+              <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari anggota, jenis, keterangan..."
-                className="w-full rounded-lg border border-slate-300 py-1.5 pr-3 pl-9 text-sm"
+                className="w-full rounded-lg border border-stone-300 py-1.5 pr-3 pl-9 text-sm"
               />
             </div>
           </div>
@@ -427,7 +424,7 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+                <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
                   <th className="py-2.5 pr-3">Tanggal</th>
                   <th className="py-2.5 pr-3">Anggota</th>
                   <th className="py-2.5 pr-3">Jenis</th>
@@ -435,27 +432,27 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
                   <th className="py-2.5 text-right">Jumlah</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-stone-100">
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                    <td colSpan={5} className="py-8 text-center text-sm text-stone-400">
                       Belum ada catatan kas masuk.
                     </td>
                   </tr>
                 ) : (
                   rows.slice(0, 50).map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-50/80">
-                      <td className="whitespace-nowrap py-2.5 pr-3 text-xs text-slate-500">
+                    <tr key={r.id} className="hover:bg-stone-50/90">
+                      <td className="whitespace-nowrap py-3 pr-3 text-xs text-stone-500">
                         {formatTanggalId(r.tanggal)}
                       </td>
-                      <td className="py-2.5 pr-3 font-medium text-slate-900">
+                      <td className="py-3 pr-3 font-medium text-stone-900">
                         {memberNames.get(r.idAnggota) || r.idAnggota || '-'}
                       </td>
-                      <td className="py-2.5 pr-3 text-xs font-medium text-emerald-700">
+                      <td className="py-3 pr-3 text-xs font-semibold text-[#065F46]">
                         {r.jenis}
                       </td>
-                      <td className="py-2.5 pr-3 text-slate-600">{r.keterangan || '-'}</td>
-                      <td className="whitespace-nowrap py-2.5 text-right font-mono font-semibold tabular-nums text-emerald-700">
+                      <td className="py-3 pr-3 text-stone-600">{r.keterangan || '-'}</td>
+                      <td className="whitespace-nowrap py-3 text-right font-mono font-semibold tabular-nums text-[#065F46]">
                         {rupiah(r.jumlah)}
                       </td>
                     </tr>
@@ -514,19 +511,21 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       <div className="lg:col-span-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h3 className="text-base font-semibold text-slate-900">Input Kas Keluar</h3>
-          <p className="mt-0.5 text-xs text-slate-500">
+        <div className="rounded-xl border border-stone-200/90 bg-white p-6">
+          <h3 className="text-base font-semibold text-stone-900">Input Kas Keluar</h3>
+          <p className="mt-0.5 text-xs text-stone-500">
             Mencatat pengeluaran operasional atau biaya kelompok lainnya.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Jenis Pengeluaran</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">
+                Jenis Pengeluaran
+              </label>
               <select
                 value={jenis}
                 onChange={(e) => setJenis(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               >
                 <option value="Operasional">Operasional</option>
                 <option value="Pencairan Pinjaman">Pencairan Pinjaman</option>
@@ -537,7 +536,7 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Jumlah (Rp)</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">Jumlah (Rp)</label>
               <input
                 type="number"
                 min={1}
@@ -545,25 +544,25 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
                 value={jumlah}
                 onChange={(e) => setJumlah(e.target.value)}
                 placeholder="50000"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">Keterangan</label>
+              <label className="mb-1 block text-xs font-semibold text-stone-700">Keterangan</label>
               <textarea
                 rows={2}
                 required
                 value={keterangan}
                 onChange={(e) => setKeterangan(e.target.value)}
                 placeholder="Rincian pengeluaran..."
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-700"
+              className="w-full rounded-lg bg-[#B45309] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-800"
             >
               Simpan Kas Keluar
             </button>
@@ -572,19 +571,19 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
       </div>
 
       <div className="lg:col-span-8">
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="rounded-xl border border-stone-200/90 bg-white p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-slate-900">
+            <h3 className="text-base font-semibold text-stone-900">
               Riwayat Pengeluaran ({rows.length})
             </h3>
             <div className="relative w-full max-w-xs">
-              <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
+              <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari kategori atau keterangan..."
-                className="w-full rounded-lg border border-slate-300 py-1.5 pr-3 pl-9 text-sm"
+                className="w-full rounded-lg border border-stone-300 py-1.5 pr-3 pl-9 text-sm"
               />
             </div>
           </div>
@@ -592,7 +591,7 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+                <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
                   <th className="py-2.5 pr-3">Tanggal</th>
                   <th className="py-2.5 pr-3">Kategori</th>
                   <th className="py-2.5 pr-3">Keterangan</th>
@@ -600,23 +599,23 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
                   <th className="py-2.5 text-right">Jumlah</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-stone-100">
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                    <td colSpan={5} className="py-8 text-center text-sm text-stone-400">
                       Belum ada pengeluaran tercatat.
                     </td>
                   </tr>
                 ) : (
                   rows.slice(0, 50).map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-50/80">
-                      <td className="whitespace-nowrap py-2.5 pr-3 text-xs text-slate-500">
+                    <tr key={r.id} className="hover:bg-stone-50/90">
+                      <td className="whitespace-nowrap py-3 pr-3 text-xs text-stone-500">
                         {formatTanggalId(r.tanggal)}
                       </td>
-                      <td className="py-2.5 pr-3 font-medium text-slate-900">{r.jenis}</td>
-                      <td className="py-2.5 pr-3 text-slate-600">{r.keterangan || '-'}</td>
-                      <td className="py-2.5 pr-3 text-xs text-slate-500">{r.user || '-'}</td>
-                      <td className="whitespace-nowrap py-2.5 text-right font-mono font-semibold tabular-nums text-amber-700">
+                      <td className="py-3 pr-3 font-medium text-stone-900">{r.jenis}</td>
+                      <td className="py-3 pr-3 text-stone-600">{r.keterangan || '-'}</td>
+                      <td className="py-3 pr-3 text-xs text-stone-500">{r.user || '-'}</td>
+                      <td className="whitespace-nowrap py-3 text-right font-mono font-semibold tabular-nums text-[#B45309]">
                         {rupiah(r.jumlah)}
                       </td>
                     </tr>
