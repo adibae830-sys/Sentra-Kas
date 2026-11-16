@@ -45,6 +45,7 @@ import {
   rupiah,
 } from './lib/financeEngine';
 import {
+  clearAccessToken,
   getAccessToken,
   googleSignIn,
   initAuth,
@@ -57,6 +58,7 @@ import {
   ensureDatabaseStructure,
   extractSpreadsheetId,
   loadAllFinanceData,
+  SheetsAuthExpiredError,
   updateRowValues,
 } from './lib/sheetsApi';
 import {
@@ -85,12 +87,59 @@ interface ToastState {
   message: string;
 }
 
+const STORAGE_KEYS = {
+  SPREADSHEET_ID: 'sentra_kas_spreadsheet_id',
+  APP_SESSION: 'sentra_kas_app_session',
+  ACTIVE_PAGE: 'sentra_kas_active_page',
+} as const;
+
+interface SavedAppSession {
+  username: string;
+  nama: string;
+  role: AppUser['role'];
+  idAnggota: string;
+}
+
+function readSavedAppSession(): SavedAppSession | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.APP_SESSION);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedAppSession>;
+    if (!parsed?.username || !parsed?.role) return null;
+    return {
+      username: parsed.username,
+      nama: parsed.nama || parsed.username,
+      role: parsed.role,
+      idAnggota: parsed.idAnggota || '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function readSavedSpreadsheetId(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.SPREADSHEET_ID) || DEFAULT_SPREADSHEET_ID;
+  } catch {
+    return DEFAULT_SPREADSHEET_ID;
+  }
+}
+
+function readSavedActivePage(): PageId | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.ACTIVE_PAGE) as PageId | null;
+    return val || null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [googleUser, setGoogleUser] = useState<User | null>(null);
   const [needsGoogleAuth, setNeedsGoogleAuth] = useState(true);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
 
-  const [spreadsheetInput, setSpreadsheetInput] = useState(DEFAULT_SPREADSHEET_ID);
+  const [spreadsheetInput, setSpreadsheetInput] = useState<string>(readSavedSpreadsheetId);
   const activeSpreadsheetId = useMemo(
     () => extractSpreadsheetId(spreadsheetInput),
     [spreadsheetInput]
@@ -100,9 +149,10 @@ export default function App() {
   const [isLoadingSheet, setIsLoadingSheet] = useState(false);
   const [sheetError, setSheetError] = useState<string | null>(null);
 
+  const [savedSession, setSavedSession] = useState<SavedAppSession | null>(readSavedAppSession);
   const [sessionUser, setSessionUser] = useState<AppUser | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [activePage, setActivePage] = useState<PageId>('dashboard');
+  const [activePage, setActivePage] = useState<PageId>(() => readSavedActivePage() || 'dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -132,6 +182,34 @@ export default function App() {
     }, 4500);
   }, []);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.SPREADSHEET_ID, spreadsheetInput);
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [spreadsheetInput]);
+
+  useEffect(() => {
+    if (!sessionUser) return;
+    try {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_PAGE, activePage);
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [activePage, sessionUser]);
+
+  const clearSavedAppSession = useCallback(() => {
+    setSavedSession(null);
+    setSessionUser(null);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.APP_SESSION);
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_PAGE);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const refreshDataset = useCallback(
     async (explicitToken?: string) => {
       const token = explicitToken || getAccessToken();
@@ -144,12 +222,46 @@ export default function App() {
       try {
         const data = await loadAllFinanceData(activeSpreadsheetId, token);
         setDataset(data);
+
+        // Automatically restore saved Admin/Bendahara/Anggota session once sheet is loaded
+        const pendingSaved = readSavedAppSession();
+        if (pendingSaved) {
+          const matched = data.users.find(
+            (u) => u.username === pendingSaved.username && u.status === 'Aktif'
+          );
+          if (matched) {
+            let resolvedIdAnggota = matched.idAnggota;
+            if (matched.role === 'Anggota' && !resolvedIdAnggota) {
+              const byName = data.anggota.find(
+                (a) => a.nama.toLowerCase() === matched.nama.toLowerCase()
+              );
+              if (byName) resolvedIdAnggota = byName.id;
+            }
+            const restored: AppUser = { ...matched, idAnggota: resolvedIdAnggota };
+            setSessionUser((prev) => prev || restored);
+
+            const savedPage = readSavedActivePage();
+            const defaultPage: PageId =
+              restored.role === 'Administrator'
+                ? 'dashboard'
+                : restored.role === 'Bendahara'
+                  ? 'kasMasuk'
+                  : 'anggotaSaya';
+            setActivePage((prev) => savedPage || prev || defaultPage);
+          }
+        }
       } catch (err) {
-        setSheetError(
-          err instanceof Error
-            ? err.message
-            : 'Gagal memuat data dari Google Spreadsheet.'
-        );
+        if (err instanceof SheetsAuthExpiredError) {
+          clearAccessToken();
+          setNeedsGoogleAuth(true);
+          setSheetError(err.message);
+        } else {
+          setSheetError(
+            err instanceof Error
+              ? err.message
+              : 'Gagal memuat data dari Google Spreadsheet.'
+          );
+        }
       } finally {
         setIsLoadingSheet(false);
       }
@@ -164,6 +276,14 @@ export default function App() {
         setNeedsGoogleAuth(false);
         refreshDataset(token);
       },
+      (user) => {
+        // Firebase still remembers the signed-in Google account across refresh;
+        // only the in-memory Sheets access token needs a quick 1-click refresh.
+        setGoogleUser(user);
+        setNeedsGoogleAuth(true);
+        setDataset(null);
+        setSessionUser(null);
+      },
       () => {
         setGoogleUser(null);
         setNeedsGoogleAuth(true);
@@ -174,11 +294,14 @@ export default function App() {
     return () => unsubscribe();
   }, [refreshDataset]);
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (forceAccountPicker = false) => {
     setIsGoogleSigningIn(true);
     setSheetError(null);
     try {
-      const res = await googleSignIn();
+      const res = await googleSignIn({
+        loginHint: forceAccountPicker ? undefined : googleUser?.email || undefined,
+        forceAccountPicker,
+      });
       if (res) {
         setGoogleUser(res.user);
         setNeedsGoogleAuth(false);
@@ -207,7 +330,7 @@ export default function App() {
     setGoogleUser(null);
     setNeedsGoogleAuth(true);
     setDataset(null);
-    setSessionUser(null);
+    clearSavedAppSession();
   };
 
   const openConfirm = (config: Omit<ConfirmationState, 'isOpen'>) => {
@@ -223,7 +346,7 @@ export default function App() {
     const token = getAccessToken();
     if (!token) {
       setNeedsGoogleAuth(true);
-      showToast('error', 'Sesi Google berakhir. Silakan Sign in with Google kembali.');
+      showToast('error', 'Sesi Google berakhir. Silakan sambungkan kembali akun Google.');
       return;
     }
 
@@ -234,6 +357,11 @@ export default function App() {
       setConfirmState((prev) => ({ ...prev, isOpen: false }));
       showToast('success', successMessage);
     } catch (err) {
+      if (err instanceof SheetsAuthExpiredError) {
+        clearAccessToken();
+        setNeedsGoogleAuth(true);
+        setConfirmState((prev) => ({ ...prev, isOpen: false }));
+      }
       showToast(
         'error',
         err instanceof Error ? err.message : 'Gagal memperbarui Google Spreadsheet.'
@@ -293,6 +421,18 @@ export default function App() {
 
     const activeUser: AppUser = { ...matched, idAnggota: resolvedIdAnggota };
     setSessionUser(activeUser);
+    const toSave: SavedAppSession = {
+      username: activeUser.username,
+      nama: activeUser.nama,
+      role: activeUser.role,
+      idAnggota: activeUser.idAnggota,
+    };
+    setSavedSession(toSave);
+    try {
+      localStorage.setItem(STORAGE_KEYS.APP_SESSION, JSON.stringify(toSave));
+    } catch {
+      // ignore
+    }
     setUsernameBaru(activeUser.username);
 
     if (activeUser.role === 'Administrator') {
@@ -959,6 +1099,8 @@ export default function App() {
           onSpreadsheetInputChange={setSpreadsheetInput}
           onGoogleLogin={handleGoogleLogin}
           onGoogleLogout={handleGoogleLogout}
+          savedSession={savedSession}
+          onClearSavedSession={clearSavedAppSession}
           dataset={dataset}
           isLoadingSheet={isLoadingSheet}
           sheetError={sheetError}
@@ -1080,7 +1222,7 @@ export default function App() {
           </a>
           <button
             type="button"
-            onClick={() => setSessionUser(null)}
+            onClick={clearSavedAppSession}
             className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100/85 transition-colors hover:bg-white/8 hover:text-white"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -1157,7 +1299,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  setSessionUser(null);
+                  clearSavedAppSession();
                 }}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-emerald-100/85 hover:bg-white/8"
               >

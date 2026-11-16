@@ -72,6 +72,13 @@ export function extractSpreadsheetId(input: string): string {
   return trimmed;
 }
 
+export class SheetsAuthExpiredError extends Error {
+  constructor(message = 'Sesi token Google Sheets berakhir. Silakan sambungkan kembali akun Google Anda.') {
+    super(message);
+    this.name = 'SheetsAuthExpiredError';
+  }
+}
+
 async function sheetsFetch(url: string, token: string, options: RequestInit = {}) {
   const res = await fetch(url, {
     ...options,
@@ -83,6 +90,9 @@ async function sheetsFetch(url: string, token: string, options: RequestInit = {}
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new SheetsAuthExpiredError();
+    }
     const errBody = await res.json().catch(() => ({}));
     const msg =
       errBody?.error?.message ||

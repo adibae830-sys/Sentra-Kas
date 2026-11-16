@@ -16,14 +16,22 @@ import { AppUser, FinanceDataset } from '../types/finance';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { PWAInstallButton } from './PWAInstallButton';
 
+export interface SavedAppSessionHint {
+  username: string;
+  nama: string;
+  role: string;
+}
+
 interface AuthGateProps {
   googleUser: User | null;
   needsGoogleAuth: boolean;
   isGoogleSigningIn: boolean;
   spreadsheetInput: string;
   onSpreadsheetInputChange: (val: string) => void;
-  onGoogleLogin: () => void;
+  onGoogleLogin: (forceAccountPicker?: boolean) => void;
   onGoogleLogout: () => void;
+  savedSession: SavedAppSessionHint | null;
+  onClearSavedSession: () => void;
   dataset: FinanceDataset | null;
   isLoadingSheet: boolean;
   sheetError: string | null;
@@ -48,6 +56,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   onSpreadsheetInputChange,
   onGoogleLogin,
   onGoogleLogout,
+  savedSession,
+  onClearSavedSession,
   dataset,
   isLoadingSheet,
   sheetError,
@@ -245,13 +255,51 @@ export const AuthGate: React.FC<AuthGateProps> = ({
 
                 {needsGoogleAuth ? (
                   <div className="space-y-3 pt-1">
+                    {(googleUser || savedSession) && (
+                      <div className="rounded-xl border border-emerald-900/15 bg-emerald-50/60 p-4 text-xs">
+                        <p className="font-semibold text-stone-900">
+                          Sesi Sebelumnya Dikenali
+                          {savedSession ? ` · ${savedSession.nama} (${savedSession.role})` : ''}
+                        </p>
+                        <p className="mt-1 leading-relaxed text-stone-600">
+                          {googleUser?.email
+                            ? `Akun Google ${googleUser.email} tetap aktif. `
+                            : ''}
+                          Demi keamanan browser, token akses Google Sheets dibersihkan setiap halaman di-refresh. Klik tombol di bawah untuk langsung masuk kembali tanpa mengetik ulang password.
+                        </p>
+                        <div className="mt-2.5 flex flex-wrap gap-3">
+                          {googleUser && (
+                            <button
+                              type="button"
+                              onClick={() => onGoogleLogin(true)}
+                              className="font-semibold text-stone-700 underline underline-offset-2 hover:text-stone-900"
+                            >
+                              Ganti akun Google lain
+                            </button>
+                          )}
+                          {savedSession && (
+                            <button
+                              type="button"
+                              onClick={onClearSavedSession}
+                              className="font-semibold text-stone-600 underline underline-offset-2 hover:text-stone-900"
+                            >
+                              Keluar dari sesi {savedSession.username}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <GoogleSignInButton
-                      onClick={onGoogleLogin}
+                      onClick={() => onGoogleLogin(false)}
                       disabled={isGoogleSigningIn}
                       label={
                         isGoogleSigningIn
-                          ? 'Menghubungkan akun Google...'
-                          : 'Sign in with Google'
+                          ? 'Menyambungkan kembali...'
+                          : savedSession
+                            ? `Lanjutkan sebagai ${savedSession.role} via Google`
+                            : googleUser?.email
+                              ? `Lanjutkan dengan ${googleUser.email}`
+                              : 'Sign in with Google'
                       }
                     />
                     {sheetError && (
@@ -360,10 +408,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({
               {needsGoogleAuth || !dataset ? (
                 <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50/70 p-7 text-center">
                   <p className="text-sm font-medium text-stone-700">
-                    Menunggu otorisasi Google Spreadsheet pada Langkah 1.
+                    {savedSession
+                      ? `Akun ${savedSession.nama} (${savedSession.role}) siap dipulihkan otomatis.`
+                      : 'Menunggu otorisasi Google Spreadsheet pada Langkah 1.'}
                   </p>
                   <p className="mt-1 text-xs text-stone-500">
-                    Setelah terhubung, formulir login peran akan aktif secara otomatis.
+                    {savedSession
+                      ? 'Klik tombol Google pada Langkah 1 untuk langsung masuk ke dashboard tanpa mengisi ulang password.'
+                      : 'Setelah terhubung, formulir login peran akan aktif secara otomatis.'}
                   </p>
                 </div>
               ) : mode === 'login' ? (
