@@ -344,24 +344,25 @@ export function buildWhatsAppMonthlyMessage(
     : '';
 
   return [
-    `📊 *RINGKASAN KEUANGAN BULANAN KELOMPOK*`,
+    `*RINGKASAN KEUANGAN BULANAN KELOMPOK*`,
     `Periode: *${report.periodeLabel}*`,
+    `--------------------------------`,
     '',
     headerGreeting,
     `Berikut adalah laporan kas dan ringkasan pengeluaran kelompok akhir bulan:`,
     '',
-    `📥 *Total Kas Masuk Bulan Ini:* ${rupiah(report.totalMasukBulan)}`,
-    `📤 *Total Pengeluaran (Kas Keluar):* ${rupiah(report.totalKeluarBulan)}`,
-    `📈 *Surplus / Defisit Bulan Ini:* ${rupiah(report.surplusDefisit)}`,
+    `[+] *Total Kas Masuk Bulan Ini:* ${rupiah(report.totalMasukBulan)}`,
+    `[-] *Total Pengeluaran (Kas Keluar):* ${rupiah(report.totalKeluarBulan)}`,
+    `[=] *Surplus / Defisit Bulan Ini:* ${rupiah(report.surplusDefisit)}`,
     '',
     `*Rincian Pengeluaran per Kategori:*`,
     kategoriLines,
     '',
-    `💰 *Saldo Kas Kelompok Saat Ini:* ${rupiah(report.saldoKasKumulatif)}`,
-    `🧾 *Total Piutang Pinjaman Berjalan:* ${rupiah(report.totalPiutangBerjalan)}`,
+    `*Saldo Kas Kelompok Saat Ini:* ${rupiah(report.saldoKasKumulatif)}`,
+    `*Total Piutang Pinjaman Berjalan:* ${rupiah(report.totalPiutangBerjalan)}`,
     personalSection,
     '',
-    `_Laporan ini dibuat otomatis oleh Sistem Keuangan Anggota._`,
+    `_Laporan ini dibuat otomatis oleh Sistem Keuangan Sentra Kas._`,
   ]
     .filter((line) => line !== undefined)
     .join('\n');
@@ -380,24 +381,23 @@ export interface MutasiGroupAlertParams {
 }
 
 export function buildWhatsAppMutasiGroupMessage(params: MutasiGroupAlertParams): string {
-  const icon = params.arah === 'MASUK' ? '🟢' : '🟠';
   const label = params.arah === 'MASUK' ? 'DANA MASUK (KREDIT)' : 'DANA KELUAR (DEBIT)';
   const tanda = params.arah === 'MASUK' ? '+' : '-';
 
   const lines = [
-    `${icon} *NOTIFIKASI ${label}*`,
+    `*NOTIFIKASI ${label}*`,
     params.namaKelompok ? `_${params.namaKelompok}_` : '_Sentra Kas · Info Mutasi Rekening_',
+    `--------------------------------`,
+    `• *Tanggal:* ${formatTanggalId(params.tanggal)}`,
+    `• *Kategori:* ${params.jenis}`,
+    ...(params.anggotaNama ? [`• *Anggota:* ${params.anggotaNama}`] : []),
+    `• *Nominal:* *${tanda} ${rupiah(params.jumlah)}*`,
+    `• *Keterangan:* ${params.keterangan?.trim() || '-'}`,
+    `--------------------------------`,
+    `*Saldo Kas Terkini:* *${rupiah(params.saldoSetelahMutasi)}*`,
+    ...(params.petugas ? [`_Dicatat oleh: ${params.petugas}_`] : []),
     '',
-    `📅 *Tanggal:* ${formatTanggalId(params.tanggal)}`,
-    `🏷️ *Kategori:* ${params.jenis}`,
-    ...(params.anggotaNama ? [`👤 *Anggota:* ${params.anggotaNama}`] : []),
-    `💵 *Nominal:* ${tanda} ${rupiah(params.jumlah)}`,
-    `📝 *Keterangan:* ${params.keterangan?.trim() || '-'}`,
-    '',
-    `💰 *Saldo Kas Terkini:* ${rupiah(params.saldoSetelahMutasi)}`,
-    ...(params.petugas ? [`✍️ *Dicatat oleh:* ${params.petugas}`] : []),
-    '',
-    `_Pesan otomatis dari aplikasi Sentra Kas._`,
+    `_Notifikasi mutasi otomatis Sentra Kas._`,
   ];
 
   return lines.join('\n');

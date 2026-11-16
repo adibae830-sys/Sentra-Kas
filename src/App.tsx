@@ -2506,7 +2506,7 @@ export default function App() {
 
                       <div>
                         <label className="mb-1 block text-xs font-semibold text-slate-700">
-                          ID Grup WhatsApp (Opsional — khusus Auto-Kirim Tanpa Klik)
+                          ID Grup WhatsApp / Telegram (Opsional — khusus Auto-Kirim Tanpa Klik)
                         </label>
                         <input
                           type="text"
@@ -2519,8 +2519,8 @@ export default function App() {
                           }
                           placeholder={
                             waGatewayStatus.hasDefaultGroup
-                              ? 'Kosongkan untuk pakai WHATSAPP_GROUP_ID server, atau isi 120363xxxx@g.us'
-                              : 'Contoh: 120363042184912345@g.us'
+                              ? 'Kosongkan untuk pakai ID default server, atau isi ID Grup'
+                              : 'WA: 120363xxxx@g.us · Telegram: -100xxxxxxxxxx'
                           }
                           className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
                         />
@@ -2543,7 +2543,7 @@ export default function App() {
                             Kirim Otomatis via Gateway Server (Jika Terpasang)
                           </p>
                           <p className="text-xs text-slate-500">
-                            Jika token Fonnte/Wablas/Webhook & ID Grup aktif, pesan langsung masuk ke grup tanpa perlu klik. Jika belum, otomatis memakai pop-up <strong>Bagikan ke Grup WA</strong>.
+                            Jika token Telegram/Fonnte/Wablas/Webhook & ID Grup aktif, pesan langsung masuk ke grup tanpa perlu klik. Jika belum, otomatis memakai pop-up <strong>Bagikan ke Grup WA</strong>.
                           </p>
                         </div>
                       </label>
@@ -2577,13 +2577,16 @@ export default function App() {
                     </div>
 
                     <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/65 p-4 text-xs leading-relaxed text-slate-700 lg:col-span-5">
-                      <p className="font-bold text-[#004A8F]">2 Pilihan Cara Kirim ke Grup WA:</p>
+                      <p className="font-bold text-[#004A8F]">Pilihan Cara Kirim ke Grup (Gratis & Otomatis):</p>
                       <ul className="mt-2.5 space-y-2.5">
                         <li>
-                          <strong>1. Mode Gratis (Tanpa Gateway):</strong> Biarkan kolom ID Grup kosong. Setiap selesai input Kas Masuk/Keluar, klik <strong>Bagikan ke Grup WA</strong> pada pop-up, lalu pilih grup Anda di WhatsApp.
+                          <strong>1. Grup WA 1-Klik (100% Gratis):</strong> Biarkan kolom ID Grup kosong. Setiap selesai input Kas Masuk/Keluar, klik <strong>Bagikan ke Grup WA</strong> lalu pilih grup Anda.
                         </li>
                         <li>
-                          <strong>2. Mode Full Otomatis (Tanpa Klik):</strong> Gunakan layanan gateway yang mendukung grup (<strong>Fonnte</strong>, <strong>Wablas</strong>, atau <strong>Webhook</strong>), pasang <code className="font-mono text-slate-900">WHATSAPP_PROVIDER</code> & <code className="font-mono text-slate-900">WHATSAPP_API_TOKEN</code> di Environment Vercel, lalu masukkan ID Grup (<code className="font-mono text-slate-900">...@g.us</code>).
+                          <strong>2. Bot Telegram (100% Gratis Selamanya & Full Otomatis):</strong> Pasang <code className="font-mono text-slate-900">WHATSAPP_PROVIDER=telegram</code> dan <code className="font-mono text-slate-900">TELEGRAM_BOT_TOKEN</code> di Vercel + masukkan Chat ID Grup (<code className="font-mono text-slate-900">-100...</code>).
+                        </li>
+                        <li>
+                          <strong>3. Gateway WA Otomatis:</strong> Bisa memakai paket gratis <strong>Fonnte</strong> (kuota terbatas), <strong>Wablas</strong>, atau bot self-hosted gratis seperti <strong>WAHA / Baileys</strong> via <code className="font-mono text-slate-900">webhook</code>.
                         </li>
                       </ul>
                     </div>

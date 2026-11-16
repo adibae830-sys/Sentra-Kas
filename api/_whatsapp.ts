@@ -1,4 +1,4 @@
-export type WhatsAppProvider = 'fonnte' | 'wablas' | 'meta' | 'webhook';
+export type WhatsAppProvider = 'fonnte' | 'wablas' | 'meta' | 'webhook' | 'telegram';
 
 export interface RecipientPayload {
   idAnggota: string;
@@ -9,13 +9,24 @@ export interface RecipientPayload {
 
 export function isWhatsAppGroupTarget(raw: string): boolean {
   const trimmed = String(raw || '').trim();
-  return trimmed.includes('@g.us') || /^\d+-\d+$/.test(trimmed);
+  return (
+    trimmed.includes('@g.us') ||
+    /^\d+-\d+$/.test(trimmed) ||
+    /^-\d+$/.test(trimmed) ||
+    trimmed.startsWith('@')
+  );
 }
 
 export function normalizeWaNumber(raw: string): string {
   const trimmed = String(raw || '').trim();
   if (!trimmed) return '';
-  if (trimmed.includes('@g.us') || trimmed.includes('@c.us') || trimmed.includes('@s.whatsapp.net')) {
+  if (
+    trimmed.includes('@g.us') ||
+    trimmed.includes('@c.us') ||
+    trimmed.includes('@s.whatsapp.net') ||
+    /^-\d+$/.test(trimmed) ||
+    trimmed.startsWith('@')
+  ) {
     return trimmed;
   }
   if (/^\d+-\d+$/.test(trimmed)) {
@@ -47,9 +58,12 @@ export function getGatewayConfig() {
   const apiUrl = cleanEnv(process.env.WHATSAPP_API_URL);
   const webhookUrl = cleanEnv(process.env.WHATSAPP_WEBHOOK_URL);
   const phoneNumberId = cleanEnv(process.env.WHATSAPP_PHONE_NUMBER_ID);
-  const defaultGroupId = cleanEnv(process.env.WHATSAPP_GROUP_ID);
+  const telegramBotToken = cleanEnv(process.env.TELEGRAM_BOT_TOKEN);
+  const defaultGroupId =
+    cleanEnv(process.env.WHATSAPP_GROUP_ID) || cleanEnv(process.env.TELEGRAM_CHAT_ID);
 
   const isConfigured =
+    (provider === 'telegram' && Boolean(telegramBotToken)) ||
     (provider === 'webhook' && Boolean(webhookUrl)) ||
     (provider === 'meta' && Boolean(apiToken && phoneNumberId)) ||
     ((provider === 'fonnte' || provider === 'wablas') && Boolean(apiToken));
@@ -60,9 +74,20 @@ export function getGatewayConfig() {
     apiUrl,
     webhookUrl,
     phoneNumberId,
+    telegramBotToken,
     defaultGroupId,
     isConfigured,
   };
+}
+
+function formatTelegramHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped
+    .replace(/\*([^*\n]+)\*/g, '<b>$1</b>')
+    .replace(/_([^_\n]+)_/g, '<i>$1</i>');
 }
 
 export async function dispatchWhatsAppMessage(phone: string, message: string) {
@@ -75,16 +100,37 @@ export async function dispatchWhatsAppMessage(phone: string, message: string) {
     return {
       success: false,
       error: isGroup
-        ? 'ID Grup WhatsApp tidak valid.'
-        : 'Nomor HP atau ID Grup WhatsApp tidak valid.',
+        ? 'ID Grup tidak valid.'
+        : 'Nomor HP atau ID Grup tidak valid.',
     };
   }
 
   if (!cfg.isConfigured) {
     return {
       success: false,
-      error: 'Gateway WhatsApp server belum dikonfigurasi pada environment variables.',
+      error: 'Gateway notifikasi server belum dikonfigurasi pada environment variables.',
     };
+  }
+
+  if (cfg.provider === 'telegram') {
+    const endpoint = `https://api.telegram.org/bot${cfg.telegramBotToken}/sendMessage`;
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: target,
+        text: formatTelegramHtml(message),
+        parse_mode: 'HTML',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.ok) {
+      return {
+        success: false,
+        error: data?.description || `Telegram HTTP ${res.status}`,
+      };
+    }
+    return { success: true, detail: data };
   }
 
   if (cfg.provider === 'fonnte') {
