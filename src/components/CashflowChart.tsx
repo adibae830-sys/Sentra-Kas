@@ -45,25 +45,25 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
   const activePoint = hoveredIdx !== null ? series[hoveredIdx] : null;
 
   return (
-    <div className="rounded-xl border border-stone-200/90 bg-white p-6">
+    <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold tracking-tight text-stone-900">
-            Arus Kas 6 Bulan Terakhir
+          <h3 className="text-base font-bold tracking-tight text-slate-900">
+            Grafik Mutasi Arus Kas (6 Bulan)
           </h3>
-          <p className="mt-0.5 text-xs text-stone-500">
-            Perbandingan kas masuk dan pengeluaran kelompok setiap periode
+          <p className="mt-0.5 text-xs text-slate-500">
+            Perbandingan dana masuk (kredit) dan pengeluaran (debit) per periode
           </p>
         </div>
 
-        <div className="flex items-center gap-5 text-xs font-medium text-stone-600">
+        <div className="flex items-center gap-5 text-xs font-semibold text-slate-600">
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-xs bg-[#065F46]" />
-            <span>Kas Masuk</span>
+            <span className="h-2.5 w-2.5 rounded-xs bg-[#00529C]" />
+            <span>Dana Masuk</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-xs bg-[#B45309]" />
-            <span>Kas Keluar</span>
+            <span className="h-2.5 w-2.5 rounded-xs bg-[#F59E0B]" />
+            <span>Dana Keluar</span>
           </div>
         </div>
       </div>
@@ -73,7 +73,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           className="h-60 w-full overflow-visible"
           role="img"
-          aria-label="Grafik arus kas masuk dan kas keluar 6 bulan terakhir"
+          aria-label="Grafik mutasi dana masuk dan dana keluar 6 bulan terakhir"
         >
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
             const y = paddingTop + innerHeight * (1 - ratio);
@@ -85,7 +85,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                   x2={chartWidth - paddingRight}
                   y1={y}
                   y2={y}
-                  stroke={ratio === 0 ? '#d6d3d1' : '#eceae6'}
+                  stroke={ratio === 0 ? '#cbd5e1' : '#e2e8f0'}
                   strokeWidth="1"
                   strokeDasharray={ratio === 0 ? undefined : '3 3'}
                 />
@@ -93,7 +93,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                   x={paddingLeft - 8}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-stone-400 font-mono text-[10px]"
+                  className="fill-slate-400 font-mono text-[10px]"
                 >
                   {formatCompactRupiah(labelVal)}
                 </text>
@@ -120,7 +120,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                   width={slotWidth * 0.88}
                   height={innerHeight}
                   rx="6"
-                  fill={isHovered ? '#f5f5f4' : 'transparent'}
+                  fill={isHovered ? '#f1f5f9' : 'transparent'}
                 />
 
                 <rect
@@ -129,7 +129,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                   width={barWidth}
                   height={Math.max(masukHeight, point.masuk > 0 ? 3 : 0)}
                   rx="3"
-                  fill={isHovered ? '#047857' : '#065F46'}
+                  fill={isHovered ? '#003B73' : '#00529C'}
                 />
 
                 <rect
@@ -138,15 +138,15 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                   width={barWidth}
                   height={Math.max(keluarHeight, point.keluar > 0 ? 3 : 0)}
                   rx="3"
-                  fill={isHovered ? '#d97706' : '#B45309'}
+                  fill={isHovered ? '#D97706' : '#F59E0B'}
                 />
 
                 <text
                   x={cx}
                   y={chartHeight - 10}
                   textAnchor="middle"
-                  className={`text-[11px] font-medium ${
-                    isHovered ? 'fill-stone-900' : 'fill-stone-500'
+                  className={`text-[11px] font-semibold ${
+                    isHovered ? 'fill-slate-900' : 'fill-slate-500'
                   }`}
                 >
                   {point.label}
@@ -156,24 +156,24 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
           })}
         </svg>
 
-        <div className="mt-3 flex min-h-6 flex-wrap items-center justify-between border-t border-stone-100 pt-3 text-xs">
+        <div className="mt-3 flex min-h-6 flex-wrap items-center justify-between border-t border-slate-100 pt-3 text-xs">
           {activePoint ? (
             <>
-              <span className="font-semibold text-stone-900">
+              <span className="font-semibold text-slate-900">
                 Periode {activePoint.label}
               </span>
               <div className="flex items-center gap-5 font-mono tabular-nums">
-                <span className="font-medium text-[#065F46]">
+                <span className="font-semibold text-[#00529C]">
                   Masuk: {rupiah(activePoint.masuk)}
                 </span>
-                <span className="font-medium text-[#B45309]">
+                <span className="font-semibold text-amber-600">
                   Keluar: {rupiah(activePoint.keluar)}
                 </span>
               </div>
             </>
           ) : (
-            <span className="text-stone-400">
-              Arahkan kursor pada grafik untuk melihat rincian nominal tiap bulan.
+            <span className="text-slate-400">
+              Arahkan kursor pada grafik untuk melihat rincian mutasi tiap bulan.
             </span>
           )}
         </div>

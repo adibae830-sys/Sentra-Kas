@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   CreditCard,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileSpreadsheet,
   LayoutDashboard,
   Lock,
@@ -154,6 +156,7 @@ export default function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activePage, setActivePage] = useState<PageId>(() => readSavedActivePage() || 'dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hideBalance, setHideBalance] = useState(false);
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isMutating, setIsMutating] = useState(false);
@@ -1120,15 +1123,15 @@ export default function App() {
         <OfflineIndicator />
 
         {toast && (
-          <div className="fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm shadow-lg">
+          <div className="fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-lg">
             {toast.type === 'success' ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
             ) : (
-              <AlertCircle className="h-4 w-4 shrink-0 text-red-700" />
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
             )}
             <p
               className={`font-medium ${
-                toast.type === 'success' ? 'text-stone-900' : 'text-red-700'
+                toast.type === 'success' ? 'text-slate-900' : 'text-red-700'
               }`}
             >
               {toast.message}
@@ -1140,51 +1143,44 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F6F7F5] text-stone-900">
-      {/* Sidebar Desktop */}
-      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-[#08201A] bg-[#0B2821] text-stone-100 lg:flex">
-        <div className="border-b border-white/10 px-5 py-5">
+    <div className="flex min-h-screen bg-[#F2F6FA] text-slate-900">
+      {/* Sidebar Desktop - Indonesian Banking Cobalt */}
+      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-[#002247] bg-gradient-to-b from-[#002855] via-[#003B7A] to-[#004A8F] text-blue-50 lg:flex">
+        <div className="border-b border-white/12 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#E5C178]/35 bg-white/8 text-[#E5C178]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 text-amber-300 shadow-xs">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 className="h-4.5 w-4.5"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="1.75"
                 aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v8m-3-5h6"
+                  d="M3 10h18M4 10V7l8-4 8 4v3M5 10v8m4-8v8m6-8v8m4-8v8M3 18h18"
                 />
               </svg>
             </div>
             <div className="min-w-0">
-              <p className="font-editorial truncate text-lg font-semibold tracking-tight text-white">
+              <p className="font-editorial truncate text-lg font-bold tracking-tight text-white">
                 Sentra Kas
               </p>
-              <p className="truncate text-[11px] text-emerald-100/65">
-                {dataset.spreadsheetTitle}
+              <p className="truncate text-[11px] font-medium text-blue-200/80">
+                e-Treasury · {dataset.spreadsheetTitle}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="border-b border-white/10 px-5 py-4">
-          <p className="text-[11px] font-medium tracking-wider text-emerald-200/60 uppercase">
-            Akun Aktif
+        <div className="border-b border-white/12 bg-white/5 px-5 py-4">
+          <p className="text-[10px] font-semibold tracking-[0.14em] text-blue-200/75 uppercase">
+            Nasabah / Pengurus Aktif
           </p>
-          <p className="mt-0.5 truncate text-sm font-semibold text-white">
-            {sessionUser.nama}
-          </p>
-          <p className="mt-0.5 text-xs font-medium text-[#E5C178]">{sessionUser.role}</p>
+          <p className="mt-1 truncate text-sm font-bold text-white">{sessionUser.nama}</p>
+          <p className="mt-0.5 text-xs font-semibold text-amber-300">{sessionUser.role}</p>
         </div>
 
         <nav className="flex-1 space-y-1 p-3">
@@ -1197,11 +1193,11 @@ export default function App() {
                 onClick={() => setActivePage(item.id)}
                 className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                   isActive
-                    ? 'border border-white/12 bg-white/12 text-white shadow-xs'
-                    : 'border border-transparent text-emerald-100/75 hover:bg-white/7 hover:text-white'
+                    ? 'border border-white/18 bg-white/15 text-white shadow-xs'
+                    : 'border border-transparent text-blue-100/80 hover:bg-white/8 hover:text-white'
                 }`}
               >
-                <span className={isActive ? 'text-[#E5C178]' : 'text-emerald-200/70'}>
+                <span className={isActive ? 'text-amber-300' : 'text-blue-200/80'}>
                   {item.icon}
                 </span>
                 <span className="truncate">{item.label}</span>
@@ -1210,27 +1206,27 @@ export default function App() {
           })}
         </nav>
 
-        <div className="space-y-2 border-t border-white/10 p-3">
+        <div className="space-y-2 border-t border-white/12 p-3">
           <a
             href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:bg-white/10"
+            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/18 bg-white/8 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/15"
           >
-            <ExternalLink className="h-3.5 w-3.5 text-[#E5C178]" />
+            <ExternalLink className="h-3.5 w-3.5 text-amber-300" />
             Buka Spreadsheet
           </a>
           <button
             type="button"
             onClick={clearSavedAppSession}
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100/85 transition-colors hover:bg-white/8 hover:text-white"
+            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-blue-100/90 transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-3.5 w-3.5" />
             Keluar Akun
           </button>
-          <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-emerald-100/50">
+          <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-blue-200/65">
             <Lock className="h-3 w-3" />
-            Sinkronisasi Google Sheets
+            Sinkronisasi Terenkripsi
           </p>
         </div>
       </aside>
@@ -1239,23 +1235,21 @@ export default function App() {
       {mobileMenuOpen && (
         <div className="no-print fixed inset-0 z-50 flex lg:hidden">
           <div
-            className="fixed inset-0 bg-stone-950/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-[#0B2821] text-stone-100 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-gradient-to-b from-[#002855] via-[#003B7A] to-[#004A8F] text-blue-50 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/12 px-5 py-4">
               <div className="min-w-0">
-                <span className="font-editorial text-lg font-semibold text-white">
-                  Sentra Kas
-                </span>
-                <p className="truncate text-[11px] text-emerald-100/65">
+                <span className="font-editorial text-lg font-bold text-white">Sentra Kas</span>
+                <p className="truncate text-[11px] text-blue-200/80">
                   {sessionUser.nama} · {sessionUser.role}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg p-1.5 text-emerald-100/75 hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 text-blue-100/80 hover:bg-white/10 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1273,11 +1267,11 @@ export default function App() {
                     }}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                       isActive
-                        ? 'border border-white/12 bg-white/12 text-white'
-                        : 'border border-transparent text-emerald-100/75 hover:bg-white/7 hover:text-white'
+                        ? 'border border-white/18 bg-white/15 text-white'
+                        : 'border border-transparent text-blue-100/80 hover:bg-white/8 hover:text-white'
                     }`}
                   >
-                    <span className={isActive ? 'text-[#E5C178]' : 'text-emerald-200/70'}>
+                    <span className={isActive ? 'text-amber-300' : 'text-blue-200/80'}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -1285,14 +1279,14 @@ export default function App() {
                 );
               })}
             </nav>
-            <div className="space-y-2 border-t border-white/10 p-3">
+            <div className="space-y-2 border-t border-white/12 p-3">
               <a
                 href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-stone-100"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/8 px-3 py-2 text-xs font-semibold text-white"
               >
-                <ExternalLink className="h-3.5 w-3.5 text-[#E5C178]" />
+                <ExternalLink className="h-3.5 w-3.5 text-amber-300" />
                 Buka Spreadsheet
               </a>
               <button
@@ -1301,7 +1295,7 @@ export default function App() {
                   setMobileMenuOpen(false);
                   clearSavedAppSession();
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-emerald-100/85 hover:bg-white/8"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-blue-100/90 hover:bg-white/10"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Keluar Akun
@@ -1314,22 +1308,22 @@ export default function App() {
       {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top Bar */}
-        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-stone-200/90 bg-white/95 px-5 py-3.5 backdrop-blur-md lg:px-7">
+        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-5 py-3.5 backdrop-blur-md lg:px-7">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg border border-stone-200 p-2 text-stone-600 hover:bg-stone-50 lg:hidden"
+              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 lg:hidden"
               aria-label="Buka menu navigasi"
             >
               <Menu className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-2 truncate">
-              <span className="hidden text-xs font-medium tracking-wide text-stone-400 uppercase sm:inline">
+              <span className="hidden text-xs font-semibold tracking-wide text-[#00529C] uppercase sm:inline">
                 Sentra Kas
               </span>
-              <span className="hidden text-stone-300 sm:inline">/</span>
-              <h1 className="font-editorial truncate text-lg font-semibold tracking-tight text-stone-900">
+              <span className="hidden text-slate-300 sm:inline">/</span>
+              <h1 className="font-editorial truncate text-lg font-bold tracking-tight text-slate-900">
                 {currentNavLabel}
               </h1>
             </div>
@@ -1341,10 +1335,10 @@ export default function App() {
               type="button"
               onClick={() => refreshDataset()}
               disabled={isLoadingSheet}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 transition-colors hover:bg-stone-50"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-[#00529C]/40 hover:bg-slate-50"
             >
               <RefreshCw
-                className={`h-3.5 w-3.5 text-stone-600 ${isLoadingSheet ? 'animate-spin' : ''}`}
+                className={`h-3.5 w-3.5 text-[#004A8F] ${isLoadingSheet ? 'animate-spin' : ''}`}
               />
               Sinkronkan Sheet
             </button>
@@ -1355,86 +1349,163 @@ export default function App() {
         <main className="mx-auto w-full max-w-7xl flex-1 p-5 lg:p-7">
           {activePage === 'dashboard' && adminMetrics && (
             <div className="space-y-6">
-              {/* Focal Treasury + Supporting KPIs */}
+              {/* Primary Rekening Card (myBCA / BRImo style) + 3 KPI Cards */}
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-                <div className="flex flex-col justify-between rounded-2xl bg-[#0B2821] p-6 text-white shadow-sm lg:col-span-5">
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.14em] text-[#E5C178] uppercase">
-                      Perbendaharaan Kelompok
+                <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-[#003063] via-[#004A8F] to-[#0066CC] p-6 text-white shadow-sm lg:col-span-5">
+                  <div
+                    className="pointer-events-none absolute -top-12 -right-10 h-44 w-44 rounded-full bg-white/6"
+                    aria-hidden="true"
+                  />
+                  <div className="relative">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[11px] font-bold tracking-[0.14em] text-amber-300 uppercase">
+                        Rekening Kas Kelompok
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setHideBalance((prev) => !prev)}
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-blue-50 transition-colors hover:bg-white/20"
+                        aria-label={hideBalance ? 'Tampilkan nominal saldo' : 'Sembunyikan nominal saldo'}
+                      >
+                        {hideBalance ? (
+                          <>
+                            <Eye className="h-3.5 w-3.5" />
+                            Tampilkan
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="h-3.5 w-3.5" />
+                            Sembunyikan
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="mt-1.5 font-mono text-[11px] text-blue-200/80">
+                      Buku Besar ID: {activeSpreadsheetId.slice(0, 12)}···
                     </p>
-                    <p className="mt-1.5 text-xs text-emerald-100/75">
-                      Saldo Kas Bersih Tercatat
+
+                    <p className="mt-3 font-mono text-3xl font-bold tracking-tight tabular-nums text-white sm:text-4xl">
+                      {hideBalance ? 'Rp ••••••••' : rupiah(adminMetrics.saldo)}
                     </p>
-                    <p className="mt-2 font-mono text-3xl font-bold tracking-tight tabular-nums text-white sm:text-4xl">
-                      {rupiah(adminMetrics.saldo)}
+                    <p className="mt-1 text-xs text-blue-100/80">
+                      Saldo Kas Bersih Tersedia
                     </p>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/12 pt-4">
+                  <div className="relative mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-4">
                     <div>
-                      <p className="text-[11px] font-medium text-emerald-200/70">
-                        Total Kas Masuk
+                      <p className="text-[11px] font-medium text-blue-100/75">
+                        Dana Masuk (Kredit)
                       </p>
-                      <p className="mt-1 font-mono text-sm font-semibold tabular-nums text-emerald-200 sm:text-base">
-                        {rupiah(adminMetrics.masuk)}
+                      <p className="mt-1 font-mono text-sm font-bold tabular-nums text-emerald-300 sm:text-base">
+                        {hideBalance ? 'Rp ••••••' : `+ ${rupiah(adminMetrics.masuk)}`}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-medium text-emerald-200/70">
-                        Total Kas Keluar
+                      <p className="text-[11px] font-medium text-blue-100/75">
+                        Dana Keluar (Debit)
                       </p>
-                      <p className="mt-1 font-mono text-sm font-semibold tabular-nums text-amber-200 sm:text-base">
-                        {rupiah(adminMetrics.keluar)}
+                      <p className="mt-1 font-mono text-sm font-bold tabular-nums text-amber-300 sm:text-base">
+                        {hideBalance ? 'Rp ••••••' : `- ${rupiah(adminMetrics.keluar)}`}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7">
-                  <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
                     <div>
-                      <p className="text-xs font-medium text-stone-500">Anggota Aktif</p>
-                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
+                      <p className="text-xs font-semibold text-slate-500">Anggota Aktif</p>
+                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
                         {adminMetrics.anggotaAktif}
                       </p>
                     </div>
-                    <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
-                      Dari total {adminMetrics.anggotaTotal} anggota terdaftar
+                    <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                      Dari total {adminMetrics.anggotaTotal} nasabah terdaftar
                     </p>
                   </div>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
                     <div>
-                      <p className="text-xs font-medium text-stone-500">
+                      <p className="text-xs font-semibold text-slate-500">
                         Total Piutang Pinjaman
                       </p>
-                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-amber-700">
-                        {rupiah(adminMetrics.piutang)}
+                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-amber-600">
+                        {hideBalance ? 'Rp ••••••' : rupiah(adminMetrics.piutang)}
                       </p>
                     </div>
-                    <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
-                      {adminMetrics.pinjamanStatusCounts.Berjalan} pinjaman berstatus berjalan
+                    <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                      {adminMetrics.pinjamanStatusCounts.Berjalan} fasilitas berjalan
                     </p>
                   </div>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-5">
+                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
                     <div>
-                      <p className="text-xs font-medium text-stone-500">
+                      <p className="text-xs font-semibold text-slate-500">
                         Menunggu Persetujuan
                       </p>
-                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
+                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
                         {adminMetrics.pinjamanStatusCounts.Menunggu}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActivePage('pinjaman')}
-                      className="mt-4 border-t border-stone-100 pt-3 text-left text-xs font-semibold text-emerald-800 hover:underline"
+                      className="mt-4 border-t border-slate-100 pt-3 text-left text-xs font-semibold text-[#00529C] hover:underline"
                     >
                       Tinjau antrean ACC →
                     </button>
                   </div>
                 </div>
+              </div>
+
+              {/* Menu Cepat Perbankan (BRImo / myBCA style shortcuts) */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                {[
+                  {
+                    page: 'kasMasuk' as PageId,
+                    label: 'Setor / Kas Masuk',
+                    icon: <ArrowDownLeft className="h-5 w-5" />,
+                  },
+                  {
+                    page: 'kasKeluar' as PageId,
+                    label: 'Tarik / Kas Keluar',
+                    icon: <ArrowUpRight className="h-5 w-5" />,
+                  },
+                  {
+                    page: 'pinjaman' as PageId,
+                    label: 'Pinjaman & ACC',
+                    icon: <CreditCard className="h-5 w-5" />,
+                  },
+                  {
+                    page: 'angsuran' as PageId,
+                    label: 'Bayar Angsuran',
+                    icon: <FileSpreadsheet className="h-5 w-5" />,
+                  },
+                  {
+                    page: 'laporan' as PageId,
+                    label: 'Laporan & WA',
+                    icon: <BarChart3 className="h-5 w-5" />,
+                  },
+                  {
+                    page: 'anggota' as PageId,
+                    label: 'Data Anggota',
+                    icon: <Users className="h-5 w-5" />,
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.page}
+                    type="button"
+                    onClick={() => setActivePage(item.page)}
+                    className="group flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-3 py-4 text-center shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EBF3FC] text-[#004A8F] transition-colors group-hover:bg-[#004A8F] group-hover:text-white">
+                      {item.icon}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-800">{item.label}</span>
+                  </button>
+                ))}
               </div>
 
               {/* Chart & Status Pinjaman */}
@@ -1443,37 +1514,37 @@ export default function App() {
                   <CashflowChart series={cashflowSeries} />
                 </div>
 
-                <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-6 lg:col-span-4">
+                <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-4">
                   <div>
-                    <h3 className="font-editorial text-lg font-semibold text-stone-900">
-                      Status Pinjaman & Laporan
+                    <h3 className="font-editorial text-lg font-bold text-slate-900">
+                      Status Fasilitas Pinjaman
                     </h3>
-                    <p className="mt-0.5 text-xs text-stone-500">
+                    <p className="mt-0.5 text-xs text-slate-500">
                       Ringkasan pengajuan serta aksi rekap akhir bulan.
                     </p>
 
-                    <dl className="mt-5 divide-y divide-stone-100 text-sm">
+                    <dl className="mt-5 divide-y divide-slate-100 text-sm">
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-stone-600">Menunggu ACC</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-amber-700">
+                        <dt className="text-slate-600">Menunggu ACC</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-amber-600">
                           {adminMetrics.pinjamanStatusCounts.Menunggu}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-stone-600">Pinjaman Berjalan</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-stone-900">
+                        <dt className="text-slate-600">Pinjaman Berjalan</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-[#004A8F]">
                           {adminMetrics.pinjamanStatusCounts.Berjalan}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-stone-600">Lunas</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-emerald-800">
+                        <dt className="text-slate-600">Lunas</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-emerald-700">
                           {adminMetrics.pinjamanStatusCounts.Lunas}
                         </dd>
                       </div>
                       <div className="flex items-center justify-between py-2.5">
-                        <dt className="text-stone-600">Ditolak</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-stone-500">
+                        <dt className="text-slate-600">Ditolak</dt>
+                        <dd className="font-mono font-semibold tabular-nums text-slate-500">
                           {adminMetrics.pinjamanStatusCounts.Ditolak}
                         </dd>
                       </div>
@@ -1483,33 +1554,33 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setActivePage('laporan')}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
                   >
-                    <BarChart3 className="h-4 w-4 text-[#E5C178]" />
+                    <BarChart3 className="h-4 w-4 text-amber-300" />
                     Buka Laporan Bulanan & WA
                   </button>
                 </div>
               </div>
 
               {/* Ringkasan Anggota Table */}
-              <div className="rounded-2xl border border-stone-200/90 bg-white p-6">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-editorial text-lg font-semibold text-stone-900">
-                      Ringkasan Keuangan Per Anggota
+                    <h3 className="font-editorial text-lg font-bold text-slate-900">
+                      Mutasi & Posisi Rekening Anggota
                     </h3>
-                    <p className="text-xs text-stone-500">
+                    <p className="text-xs text-slate-500">
                       Akumulasi simpanan, sisa pinjaman, dan saldo bersih setiap anggota.
                     </p>
                   </div>
                   <div className="relative w-full max-w-xs">
-                    <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-stone-400" />
+                    <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
                     <input
                       type="text"
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                       placeholder="Cari nama atau ID anggota..."
-                      className="w-full rounded-xl border border-stone-300 bg-white py-2 pr-3 pl-9 text-sm text-stone-900 placeholder:text-stone-400"
+                      className="w-full rounded-xl border border-slate-300 bg-white py-2 pr-3 pl-9 text-sm text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
                 </div>
@@ -1517,7 +1588,7 @@ export default function App() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
+                      <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
                         <th className="py-2.5 pr-3">ID Anggota</th>
                         <th className="py-2.5 pr-3">Nama</th>
                         <th className="py-2.5 pr-3 text-right">Total Simpanan</th>
@@ -1528,38 +1599,36 @@ export default function App() {
                         <th className="py-2.5 text-right">Sisa Angsuran</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-100">
+                    <tbody className="divide-y divide-slate-100">
                       {filteredMemberSummaries.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-sm text-stone-400">
+                          <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
                             Tidak ada data anggota.
                           </td>
                         </tr>
                       ) : (
                         filteredMemberSummaries.map((m) => (
-                          <tr key={m.idAnggota} className="hover:bg-stone-50/80">
-                            <td className="py-3 pr-3 font-mono text-xs text-stone-500">
+                          <tr key={m.idAnggota} className="hover:bg-[#F8FBFF]">
+                            <td className="py-3 pr-3 font-mono text-xs text-slate-500">
                               {m.idAnggota}
                             </td>
-                            <td className="py-3 pr-3 font-medium text-stone-900">
-                              {m.nama}
-                            </td>
-                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-800">
+                            <td className="py-3 pr-3 font-semibold text-slate-900">{m.nama}</td>
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-700">
                               {rupiah(m.totalSimpanan)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-amber-700">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-amber-600">
                               {rupiah(m.totalSisaPinjaman)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-stone-900">
+                            <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-[#004A8F]">
                               {rupiah(m.saldoAnggotaSaatIni)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-600">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-600">
                               {rupiah(m.totalPinjaman)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-600">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-600">
                               {rupiah(m.totalDibayar)}
                             </td>
-                            <td className="py-3 text-right font-mono text-xs tabular-nums text-stone-700">
+                            <td className="py-3 text-right font-mono text-xs tabular-nums text-slate-700">
                               {m.totalSisaAngsuran} kali
                             </td>
                           </tr>
@@ -1620,54 +1689,110 @@ export default function App() {
           {activePage === 'anggotaSaya' && anggotaMetrics && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-2xl bg-[#0B2821] p-6 text-white shadow-sm">
-                  <p className="text-[11px] font-semibold tracking-[0.14em] text-[#E5C178] uppercase">
-                    Posisi Bersih Anda
-                  </p>
-                  <p className="mt-1 text-xs text-emerald-100/75">
-                    Saldo Anggota Saat Ini
-                  </p>
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#003063] via-[#004A8F] to-[#0066CC] p-6 text-white shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] font-bold tracking-[0.14em] text-amber-300 uppercase">
+                      Rekening Anggota
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setHideBalance((prev) => !prev)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold text-blue-50 hover:bg-white/20"
+                      aria-label={hideBalance ? 'Tampilkan saldo' : 'Sembunyikan saldo'}
+                    >
+                      {hideBalance ? (
+                        <Eye className="h-3.5 w-3.5" />
+                      ) : (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-blue-100/80">Saldo Bersih Anda Saat Ini</p>
                   <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-white sm:text-3xl">
-                    {rupiah(anggotaMetrics.saldoAnggotaSaatIni)}
+                    {hideBalance ? 'Rp ••••••••' : rupiah(anggotaMetrics.saldoAnggotaSaatIni)}
                   </p>
-                  <p className="mt-4 border-t border-white/12 pt-3 text-xs text-emerald-100/80">
-                    Sisa pinjaman aktif: {rupiah(anggotaMetrics.totalSisaPinjaman)}
-                  </p>
-                </div>
-
-                <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-6">
-                  <div>
-                    <p className="text-xs font-medium text-stone-500">Total Simpanan Saya</p>
-                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-emerald-800">
-                      {rupiah(anggotaMetrics.simpananSaya)}
-                    </p>
-                  </div>
-                  <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
-                    Kekurangan target iuran: {rupiah(anggotaMetrics.kekuranganIuran)}
+                  <p className="mt-4 border-t border-white/15 pt-3 text-xs text-blue-100/85">
+                    Sisa pinjaman aktif:{' '}
+                    {hideBalance ? 'Rp ••••••' : rupiah(anggotaMetrics.totalSisaPinjaman)}
                   </p>
                 </div>
 
-                <div className="flex flex-col justify-between rounded-2xl border border-stone-200/90 bg-white p-6">
+                <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
                   <div>
-                    <p className="text-xs font-medium text-stone-500">Total Saldo Kelompok</p>
-                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-stone-900">
-                      {rupiah(anggotaMetrics.saldoKelompok)}
+                    <p className="text-xs font-semibold text-slate-500">Total Simpanan Saya</p>
+                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-emerald-700">
+                      {hideBalance ? 'Rp ••••••' : rupiah(anggotaMetrics.simpananSaya)}
                     </p>
                   </div>
-                  <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500">
-                    Akumulasi saldo kas seluruh anggota
+                  <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                    Kekurangan target iuran:{' '}
+                    {hideBalance ? 'Rp ••••••' : rupiah(anggotaMetrics.kekuranganIuran)}
+                  </p>
+                </div>
+
+                <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500">Total Saldo Kelompok</p>
+                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
+                      {hideBalance ? 'Rp ••••••' : rupiah(anggotaMetrics.saldoKelompok)}
+                    </p>
+                  </div>
+                  <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                    Akumulasi kas seluruh anggota kelompok
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-stone-200/90 bg-white p-6">
-                <h3 className="font-editorial mb-4 text-lg font-semibold text-stone-900">
-                  Pinjaman Saya
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => setActivePage('ajukanPinjaman')}
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F] group-hover:bg-[#004A8F] group-hover:text-white">
+                    <CreditCard className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Ajukan Pinjaman</p>
+                    <p className="text-xs text-slate-500">Kirim pengajuan baru ke pengurus</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivePage('laporan')}
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F] group-hover:bg-[#004A8F] group-hover:text-white">
+                    <BarChart3 className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Laporan Bulanan</p>
+                    <p className="text-xs text-slate-500">Lihat transparansi kas kelompok</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivePage('pengaturan')}
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F] group-hover:bg-[#004A8F] group-hover:text-white">
+                    <Settings className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Pengaturan Akun</p>
+                    <p className="text-xs text-slate-500">Ubah username atau password</p>
+                  </div>
+                </button>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+                <h3 className="font-editorial mb-4 text-lg font-bold text-slate-900">
+                  Fasilitas Pinjaman Saya
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
+                      <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
                         <th className="py-2.5 pr-3">ID Pinjaman</th>
                         <th className="py-2.5 pr-3">Tanggal</th>
                         <th className="py-2.5 pr-3 text-right">Jumlah</th>
@@ -1676,32 +1801,32 @@ export default function App() {
                         <th className="py-2.5">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-100">
+                    <tbody className="divide-y divide-slate-100">
                       {anggotaMetrics.pinjamanSaya.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-8 text-center text-sm text-stone-400">
+                          <td colSpan={6} className="py-8 text-center text-sm text-slate-400">
                             Anda tidak memiliki catatan pinjaman.
                           </td>
                         </tr>
                       ) : (
                         anggotaMetrics.pinjamanSaya.map((p) => (
-                          <tr key={p.idPinjaman} className="hover:bg-stone-50/80">
-                            <td className="py-3 pr-3 font-mono text-xs text-stone-600">
+                          <tr key={p.idPinjaman} className="hover:bg-[#F8FBFF]">
+                            <td className="py-3 pr-3 font-mono text-xs text-slate-600">
                               {p.idPinjaman}
                             </td>
-                            <td className="py-3 pr-3 text-xs text-stone-500">
+                            <td className="py-3 pr-3 text-xs text-slate-500">
                               {formatTanggalId(p.tanggal)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-900">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-900">
                               {rupiah(p.jumlah)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-800">
+                            <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-700">
                               {rupiah(p.totalDibayar)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-stone-900">
+                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-[#004A8F]">
                               {rupiah(p.sisa)}
                             </td>
-                            <td className="py-3 text-xs font-semibold text-stone-800">
+                            <td className="py-3 text-xs font-semibold text-slate-800">
                               {p.status}
                             </td>
                           </tr>
@@ -1715,17 +1840,17 @@ export default function App() {
           )}
 
           {activePage === 'ajukanPinjaman' && (
-            <div className="max-w-lg rounded-2xl border border-stone-200/90 bg-white p-6">
-              <h3 className="font-editorial text-lg font-semibold text-stone-900">
+            <div className="max-w-lg rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+              <h3 className="font-editorial text-lg font-bold text-slate-900">
                 Form Pengajuan Pinjaman Anggota
               </h3>
-              <p className="mt-1 text-xs text-stone-500">
+              <p className="mt-1 text-xs text-slate-500">
                 Pengajuan akan masuk ke antrean Administrator untuk disetujui (ACC) atau ditolak.
               </p>
 
               <form onSubmit={handleAjukanPinjamanAnggota} className="mt-5 space-y-4">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-stone-700">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Jumlah Pinjaman (Rp)
                   </label>
                   <input
@@ -1735,12 +1860,12 @@ export default function App() {
                     value={ajuJumlah}
                     onChange={(e) => setAjuJumlah(e.target.value)}
                     placeholder="1000000"
-                    className="w-full rounded-xl border border-stone-300 px-3 py-2.5 font-mono text-sm text-stone-900"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm text-slate-900"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-stone-700">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Tenor (Jumlah Bulan Angsuran)
                   </label>
                   <input
@@ -1750,14 +1875,14 @@ export default function App() {
                     value={ajuTenor}
                     onChange={(e) => setAjuTenor(e.target.value)}
                     placeholder="10"
-                    className="w-full rounded-xl border border-stone-300 px-3 py-2.5 font-mono text-sm text-stone-900"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm text-slate-900"
                   />
                 </div>
 
                 {Number(ajuJumlah) > 0 && Number(ajuTenor) > 0 && (
-                  <div className="flex items-center justify-between rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs">
-                    <span className="text-stone-600">Estimasi Angsuran/Bulan</span>
-                    <span className="font-mono font-semibold tabular-nums text-stone-900">
+                  <div className="flex items-center justify-between rounded-xl border border-[#00529C]/20 bg-[#EBF3FC] px-3.5 py-2.5 text-xs">
+                    <span className="font-medium text-slate-700">Estimasi Angsuran/Bulan</span>
+                    <span className="font-mono font-bold tabular-nums text-[#004A8F]">
                       {rupiah(Number(ajuJumlah) / Number(ajuTenor))}
                     </span>
                   </div>
@@ -1765,7 +1890,7 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
+                  className="w-full rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
                 >
                   Kirim Pengajuan Pinjaman
                 </button>
@@ -1775,17 +1900,17 @@ export default function App() {
 
           {activePage === 'pengaturan' && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-              <div className="rounded-2xl border border-stone-200/90 bg-white p-6 lg:col-span-6">
-                <h3 className="font-editorial text-lg font-semibold text-stone-900">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
+                <h3 className="font-editorial text-lg font-bold text-slate-900">
                   Ubah Username & Password Akun
                 </h3>
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs text-slate-500">
                   Mengubah kredensial akun yang sedang login pada sheet Users.
                 </p>
 
                 <form onSubmit={handleUpdateAkun} className="mt-4 space-y-3.5">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-stone-700">
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
                       Username Baru
                     </label>
                     <input
@@ -1793,11 +1918,11 @@ export default function App() {
                       required
                       value={usernameBaru}
                       onChange={(e) => setUsernameBaru(e.target.value)}
-                      className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-900"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-stone-700">
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
                       Password Lama
                     </label>
                     <input
@@ -1805,11 +1930,11 @@ export default function App() {
                       required
                       value={passwordLama}
                       onChange={(e) => setPasswordLama(e.target.value)}
-                      className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-900"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-stone-700">
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
                       Password Baru
                     </label>
                     <input
@@ -1817,43 +1942,43 @@ export default function App() {
                       required
                       value={passwordBaru}
                       onChange={(e) => setPasswordBaru(e.target.value)}
-                      className="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm text-stone-900"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="rounded-xl bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
+                    className="rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
                   >
                     Simpan Perubahan Akun
                   </button>
                 </form>
               </div>
 
-              <div className="rounded-2xl border border-stone-200/90 bg-white p-6 lg:col-span-6">
-                <h3 className="font-editorial text-lg font-semibold text-stone-900">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
+                <h3 className="font-editorial text-lg font-bold text-slate-900">
                   Koneksi Spreadsheet Database
                 </h3>
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs text-slate-500">
                   Spreadsheet aktif yang terhubung ke sistem keuangan ini.
                 </p>
 
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-stone-700">
+                    <label className="mb-1 block text-xs font-semibold text-slate-700">
                       Tautan / ID Spreadsheet
                     </label>
                     <input
                       type="text"
                       value={spreadsheetInput}
                       onChange={(e) => setSpreadsheetInput(e.target.value)}
-                      className="w-full rounded-xl border border-stone-300 px-3 py-2 font-mono text-xs text-stone-900"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2.5">
                     <button
                       type="button"
                       onClick={() => refreshDataset()}
-                      className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 transition-colors hover:bg-stone-50"
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                     >
                       Muat Ulang Data
                     </button>
@@ -1861,15 +1986,15 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleRequestSetupDatabase}
-                        className="rounded-xl bg-[#0B2821] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#12382E]"
+                        className="rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
                       >
                         Verifikasi & Setup Tab Sheet
                       </button>
                     )}
                   </div>
-                  <div className="border-t border-stone-100 pt-3 text-xs text-stone-500">
+                  <div className="border-t border-slate-100 pt-3 text-xs text-slate-500">
                     Tab terdeteksi:{' '}
-                    <span className="font-mono text-stone-700">
+                    <span className="font-mono text-slate-700">
                       {dataset.availableTabs.join(', ') || '-'}
                     </span>
                   </div>
@@ -1901,17 +2026,17 @@ export default function App() {
 
       {toast && (
         <div
-          className="no-print fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm shadow-lg"
+          className="no-print fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-lg"
           role="status"
         >
           {toast.type === 'success' ? (
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
           ) : (
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-700" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
           )}
           <p
             className={`font-medium ${
-              toast.type === 'success' ? 'text-stone-900' : 'text-red-700'
+              toast.type === 'success' ? 'text-slate-900' : 'text-red-700'
             }`}
           >
             {toast.message}

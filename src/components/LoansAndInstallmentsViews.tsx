@@ -56,20 +56,20 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <div className="rounded-xl border border-stone-200/90 bg-white p-6">
-            <h3 className="text-base font-semibold text-stone-900">Input Pinjaman Baru</h3>
-            <p className="mt-0.5 text-xs text-stone-500">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900">Fasilitas Pinjaman Baru</h3>
+            <p className="mt-0.5 text-xs text-slate-500">
               Pinjaman yang diinput admin atau bendahara langsung aktif berstatus Berjalan dan mencatat Kas Keluar.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-stone-700">Anggota</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Anggota</label>
                 <select
                   required
                   value={idAnggota}
                   onChange={(e) => setIdAnggota(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                 >
                   <option value="">-- Pilih Anggota --</option>
                   {activeMembers.map((m) => (
@@ -82,8 +82,8 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-stone-700">
-                    Jumlah Pinjaman (Rp)
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Plafon Pinjaman (Rp)
                   </label>
                   <input
                     type="number"
@@ -92,11 +92,11 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                     value={jumlah}
                     onChange={(e) => setJumlah(e.target.value)}
                     placeholder="1000000"
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-stone-700">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Tenor (Bulan)
                   </label>
                   <input
@@ -106,15 +106,15 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                     value={tenor}
                     onChange={(e) => setTenor(e.target.value)}
                     placeholder="10"
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
               </div>
 
               {estimasiAngsuran > 0 && (
-                <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-2.5 text-xs">
-                  <span className="text-stone-600">Estimasi Angsuran/Bulan</span>
-                  <span className="font-mono font-semibold tabular-nums text-stone-900">
+                <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs">
+                  <span className="text-slate-600">Estimasi Angsuran/Bulan</span>
+                  <span className="font-mono font-bold tabular-nums text-[#004A8F]">
                     {rupiah(estimasiAngsuran)}
                   </span>
                 </div>
@@ -122,7 +122,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
+                className="w-full rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
               >
                 Simpan & Cairkan Pinjaman
               </button>
@@ -131,20 +131,20 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
         </div>
 
         <div className="lg:col-span-7">
-          <div className="rounded-xl border border-stone-200/90 bg-white p-6">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
             <div className="mb-4">
-              <h3 className="text-base font-semibold text-stone-900">
-                Antrean Pengajuan Pinjaman ({pendingLoans.length})
+              <h3 className="text-base font-bold text-slate-900">
+                Antrean Persetujuan Pinjaman ({pendingLoans.length})
               </h3>
-              <p className="text-xs text-stone-500">
-                Pengajuan mandiri dari anggota yang menunggu persetujuan Administrator.
+              <p className="text-xs text-slate-500">
+                Pengajuan mandiri dari anggota yang menunggu otorisasi Administrator.
               </p>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
+                  <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
                     <th className="py-2 pr-3">ID & Tanggal</th>
                     <th className="py-2 pr-3">Anggota</th>
                     <th className="py-2 pr-3 text-right">Jumlah</th>
@@ -152,10 +152,10 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                     <th className="py-2 text-right">Keputusan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody className="divide-y divide-slate-100">
                   {pendingLoans.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-sm text-stone-400">
+                      <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
                         Tidak ada pengajuan pinjaman yang menunggu ACC.
                       </td>
                     </tr>
@@ -163,20 +163,20 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                     pendingLoans.map((p) => (
                       <tr key={p.idPinjaman}>
                         <td className="py-3 pr-3">
-                          <div className="font-mono text-xs font-medium text-stone-900">
+                          <div className="font-mono text-xs font-semibold text-slate-900">
                             {p.idPinjaman}
                           </div>
-                          <div className="text-xs text-stone-500">
+                          <div className="text-xs text-slate-500">
                             {formatTanggalId(p.tanggal)}
                           </div>
                         </td>
-                        <td className="py-3 pr-3 font-medium text-stone-900">
+                        <td className="py-3 pr-3 font-semibold text-slate-900">
                           {memberMap.get(p.idAnggota) || p.idAnggota}
                         </td>
-                        <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-900">
+                        <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-900">
                           {rupiah(p.jumlah)}
                         </td>
-                        <td className="py-3 pr-3 text-right font-mono text-xs text-stone-600">
+                        <td className="py-3 pr-3 text-right font-mono text-xs text-slate-600">
                           {p.tenor} bln
                         </td>
                         <td className="py-3 text-right">
@@ -185,7 +185,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onAccPinjaman(p)}
-                                className="inline-flex items-center gap-1 rounded-lg bg-[#0B2821] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#12382E]"
+                                className="inline-flex items-center gap-1 rounded-xl bg-[#004A8F] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#003870]"
                               >
                                 <CheckCircle className="h-3.5 w-3.5" />
                                 ACC
@@ -193,14 +193,14 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onTolakPinjaman(p)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                                className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
                               >
                                 <XCircle className="h-3.5 w-3.5" />
                                 Tolak
                               </button>
                             </div>
                           ) : (
-                            <span className="text-xs text-stone-500">Khusus Admin</span>
+                            <span className="text-xs text-slate-500">Khusus Admin</span>
                           )}
                         </td>
                       </tr>
@@ -213,14 +213,14 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
         </div>
       </div>
 
-      <div className="rounded-xl border border-stone-200/90 bg-white p-6">
-        <h3 className="mb-3 text-base font-semibold text-stone-900">
-          Daftar Pinjaman Kelompok ({allLoans.length})
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+        <h3 className="mb-3 text-base font-bold text-slate-900">
+          Portofolio Pinjaman Kelompok ({allLoans.length})
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
+              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
                 <th className="py-2.5 pr-3">ID Pinjaman</th>
                 <th className="py-2.5 pr-3">Anggota</th>
                 <th className="py-2.5 pr-3 text-right">Pokok Pinjaman</th>
@@ -230,47 +230,47 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                 <th className="py-2.5">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-slate-100">
               {allLoans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-stone-400">
+                  <td colSpan={7} className="py-8 text-center text-sm text-slate-400">
                     Belum ada catatan pinjaman.
                   </td>
                 </tr>
               ) : (
                 allLoans.map((p) => (
-                  <tr key={p.idPinjaman} className="hover:bg-stone-50/90">
+                  <tr key={p.idPinjaman} className="hover:bg-slate-50/90">
                     <td className="py-3 pr-3">
-                      <div className="font-mono text-xs font-medium text-stone-900">
+                      <div className="font-mono text-xs font-semibold text-slate-900">
                         {p.idPinjaman}
                       </div>
-                      <div className="text-xs text-stone-500">{formatTanggalId(p.tanggal)}</div>
+                      <div className="text-xs text-slate-500">{formatTanggalId(p.tanggal)}</div>
                     </td>
-                    <td className="py-3 pr-3 font-medium text-stone-900">
+                    <td className="py-3 pr-3 font-semibold text-slate-900">
                       {memberMap.get(p.idAnggota) || p.idAnggota}
                     </td>
-                    <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-900">
+                    <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-900">
                       {rupiah(p.jumlah)}
                     </td>
-                    <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-600">
+                    <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-600">
                       {rupiah(p.angsuranPerBulan)}
                     </td>
-                    <td className="py-3 pr-3 text-right font-mono tabular-nums text-[#065F46]">
+                    <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-700">
                       {rupiah(p.totalDibayar)}
                     </td>
-                    <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-stone-900">
+                    <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-slate-900">
                       {rupiah(p.sisa)}
                     </td>
                     <td className="py-3 text-xs font-semibold">
                       <span
                         className={
                           p.status === 'Lunas'
-                            ? 'text-[#065F46]'
+                            ? 'text-emerald-700'
                             : p.status === 'Berjalan'
-                            ? 'text-[#B45309]'
+                            ? 'text-[#00529C]'
                             : p.status === 'Ditolak'
-                            ? 'text-red-700'
-                            : 'text-stone-600'
+                            ? 'text-red-600'
+                            : 'text-amber-600'
                         }
                       >
                         {p.status}
@@ -352,22 +352,22 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <div className="rounded-xl border border-stone-200/90 bg-white p-6">
-            <h3 className="text-base font-semibold text-stone-900">Input Pembayaran Angsuran</h3>
-            <p className="mt-0.5 text-xs text-stone-500">
-              Otomatis memperbarui sisa pinjaman dan mencatat Kas Masuk.
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900">Pembayaran Angsuran</h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Otomatis memperbarui sisa pinjaman dan mencatat mutasi Kas Masuk.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-stone-700">
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
                   Pilih Pinjaman Berjalan
                 </label>
                 <select
                   required
                   value={selectedPinjamanId}
                   onChange={(e) => handleSelectLoan(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                 >
                   <option value="">-- Pilih Pinjaman --</option>
                   {activeLoans.map((p) => {
@@ -382,16 +382,16 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
               </div>
 
               {selectedLoan && (
-                <div className="grid grid-cols-2 gap-3 rounded-lg border border-stone-200 bg-stone-50 p-3 text-xs">
+                <div className="grid grid-cols-2 gap-3 rounded-xl border border-blue-200 bg-[#EBF3FC]/70 p-3 text-xs">
                   <div>
-                    <span className="text-stone-500">Anggota</span>
-                    <p className="font-semibold text-stone-900">
+                    <span className="text-slate-500">Anggota</span>
+                    <p className="font-bold text-slate-900">
                       {memberMap.get(selectedLoan.idAnggota)?.nama || selectedLoan.idAnggota}
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-stone-500">Sisa Pinjaman</span>
-                    <p className="font-mono font-semibold tabular-nums text-[#B45309]">
+                    <span className="text-slate-500">Sisa Kewajiban</span>
+                    <p className="font-mono font-bold tabular-nums text-amber-600">
                       {rupiah(selectedLoan.sisa)}
                     </p>
                   </div>
@@ -400,7 +400,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-stone-700">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Angsuran Ke
                   </label>
                   <input
@@ -409,11 +409,11 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                     required
                     value={angsuranKe}
                     onChange={(e) => setAngsuranKe(e.target.value)}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-stone-700">
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Jumlah Bayar (Rp)
                   </label>
                   <input
@@ -422,44 +422,44 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                     required
                     value={jumlahBayar}
                     onChange={(e) => setJumlahBayar(e.target.value)}
-                    className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-[#0B2821] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#12382E]"
+                className="w-full rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
               >
-                Simpan Angsuran
+                Proses Pembayaran Angsuran
               </button>
             </form>
           </div>
         </div>
 
         <div className="lg:col-span-7">
-          <div className="rounded-xl border border-stone-200/90 bg-white p-6">
-            <h3 className="text-base font-semibold text-stone-900">
-              Daftar Pinjaman Berjalan / Tunggakan ({activeLoans.length})
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+            <h3 className="text-base font-bold text-slate-900">
+              Pinjaman Berjalan & Pengingat ({activeLoans.length})
             </h3>
-            <p className="mt-0.5 mb-4 text-xs text-stone-500">
-              Kirim pengingat angsuran langsung melalui WhatsApp ke anggota terkait.
+            <p className="mt-0.5 mb-4 text-xs text-slate-500">
+              Kirim notifikasi tagihan angsuran langsung melalui WhatsApp ke anggota terkait.
             </p>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
+                  <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
                     <th className="py-2 pr-3">Anggota</th>
                     <th className="py-2 pr-3 text-right">Angsuran/Bln</th>
                     <th className="py-2 pr-3 text-right">Sisa Pinjaman</th>
                     <th className="py-2 text-right">WhatsApp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody className="divide-y divide-slate-100">
                   {activeLoans.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-sm text-stone-400">
+                      <td colSpan={4} className="py-8 text-center text-sm text-slate-400">
                         Semua pinjaman sudah lunas.
                       </td>
                     </tr>
@@ -473,17 +473,17 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                       const waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(pesan)}`;
 
                       return (
-                        <tr key={p.idPinjaman} className="hover:bg-stone-50/90">
+                        <tr key={p.idPinjaman} className="hover:bg-slate-50/90">
                           <td className="py-3 pr-3">
-                            <div className="font-semibold text-stone-900">{nama}</div>
-                            <div className="font-mono text-xs text-stone-500">
+                            <div className="font-semibold text-slate-900">{nama}</div>
+                            <div className="font-mono text-xs text-slate-500">
                               {p.idPinjaman} · {nohp || 'Tanpa HP'}
                             </div>
                           </td>
-                          <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-700">
+                          <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-700">
                             {rupiah(p.angsuranPerBulan)}
                           </td>
-                          <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-[#B45309]">
+                          <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-amber-600">
                             {rupiah(p.sisa)}
                           </td>
                           <td className="py-3 text-right">
@@ -492,13 +492,13 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                                 href={waUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-900/20 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-[#065F46] hover:bg-emerald-100"
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-1.5 text-xs font-semibold text-[#004A8F] hover:bg-blue-100"
                               >
                                 <MessageCircle className="h-3.5 w-3.5" />
                                 Tagih WA
                               </a>
                             ) : (
-                              <span className="text-xs text-stone-400">No HP belum ada</span>
+                              <span className="text-xs text-slate-400">No HP belum ada</span>
                             )}
                           </td>
                         </tr>
@@ -512,27 +512,27 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
         </div>
       </div>
 
-      <div className="rounded-xl border border-stone-200/90 bg-white p-6">
-        <h3 className="mb-3 text-base font-semibold text-stone-900">
-          Riwayat Angsuran & Cetak Kwitansi
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+        <h3 className="mb-3 text-base font-bold text-slate-900">
+          Riwayat Angsuran & e-Resi Pembayaran
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-stone-200 text-xs font-semibold text-stone-500">
-                <th className="py-2 pr-3">ID Angsuran</th>
+              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+                <th className="py-2 pr-3">No. Referensi</th>
                 <th className="py-2 pr-3">Tanggal</th>
                 <th className="py-2 pr-3">Anggota</th>
                 <th className="py-2 pr-3">Ke</th>
                 <th className="py-2 pr-3 text-right">Dibayar</th>
                 <th className="py-2 pr-3 text-right">Sisa</th>
-                <th className="py-2 text-right">Kwitansi</th>
+                <th className="py-2 text-right">Bukti</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-slate-100">
               {dataset.angsuran.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-stone-400">
+                  <td colSpan={7} className="py-8 text-center text-sm text-slate-400">
                     Belum ada riwayat pembayaran angsuran.
                   </td>
                 </tr>
@@ -541,33 +541,33 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                   .reverse()
                   .slice(0, 40)
                   .map((ang) => (
-                    <tr key={ang.idAngsuran} className="hover:bg-stone-50/90">
-                      <td className="py-3 pr-3 font-mono text-xs text-stone-700">
+                    <tr key={ang.idAngsuran} className="hover:bg-slate-50/90">
+                      <td className="py-3 pr-3 font-mono text-xs text-slate-700">
                         {ang.idAngsuran}
                       </td>
-                      <td className="py-3 pr-3 text-xs text-stone-500">
+                      <td className="py-3 pr-3 text-xs text-slate-500">
                         {formatTanggalId(ang.tanggal)}
                       </td>
-                      <td className="py-3 pr-3 font-medium text-stone-900">
+                      <td className="py-3 pr-3 font-semibold text-slate-900">
                         {memberMap.get(ang.idAnggota)?.nama || ang.idAnggota}
                       </td>
-                      <td className="py-3 pr-3 font-mono text-xs text-stone-600">
+                      <td className="py-3 pr-3 font-mono text-xs text-slate-600">
                         Ke-{ang.angsuranKe}
                       </td>
-                      <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-[#065F46]">
+                      <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-emerald-700">
                         {rupiah(ang.jumlah)}
                       </td>
-                      <td className="py-3 pr-3 text-right font-mono tabular-nums text-stone-700">
+                      <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-700">
                         {rupiah(ang.sisa)}
                       </td>
                       <td className="py-3 text-right">
                         <button
                           type="button"
                           onClick={() => onShowKwitansi(ang)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-stone-50"
+                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-[#004A8F] hover:bg-[#EBF3FC]"
                         >
                           <Receipt className="h-3.5 w-3.5" />
-                          Kwitansi
+                          e-Resi
                         </button>
                       </td>
                     </tr>
