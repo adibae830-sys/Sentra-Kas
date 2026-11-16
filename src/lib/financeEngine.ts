@@ -366,3 +366,39 @@ export function buildWhatsAppMonthlyMessage(
     .filter((line) => line !== undefined)
     .join('\n');
 }
+
+export interface MutasiGroupAlertParams {
+  arah: 'MASUK' | 'KELUAR';
+  jenis: string;
+  jumlah: number;
+  saldoSetelahMutasi: number;
+  tanggal: string;
+  anggotaNama?: string;
+  keterangan?: string;
+  petugas?: string;
+  namaKelompok?: string;
+}
+
+export function buildWhatsAppMutasiGroupMessage(params: MutasiGroupAlertParams): string {
+  const icon = params.arah === 'MASUK' ? '🟢' : '🟠';
+  const label = params.arah === 'MASUK' ? 'DANA MASUK (KREDIT)' : 'DANA KELUAR (DEBIT)';
+  const tanda = params.arah === 'MASUK' ? '+' : '-';
+
+  const lines = [
+    `${icon} *NOTIFIKASI ${label}*`,
+    params.namaKelompok ? `_${params.namaKelompok}_` : '_Sentra Kas · Info Mutasi Rekening_',
+    '',
+    `📅 *Tanggal:* ${formatTanggalId(params.tanggal)}`,
+    `🏷️ *Kategori:* ${params.jenis}`,
+    ...(params.anggotaNama ? [`👤 *Anggota:* ${params.anggotaNama}`] : []),
+    `💵 *Nominal:* ${tanda} ${rupiah(params.jumlah)}`,
+    `📝 *Keterangan:* ${params.keterangan?.trim() || '-'}`,
+    '',
+    `💰 *Saldo Kas Terkini:* ${rupiah(params.saldoSetelahMutasi)}`,
+    ...(params.petugas ? [`✍️ *Dicatat oleh:* ${params.petugas}`] : []),
+    '',
+    `_Pesan otomatis dari aplikasi Sentra Kas._`,
+  ];
+
+  return lines.join('\n');
+}

@@ -5,5 +5,6 @@ export function GET() {
   return Response.json({
     configured: cfg.isConfigured,
     provider: cfg.provider,
+    hasDefaultGroup: Boolean(cfg.defaultGroupId),
   });
 }

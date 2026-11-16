@@ -5,7 +5,9 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   BarChart3,
+  Check,
   CheckCircle2,
+  Copy,
   CreditCard,
   ExternalLink,
   Eye,
@@ -15,8 +17,10 @@ import {
   Lock,
   LogOut,
   Menu,
+  MessageCircle,
   RefreshCw,
   Search,
+  Send,
   Settings,
   Users,
   Wallet,
@@ -38,6 +42,7 @@ import {
 import { MonthlyReportView } from './components/MonthlyReportView';
 import { OfflineIndicator, PWAInstallButton } from './components/PWAInstallButton';
 import {
+  buildWhatsAppMutasiGroupMessage,
   computeAdminDashboard,
   computeAnggotaDashboard,
   computeMonthlyCashflowSeries,
@@ -95,7 +100,29 @@ const STORAGE_KEYS = {
   SPREADSHEET_ID: 'sentra_kas_spreadsheet_id',
   APP_SESSION: 'sentra_kas_app_session',
   ACTIVE_PAGE: 'sentra_kas_active_page',
+  WA_GROUP_SETTINGS: 'sentra_kas_wa_group_settings',
 } as const;
+
+interface WaGroupSettings {
+  enabled: boolean;
+  groupId: string;
+  autoSendGateway: boolean;
+}
+
+function readSavedWaGroupSettings(): WaGroupSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.WA_GROUP_SETTINGS);
+    if (!raw) return { enabled: true, groupId: '', autoSendGateway: true };
+    const parsed = JSON.parse(raw) as Partial<WaGroupSettings>;
+    return {
+      enabled: parsed.enabled !== false,
+      groupId: String(parsed.groupId || ''),
+      autoSendGateway: parsed.autoSendGateway !== false,
+    };
+  } catch {
+    return { enabled: true, groupId: '', autoSendGateway: true };
+  }
+}
 
 interface SavedAppSession {
   username: string;
@@ -180,12 +207,124 @@ export default function App() {
   const [passwordLama, setPasswordLama] = useState('');
   const [passwordBaru, setPasswordBaru] = useState('');
 
+  // WhatsApp Group auto-notification state
+  const [waGroupSettings, setWaGroupSettings] = useState<WaGroupSettings>(readSavedWaGroupSettings);
+  const [waGatewayStatus, setWaGatewayStatus] = useState<{
+    configured: boolean;
+    provider: string;
+    hasDefaultGroup?: boolean;
+  }>({ configured: false, provider: 'fonnte', hasDefaultGroup: false });
+  const [waShareModal, setWaShareModal] = useState<{
+    title: string;
+    message: string;
+    autoSentError?: string;
+  } | null>(null);
+  const [copiedWaMsg, setCopiedWaMsg] = useState(false);
+  const [isSendingWaGroup, setIsSendingWaGroup] = useState(false);
+
   const showToast = useCallback((type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => {
       setToast((curr) => (curr?.message === message ? null : curr));
     }, 4500);
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.WA_GROUP_SETTINGS, JSON.stringify(waGroupSettings));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [waGroupSettings]);
+
+  useEffect(() => {
+    fetch('/api/whatsapp/status')
+      .then((r) => r.json())
+      .then((data) => setWaGatewayStatus(data))
+      .catch(() => {});
+  }, []);
+
+  const notifyWhatsAppGroupForMutasi = useCallback(
+    async (params: {
+      arah: 'MASUK' | 'KELUAR';
+      jenis: string;
+      jumlah: number;
+      tanggal: string;
+      idAnggota?: string;
+      keterangan?: string;
+    }) => {
+      if (!waGroupSettings.enabled) return;
+
+      const currentMasuk = (dataset?.kasMasuk || []).reduce((s, r) => s + r.jumlah, 0);
+      const currentKeluar = (dataset?.kasKeluar || []).reduce((s, r) => s + r.jumlah, 0);
+      const currentSaldo = currentMasuk - currentKeluar;
+      const saldoSetelahMutasi =
+        currentSaldo + (params.arah === 'MASUK' ? params.jumlah : -params.jumlah);
+
+      const anggotaNama = params.idAnggota
+        ? dataset?.anggota.find((a) => a.id === params.idAnggota)?.nama || params.idAnggota
+        : undefined;
+
+      const message = buildWhatsAppMutasiGroupMessage({
+        arah: params.arah,
+        jenis: params.jenis,
+        jumlah: params.jumlah,
+        saldoSetelahMutasi,
+        tanggal: params.tanggal,
+        anggotaNama,
+        keterangan: params.keterangan,
+        petugas: sessionUser?.nama || 'Pengurus',
+        namaKelompok: dataset?.spreadsheetTitle,
+      });
+
+      const targetGroup =
+        waGroupSettings.groupId.trim() || (waGatewayStatus.hasDefaultGroup ? 'GROUP' : '');
+
+      if (waGroupSettings.autoSendGateway && waGatewayStatus.configured && targetGroup) {
+        try {
+          const res = await fetch('/api/whatsapp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nohp: targetGroup, message }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data?.success) {
+            showToast('success', 'Transaksi tersimpan & otomatis terkirim ke Grup WhatsApp!');
+            return;
+          }
+          setWaShareModal({
+            title:
+              params.arah === 'MASUK'
+                ? 'Notifikasi Dana Masuk ke Grup WA'
+                : 'Notifikasi Dana Keluar ke Grup WA',
+            message,
+            autoSentError:
+              data?.error || 'Auto-kirim server gagal. Silakan bagikan manual 1-klik ke Grup WA.',
+          });
+          return;
+        } catch {
+          setWaShareModal({
+            title:
+              params.arah === 'MASUK'
+                ? 'Notifikasi Dana Masuk ke Grup WA'
+                : 'Notifikasi Dana Keluar ke Grup WA',
+            message,
+            autoSentError: 'Gagal terhubung ke server WhatsApp. Gunakan tombol Bagikan ke Grup WA.',
+          });
+          return;
+        }
+      }
+
+      setWaShareModal({
+        title:
+          params.arah === 'MASUK'
+            ? 'Bagikan Info Kas Masuk ke Grup WA'
+            : 'Bagikan Info Kas Keluar ke Grup WA',
+        message,
+      });
+    },
+    [waGroupSettings, waGatewayStatus, dataset, sessionUser, showToast]
+  );
 
   useEffect(() => {
     try {
@@ -594,15 +733,24 @@ export default function App() {
       onConfirm: () =>
         runConfirmedMutation(async () => {
           const token = getAccessToken()!;
+          const tgl = nowIsoShort();
           await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
             newId,
-            nowIsoShort(),
+            tgl,
             payload.idAnggota,
             payload.jenis,
             payload.jumlah,
             payload.keterangan,
             sessionUser?.nama || 'Admin',
           ]);
+          void notifyWhatsAppGroupForMutasi({
+            arah: 'MASUK',
+            jenis: payload.jenis,
+            jumlah: payload.jumlah,
+            tanggal: tgl,
+            idAnggota: payload.idAnggota,
+            keterangan: payload.keterangan,
+          });
         }, `Kas masuk ${rupiah(payload.jumlah)} berhasil disimpan.`),
     });
   };
@@ -627,14 +775,22 @@ export default function App() {
       onConfirm: () =>
         runConfirmedMutation(async () => {
           const token = getAccessToken()!;
+          const tgl = nowIsoShort();
           await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
             newId,
-            nowIsoShort(),
+            tgl,
             payload.jenis,
             payload.jumlah,
             payload.keterangan,
             sessionUser?.nama || 'Admin',
           ]);
+          void notifyWhatsAppGroupForMutasi({
+            arah: 'KELUAR',
+            jenis: payload.jenis,
+            jumlah: payload.jumlah,
+            tanggal: tgl,
+            keterangan: payload.keterangan,
+          });
         }, `Pengeluaran ${rupiah(payload.jumlah)} berhasil dicatat.`),
     });
   };
@@ -777,6 +933,14 @@ export default function App() {
             `Pinjaman anggota ${payload.idAnggota} (${idPinjaman})`,
             sessionUser?.nama || 'Admin',
           ]);
+          void notifyWhatsAppGroupForMutasi({
+            arah: 'KELUAR',
+            jenis: 'Pencairan Pinjaman',
+            jumlah: payload.jumlah,
+            tanggal: now,
+            idAnggota: payload.idAnggota,
+            keterangan: `Pencairan pinjaman ${idPinjaman} (${payload.tenor} bulan)`,
+          });
         }, `Pinjaman ${idPinjaman} berhasil disimpan dan dicairkan.`),
     });
   };
@@ -795,6 +959,7 @@ export default function App() {
       onConfirm: () =>
         runConfirmedMutation(async () => {
           const token = getAccessToken()!;
+          const now = nowIsoShort();
           await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
             pinjaman.idPinjaman,
             pinjaman.tanggal,
@@ -808,12 +973,20 @@ export default function App() {
           ]);
           await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
             'KK-' + Date.now(),
-            nowIsoShort(),
+            now,
             'Pencairan Pinjaman',
             pinjaman.jumlah,
             `ACC pinjaman anggota ${pinjaman.idAnggota} / ${pinjaman.idPinjaman}`,
             sessionUser?.nama || 'Administrator',
           ]);
+          void notifyWhatsAppGroupForMutasi({
+            arah: 'KELUAR',
+            jenis: 'Pencairan Pinjaman (ACC)',
+            jumlah: pinjaman.jumlah,
+            tanggal: now,
+            idAnggota: pinjaman.idAnggota,
+            keterangan: `ACC pinjaman ${pinjaman.idPinjaman}`,
+          });
         }, `Pinjaman ${pinjaman.idPinjaman} berhasil disetujui.`),
     });
   };
@@ -913,6 +1086,14 @@ export default function App() {
             sisa: sisaBaru,
             user: sessionUser?.nama || 'Admin',
             rowIndex: 0,
+          });
+          void notifyWhatsAppGroupForMutasi({
+            arah: 'MASUK',
+            jenis: `Angsuran Ke-${angsuranKe}`,
+            jumlah,
+            tanggal: now,
+            idAnggota: pinjaman.idAnggota,
+            keterangan: `Pembayaran pinjaman ${pinjaman.idPinjaman} (Sisa: ${rupiah(sisaBaru)})`,
           });
         }, 'Angsuran berhasil disimpan dan kwitansi siap dicetak.'),
     });
@@ -2278,6 +2459,137 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {(sessionUser.role === 'Administrator' || sessionUser.role === 'Bendahara') && (
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-12">
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                      <h3 className="font-editorial text-lg font-bold text-slate-900">
+                        Notifikasi Otomatis Mutasi ke Grup WhatsApp
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Siapkan atau kirim pesan otomatis ke Grup WhatsApp setiap kali ada{' '}
+                        <strong>Kas Masuk</strong>, <strong>Kas Keluar</strong>,{' '}
+                        <strong>Pencairan Pinjaman</strong>, atau <strong>Angsuran</strong>.
+                      </p>
+                    </div>
+                    <span className="rounded-lg border border-slate-200 bg-[#F2F6FA] px-3 py-1.5 text-xs font-semibold text-[#004A8F]">
+                      {waGatewayStatus.configured
+                        ? `Gateway Server Aktif (${waGatewayStatus.provider.toUpperCase()})`
+                        : 'Mode 1-Klik Bagikan ke Grup WA'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-12">
+                    <div className="space-y-4 lg:col-span-7">
+                      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-[#F8FAFC] p-3.5">
+                        <input
+                          type="checkbox"
+                          checked={waGroupSettings.enabled}
+                          onChange={(e) =>
+                            setWaGroupSettings((prev) => ({
+                              ...prev,
+                              enabled: e.target.checked,
+                            }))
+                          }
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#004A8F]"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">
+                            Aktifkan Notifikasi Grup Setelah Simpan Transaksi
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Setiap selesai mencatat uang masuk atau keluar, pesan info mutasi + saldo terkini otomatis disiapkan/dikirim ke Grup WA.
+                          </p>
+                        </div>
+                      </label>
+
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          ID Grup WhatsApp (Opsional — khusus Auto-Kirim Tanpa Klik)
+                        </label>
+                        <input
+                          type="text"
+                          value={waGroupSettings.groupId}
+                          onChange={(e) =>
+                            setWaGroupSettings((prev) => ({
+                              ...prev,
+                              groupId: e.target.value,
+                            }))
+                          }
+                          placeholder={
+                            waGatewayStatus.hasDefaultGroup
+                              ? 'Kosongkan untuk pakai WHATSAPP_GROUP_ID server, atau isi 120363xxxx@g.us'
+                              : 'Contoh: 120363042184912345@g.us'
+                          }
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
+                        />
+                      </div>
+
+                      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3.5">
+                        <input
+                          type="checkbox"
+                          checked={waGroupSettings.autoSendGateway}
+                          onChange={(e) =>
+                            setWaGroupSettings((prev) => ({
+                              ...prev,
+                              autoSendGateway: e.target.checked,
+                            }))
+                          }
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#004A8F]"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">
+                            Kirim Otomatis via Gateway Server (Jika Terpasang)
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Jika token Fonnte/Wablas/Webhook & ID Grup aktif, pesan langsung masuk ke grup tanpa perlu klik. Jika belum, otomatis memakai pop-up <strong>Bagikan ke Grup WA</strong>.
+                          </p>
+                        </div>
+                      </label>
+
+                      <div className="flex flex-wrap gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sampleMsg = buildWhatsAppMutasiGroupMessage({
+                              arah: 'MASUK',
+                              jenis: 'Simpanan Wajib (Uji Coba)',
+                              jumlah: 100000,
+                              saldoSetelahMutasi: adminMetrics?.saldo || 0,
+                              tanggal: nowIsoShort(),
+                              anggotaNama: 'Contoh Anggota',
+                              keterangan: 'Tes notifikasi otomatis grup WhatsApp',
+                              petugas: sessionUser.nama,
+                              namaKelompok: dataset.spreadsheetTitle,
+                            });
+                            setWaShareModal({
+                              title: 'Uji Coba Pesan Grup WhatsApp',
+                              message: sampleMsg,
+                            });
+                          }}
+                          className="inline-flex items-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          Uji Coba Pesan Grup
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/65 p-4 text-xs leading-relaxed text-slate-700 lg:col-span-5">
+                      <p className="font-bold text-[#004A8F]">2 Pilihan Cara Kirim ke Grup WA:</p>
+                      <ul className="mt-2.5 space-y-2.5">
+                        <li>
+                          <strong>1. Mode Gratis (Tanpa Gateway):</strong> Biarkan kolom ID Grup kosong. Setiap selesai input Kas Masuk/Keluar, klik <strong>Bagikan ke Grup WA</strong> pada pop-up, lalu pilih grup Anda di WhatsApp.
+                        </li>
+                        <li>
+                          <strong>2. Mode Full Otomatis (Tanpa Klik):</strong> Gunakan layanan gateway yang mendukung grup (<strong>Fonnte</strong>, <strong>Wablas</strong>, atau <strong>Webhook</strong>), pasang <code className="font-mono text-slate-900">WHATSAPP_PROVIDER</code> & <code className="font-mono text-slate-900">WHATSAPP_API_TOKEN</code> di Environment Vercel, lalu masukkan ID Grup (<code className="font-mono text-slate-900">...@g.us</code>).
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -2299,6 +2611,114 @@ export default function App() {
         }
         onClose={() => setKwitansiModalData(null)}
       />
+
+      {waShareModal && !kwitansiModalData && (
+        <div
+          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between bg-gradient-to-r from-[#003063] via-[#004A8F] to-[#0062BD] px-5 py-4 text-white">
+              <div className="flex items-center gap-2.5">
+                <MessageCircle className="h-5 w-5 text-amber-300" />
+                <div>
+                  <h3 className="text-sm font-bold">{waShareModal.title}</h3>
+                  <p className="text-[11px] text-blue-100">
+                    Siap diteruskan ke grup WhatsApp kelompok
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWaShareModal(null)}
+                className="rounded-lg p-1 text-blue-100 hover:bg-white/15 hover:text-white"
+                aria-label="Tutup"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {waShareModal.autoSentError && (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  {waShareModal.autoSentError}
+                </div>
+              )}
+
+              <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-xl border border-slate-200 bg-[#F8FAFC] p-3.5 font-sans text-xs leading-relaxed text-slate-800">
+                {waShareModal.message}
+              </pre>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(waShareModal.message)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setWaShareModal(null)}
+                  className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Bagikan ke Grup WA
+                </a>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(waShareModal.message);
+                    setCopiedWaMsg(true);
+                    setTimeout(() => setCopiedWaMsg(false), 2000);
+                    showToast('success', 'Pesan grup WhatsApp berhasil disalin.');
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {copiedWaMsg ? (
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-[#00529C]" />
+                  )}
+                  {copiedWaMsg ? 'Tersalin' : 'Salin'}
+                </button>
+
+                {waGatewayStatus.configured &&
+                  (waGroupSettings.groupId.trim() || waGatewayStatus.hasDefaultGroup) && (
+                    <button
+                      type="button"
+                      disabled={isSendingWaGroup}
+                      onClick={async () => {
+                        setIsSendingWaGroup(true);
+                        try {
+                          const target = waGroupSettings.groupId.trim() || 'GROUP';
+                          const res = await fetch('/api/whatsapp/send', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              nohp: target,
+                              message: waShareModal.message,
+                            }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (res.ok && data?.success) {
+                            setWaShareModal(null);
+                            showToast('success', 'Pesan berhasil dikirim ke Grup WhatsApp via Gateway!');
+                          } else {
+                            showToast('error', data?.error || 'Gagal mengirim ke Grup WhatsApp.');
+                          }
+                        } finally {
+                          setIsSendingWaGroup(false);
+                        }
+                      }}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003870] disabled:opacity-60"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      {isSendingWaGroup ? 'Mengirim ke Grup...' : 'Kirim Otomatis via Gateway Server'}
+                    </button>
+                  )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <OfflineIndicator />
 

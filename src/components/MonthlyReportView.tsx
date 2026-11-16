@@ -418,17 +418,29 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
             </pre>
 
             <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(
+                  buildWhatsAppMonthlyMessage(report)
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Bagikan ke Grup WA
+              </a>
+
               <button
                 type="button"
                 onClick={handleCopyGroupMessage}
-                className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
                 {copiedGroupMsg ? (
                   <Check className="h-4 w-4 text-emerald-600" />
                 ) : (
                   <Copy className="h-4 w-4 text-[#00529C]" />
                 )}
-                {copiedGroupMsg ? 'Tersalin' : 'Salin Pesan Grup'}
+                {copiedGroupMsg ? 'Tersalin' : 'Salin Pesan'}
               </button>
 
               {isAdminOrBendahara && (
@@ -439,7 +451,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   title={
                     gatewayStatus.configured
                       ? 'Kirim otomatis ke seluruh anggota via gateway server'
-                      : 'Aktifkan WHATSAPP_API_TOKEN di environment server untuk kirim massal otomatis, atau gunakan tombol Kirim WA per anggota di bawah'
+                      : 'Aktifkan WHATSAPP_API_TOKEN di environment server untuk kirim massal otomatis, atau gunakan tombol Bagikan ke Grup WA'
                   }
                   className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#004A8F] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#003870] disabled:cursor-not-allowed disabled:bg-slate-300"
                 >

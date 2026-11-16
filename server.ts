@@ -20,8 +20,21 @@ interface RecipientPayload {
   message: string;
 }
 
+function isWhatsAppGroupTarget(raw: string): boolean {
+  const trimmed = String(raw || '').trim();
+  return trimmed.includes('@g.us') || /^\d+-\d+$/.test(trimmed);
+}
+
 function normalizeWaNumber(raw: string): string {
-  let num = String(raw || '').replace(/\D/g, '');
+  const trimmed = String(raw || '').trim();
+  if (!trimmed) return '';
+  if (trimmed.includes('@g.us') || trimmed.includes('@c.us') || trimmed.includes('@s.whatsapp.net')) {
+    return trimmed;
+  }
+  if (/^\d+-\d+$/.test(trimmed)) {
+    return `${trimmed}@g.us`;
+  }
+  let num = trimmed.replace(/\D/g, '');
   if (!num) return '';
   if (num.startsWith('0')) {
     num = '62' + num.slice(1);
@@ -45,6 +58,7 @@ function getGatewayConfig() {
   const apiUrl = cleanEnv(process.env.WHATSAPP_API_URL);
   const webhookUrl = cleanEnv(process.env.WHATSAPP_WEBHOOK_URL);
   const phoneNumberId = cleanEnv(process.env.WHATSAPP_PHONE_NUMBER_ID);
+  const defaultGroupId = cleanEnv(process.env.WHATSAPP_GROUP_ID);
 
   const isConfigured =
     (provider === 'webhook' && Boolean(webhookUrl)) ||
@@ -57,16 +71,24 @@ function getGatewayConfig() {
     apiUrl,
     webhookUrl,
     phoneNumberId,
+    defaultGroupId,
     isConfigured,
   };
 }
 
 async function dispatchWhatsAppMessage(phone: string, message: string) {
   const cfg = getGatewayConfig();
-  const target = normalizeWaNumber(phone);
+  const rawInput = phone === 'GROUP' ? cfg.defaultGroupId : phone;
+  const target = normalizeWaNumber(rawInput);
+  const isGroup = isWhatsAppGroupTarget(target);
 
-  if (!target || target.length < 10) {
-    return { success: false, error: 'Nomor WhatsApp tidak valid' };
+  if (!target || (!isGroup && target.length < 10)) {
+    return {
+      success: false,
+      error: isGroup
+        ? 'ID Grup WhatsApp tidak valid.'
+        : 'Nomor HP atau ID Grup WhatsApp tidak valid.',
+    };
   }
 
   if (!cfg.isConfigured) {
@@ -81,7 +103,9 @@ async function dispatchWhatsAppMessage(phone: string, message: string) {
     const formData = new URLSearchParams();
     formData.append('target', target);
     formData.append('message', message);
-    formData.append('countryCode', '62');
+    if (!isGroup) {
+      formData.append('countryCode', '62');
+    }
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -109,6 +133,7 @@ async function dispatchWhatsAppMessage(phone: string, message: string) {
       body: JSON.stringify({
         phone: target,
         message,
+        ...(isGroup ? { isGroup: true } : {}),
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -119,6 +144,13 @@ async function dispatchWhatsAppMessage(phone: string, message: string) {
   }
 
   if (cfg.provider === 'meta') {
+    if (isGroup) {
+      return {
+        success: false,
+        error:
+          'Meta WhatsApp Cloud API tidak mendukung pengiriman langsung ke Grup WA. Gunakan Fonnte, Wablas, Webhook, atau mode Bagikan ke Grup WA.',
+      };
+    }
     const endpoint =
       cfg.apiUrl || `https://graph.facebook.com/v21.0/${cfg.phoneNumberId}/messages`;
     const res = await fetch(endpoint, {
@@ -153,6 +185,7 @@ async function dispatchWhatsAppMessage(phone: string, message: string) {
     },
     body: JSON.stringify({
       phone: target,
+      isGroup,
       message,
       sentAt: new Date().toISOString(),
     }),
@@ -177,6 +210,7 @@ async function startServer() {
     res.json({
       configured: cfg.isConfigured,
       provider: cfg.provider,
+      hasDefaultGroup: Boolean(cfg.defaultGroupId),
     });
   });
 
