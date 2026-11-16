@@ -69,6 +69,8 @@ import {
   AppUser,
   ConfirmationState,
   FinanceDataset,
+  KasKeluar,
+  KasMasuk,
   Pinjaman,
 } from './types/finance';
 
@@ -637,6 +639,101 @@ export default function App() {
     });
   };
 
+  const handleUpdateKasMasuk = (updated: KasMasuk) => {
+    openConfirm({
+      title: 'Perbarui Catatan Kas Masuk?',
+      description: `Mengubah transaksi ${updated.id} pada tab KasMasuk di Google Sheets.`,
+      details: [
+        `Jenis: ${updated.jenis}`,
+        `Nominal Baru: ${rupiah(updated.jumlah)}`,
+        `Keterangan: ${updated.keterangan || '-'}`,
+      ],
+      confirmLabel: 'Simpan Perubahan',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await updateRowValues(activeSpreadsheetId, token, 'KasMasuk', updated.rowIndex, [
+            updated.id,
+            updated.tanggal,
+            updated.idAnggota,
+            updated.jenis,
+            updated.jumlah,
+            updated.keterangan,
+            updated.user || sessionUser?.nama || 'Admin',
+          ]);
+        }, `Kas masuk ${updated.id} berhasil diperbarui.`),
+    });
+  };
+
+  const handleDeleteKasMasuk = (target: KasMasuk) => {
+    if (!dataset) return;
+    const sheetId = dataset.sheetIds['KasMasuk'];
+    if (sheetId === undefined) return;
+    openConfirm({
+      title: 'Hapus Catatan Kas Masuk?',
+      description: 'Baris transaksi ini akan dihapus permanen dari tab KasMasuk.',
+      details: [
+        `ID: ${target.id}`,
+        `Jenis: ${target.jenis}`,
+        `Nominal: ${rupiah(target.jumlah)}`,
+      ],
+      confirmLabel: 'Ya, Hapus Transaksi',
+      variant: 'danger',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
+        }, `Kas masuk ${target.id} berhasil dihapus.`),
+    });
+  };
+
+  const handleUpdateKasKeluar = (updated: KasKeluar) => {
+    openConfirm({
+      title: 'Perbarui Catatan Kas Keluar?',
+      description: `Mengubah transaksi ${updated.id} pada tab KasKeluar di Google Sheets.`,
+      details: [
+        `Kategori: ${updated.jenis}`,
+        `Nominal Baru: ${rupiah(updated.jumlah)}`,
+        `Keterangan: ${updated.keterangan || '-'}`,
+      ],
+      confirmLabel: 'Simpan Perubahan',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await updateRowValues(activeSpreadsheetId, token, 'KasKeluar', updated.rowIndex, [
+            updated.id,
+            updated.tanggal,
+            updated.jenis,
+            updated.jumlah,
+            updated.keterangan,
+            updated.user || sessionUser?.nama || 'Admin',
+          ]);
+        }, `Kas keluar ${updated.id} berhasil diperbarui.`),
+    });
+  };
+
+  const handleDeleteKasKeluar = (target: KasKeluar) => {
+    if (!dataset) return;
+    const sheetId = dataset.sheetIds['KasKeluar'];
+    if (sheetId === undefined) return;
+    openConfirm({
+      title: 'Hapus Catatan Kas Keluar?',
+      description: 'Baris pengeluaran ini akan dihapus permanen dari tab KasKeluar.',
+      details: [
+        `ID: ${target.id}`,
+        `Kategori: ${target.jenis}`,
+        `Nominal: ${rupiah(target.jumlah)}`,
+      ],
+      confirmLabel: 'Ya, Hapus Transaksi',
+      variant: 'danger',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
+        }, `Kas keluar ${target.id} berhasil dihapus.`),
+    });
+  };
+
   // Pinjaman & ACC
   const handleSavePinjaman = (payload: {
     idAnggota: string;
@@ -818,6 +915,173 @@ export default function App() {
             rowIndex: 0,
           });
         }, 'Angsuran berhasil disimpan dan kwitansi siap dicetak.'),
+    });
+  };
+
+  const handleUpdatePinjaman = (updated: Pinjaman) => {
+    const angsuranPerBulan = Math.round(updated.jumlah / Math.max(updated.tenor, 1));
+    const sisa = Math.max(updated.jumlah - updated.totalDibayar, 0);
+    const status =
+      updated.status === 'Berjalan' && sisa <= 0 ? 'Lunas' : updated.status;
+
+    openConfirm({
+      title: 'Perbarui Data Pinjaman?',
+      description: `Mengubah data pinjaman ${updated.idPinjaman} pada tab Pinjaman di Google Sheets.`,
+      details: [
+        `Pokok Baru: ${rupiah(updated.jumlah)} (${updated.tenor} bulan)`,
+        `Angsuran/Bulan: ${rupiah(angsuranPerBulan)}`,
+        `Sisa Pinjaman: ${rupiah(sisa)} · Status: ${status}`,
+      ],
+      confirmLabel: 'Simpan Perubahan',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', updated.rowIndex, [
+            updated.idPinjaman,
+            updated.tanggal,
+            updated.idAnggota,
+            updated.jumlah,
+            updated.tenor,
+            angsuranPerBulan,
+            updated.totalDibayar,
+            sisa,
+            status,
+          ]);
+        }, `Data pinjaman ${updated.idPinjaman} berhasil diperbarui.`),
+    });
+  };
+
+  const handleDeletePinjaman = (target: Pinjaman) => {
+    if (!dataset) return;
+    const sheetId = dataset.sheetIds['Pinjaman'];
+    if (sheetId === undefined) return;
+    openConfirm({
+      title: 'Hapus Catatan Pinjaman?',
+      description:
+        'Baris pinjaman ini akan dihapus permanen dari tab Pinjaman. (Mutasi KasKeluar sebelumnya tidak ikut terhapus otomatis.)',
+      details: [
+        `ID Pinjaman: ${target.idPinjaman}`,
+        `Nominal: ${rupiah(target.jumlah)}`,
+        `Status: ${target.status}`,
+      ],
+      confirmLabel: 'Ya, Hapus Pinjaman',
+      variant: 'danger',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
+        }, `Pinjaman ${target.idPinjaman} berhasil dihapus.`),
+    });
+  };
+
+  const handleUpdateAngsuran = (updated: Angsuran) => {
+    if (!dataset) return;
+    const linkedLoan = dataset.pinjaman.find((p) => p.idPinjaman === updated.idPinjaman);
+    const totalDibayarBaru = dataset.angsuran
+      .filter((a) => a.idPinjaman === updated.idPinjaman)
+      .reduce(
+        (sum, a) => sum + (a.idAngsuran === updated.idAngsuran ? updated.jumlah : a.jumlah),
+        0
+      );
+    const sisaPinjamanBaru = linkedLoan
+      ? Math.max(linkedLoan.jumlah - totalDibayarBaru, 0)
+      : updated.sisa;
+    const statusPinjamanBaru = linkedLoan
+      ? sisaPinjamanBaru <= 0
+        ? 'Lunas'
+        : 'Berjalan'
+      : 'Berjalan';
+
+    openConfirm({
+      title: 'Perbarui Pembayaran Angsuran?',
+      description:
+        'Memperbarui baris pada tab Angsuran sekaligus menghitung ulang Total Dibayar dan Sisa pada tab Pinjaman.',
+      details: [
+        `ID Angsuran: ${updated.idAngsuran} (Ke-${updated.angsuranKe})`,
+        `Nominal Baru: ${rupiah(updated.jumlah)}`,
+        ...(linkedLoan
+          ? [`Sisa Pinjaman (${linkedLoan.idPinjaman}): ${rupiah(sisaPinjamanBaru)} (${statusPinjamanBaru})`]
+          : []),
+      ],
+      confirmLabel: 'Simpan Perubahan',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await updateRowValues(activeSpreadsheetId, token, 'Angsuran', updated.rowIndex, [
+            updated.idAngsuran,
+            updated.tanggal,
+            updated.idPinjaman,
+            updated.idAnggota,
+            updated.angsuranKe,
+            updated.jumlah,
+            sisaPinjamanBaru,
+            updated.user || sessionUser?.nama || 'Admin',
+          ]);
+          if (linkedLoan) {
+            await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', linkedLoan.rowIndex, [
+              linkedLoan.idPinjaman,
+              linkedLoan.tanggal,
+              linkedLoan.idAnggota,
+              linkedLoan.jumlah,
+              linkedLoan.tenor,
+              linkedLoan.angsuranPerBulan,
+              totalDibayarBaru,
+              sisaPinjamanBaru,
+              statusPinjamanBaru,
+            ]);
+          }
+        }, `Angsuran ${updated.idAngsuran} berhasil diperbarui.`),
+    });
+  };
+
+  const handleDeleteAngsuran = (target: Angsuran) => {
+    if (!dataset) return;
+    const sheetId = dataset.sheetIds['Angsuran'];
+    if (sheetId === undefined) return;
+    const linkedLoan = dataset.pinjaman.find((p) => p.idPinjaman === target.idPinjaman);
+    const totalDibayarBaru = dataset.angsuran
+      .filter((a) => a.idPinjaman === target.idPinjaman && a.idAngsuran !== target.idAngsuran)
+      .reduce((sum, a) => sum + a.jumlah, 0);
+    const sisaPinjamanBaru = linkedLoan
+      ? Math.max(linkedLoan.jumlah - totalDibayarBaru, 0)
+      : 0;
+    const statusPinjamanBaru = linkedLoan
+      ? sisaPinjamanBaru <= 0
+        ? 'Lunas'
+        : 'Berjalan'
+      : 'Berjalan';
+
+    openConfirm({
+      title: 'Hapus Pembayaran Angsuran?',
+      description:
+        'Baris angsuran akan dihapus permanen dan Total Dibayar serta Sisa pada tab Pinjaman akan disesuaikan kembali.',
+      details: [
+        `ID Angsuran: ${target.idAngsuran}`,
+        `Nominal Dihapus: ${rupiah(target.jumlah)}`,
+        ...(linkedLoan
+          ? [`Sisa Pinjaman (${linkedLoan.idPinjaman}) menjadi: ${rupiah(sisaPinjamanBaru)}`]
+          : []),
+      ],
+      confirmLabel: 'Ya, Hapus Angsuran',
+      variant: 'danger',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getAccessToken()!;
+          await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
+          if (linkedLoan) {
+            await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', linkedLoan.rowIndex, [
+              linkedLoan.idPinjaman,
+              linkedLoan.tanggal,
+              linkedLoan.idAnggota,
+              linkedLoan.jumlah,
+              linkedLoan.tenor,
+              linkedLoan.angsuranPerBulan,
+              totalDibayarBaru,
+              sisaPinjamanBaru,
+              statusPinjamanBaru,
+            ]);
+          }
+        }, `Angsuran ${target.idAngsuran} berhasil dihapus.`),
     });
   };
 
@@ -1661,11 +1925,21 @@ export default function App() {
           )}
 
           {activePage === 'kasMasuk' && (
-            <KasMasukView dataset={dataset} onSaveKasMasuk={handleSaveKasMasuk} />
+            <KasMasukView
+              dataset={dataset}
+              onSaveKasMasuk={handleSaveKasMasuk}
+              onUpdateKasMasuk={handleUpdateKasMasuk}
+              onDeleteKasMasuk={handleDeleteKasMasuk}
+            />
           )}
 
           {activePage === 'kasKeluar' && (
-            <KasKeluarView dataset={dataset} onSaveKasKeluar={handleSaveKasKeluar} />
+            <KasKeluarView
+              dataset={dataset}
+              onSaveKasKeluar={handleSaveKasKeluar}
+              onUpdateKasKeluar={handleUpdateKasKeluar}
+              onDeleteKasKeluar={handleDeleteKasKeluar}
+            />
           )}
 
           {activePage === 'pinjaman' && (
@@ -1675,6 +1949,8 @@ export default function App() {
               onSavePinjaman={handleSavePinjaman}
               onAccPinjaman={handleAccPinjaman}
               onTolakPinjaman={handleTolakPinjaman}
+              onUpdatePinjaman={handleUpdatePinjaman}
+              onDeletePinjaman={handleDeletePinjaman}
             />
           )}
 
@@ -1682,6 +1958,8 @@ export default function App() {
             <AngsuranAndTunggakanView
               dataset={dataset}
               onSaveAngsuran={handleSaveAngsuran}
+              onUpdateAngsuran={handleUpdateAngsuran}
+              onDeleteAngsuran={handleDeleteAngsuran}
               onShowKwitansi={setKwitansiModalData}
             />
           )}

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { formatTanggalId, rupiah } from '../lib/financeEngine';
-import { Anggota, FinanceDataset } from '../types/finance';
+import { Anggota, FinanceDataset, KasKeluar, KasMasuk } from '../types/finance';
 
 interface DataAnggotaViewProps {
   dataset: FinanceDataset;
@@ -281,17 +281,22 @@ interface KasMasukViewProps {
     jumlah: number;
     keterangan: string;
   }) => void;
+  onUpdateKasMasuk: (item: KasMasuk) => void;
+  onDeleteKasMasuk: (item: KasMasuk) => void;
 }
 
 export const KasMasukView: React.FC<KasMasukViewProps> = ({
   dataset,
   onSaveKasMasuk,
+  onUpdateKasMasuk,
+  onDeleteKasMasuk,
 }) => {
   const [idAnggota, setIdAnggota] = useState('');
   const [jenis, setJenis] = useState('Simpanan');
   const [jumlah, setJumlah] = useState('');
   const [keterangan, setKeterangan] = useState('');
   const [search, setSearch] = useState('');
+  const [editing, setEditing] = useState<KasMasuk | null>(null);
 
   const activeMembers = useMemo(
     () => dataset.anggota.filter((a) => a.status === 'Aktif'),
@@ -429,13 +434,14 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
                   <th className="py-2.5 pr-3">Anggota</th>
                   <th className="py-2.5 pr-3">Jenis</th>
                   <th className="py-2.5 pr-3">Keterangan</th>
-                  <th className="py-2.5 text-right">Nominal Kredit</th>
+                  <th className="py-2.5 pr-3 text-right">Nominal Kredit</th>
+                  <th className="py-2.5 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                    <td colSpan={6} className="py-8 text-center text-sm text-slate-400">
                       Belum ada catatan kas masuk.
                     </td>
                   </tr>
@@ -452,8 +458,28 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
                         {r.jenis}
                       </td>
                       <td className="py-3 pr-3 text-slate-600">{r.keterangan || '-'}</td>
-                      <td className="whitespace-nowrap py-3 text-right font-mono font-bold tabular-nums text-emerald-700">
+                      <td className="whitespace-nowrap py-3 pr-3 text-right font-mono font-bold tabular-nums text-emerald-700">
                         + {rupiah(r.jumlah)}
+                      </td>
+                      <td className="whitespace-nowrap py-3 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setEditing(r)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteKasMasuk(r)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -463,6 +489,116 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
           </div>
         </div>
       </div>
+
+      {editing && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">
+                Edit Kas Masuk · {editing.id}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Anggota</label>
+                <select
+                  value={editing.idAnggota}
+                  onChange={(e) => setEditing({ ...editing, idAnggota: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="">-- Umum / Tanpa Anggota --</option>
+                  {dataset.anggota.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.id} - {m.nama}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Jenis</label>
+                  <select
+                    value={editing.jenis}
+                    onChange={(e) => setEditing({ ...editing, jenis: e.target.value })}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="Simpanan">Simpanan</option>
+                    <option value="Angsuran">Angsuran</option>
+                    <option value="Denda">Denda</option>
+                    <option value="Lainnya">Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Tanggal
+                  </label>
+                  <input
+                    type="text"
+                    value={editing.tanggal}
+                    onChange={(e) => setEditing({ ...editing, tanggal: e.target.value })}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Nominal (Rp)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={editing.jumlah}
+                  onChange={(e) => setEditing({ ...editing, jumlah: Number(e.target.value) || 0 })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Keterangan
+                </label>
+                <textarea
+                  rows={2}
+                  value={editing.keterangan}
+                  onChange={(e) => setEditing({ ...editing, keterangan: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={editing.jumlah <= 0}
+                onClick={() => {
+                  const target = editing;
+                  setEditing(null);
+                  onUpdateKasMasuk(target);
+                }}
+                className="rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-50"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -474,16 +610,21 @@ interface KasKeluarViewProps {
     jumlah: number;
     keterangan: string;
   }) => void;
+  onUpdateKasKeluar: (item: KasKeluar) => void;
+  onDeleteKasKeluar: (item: KasKeluar) => void;
 }
 
 export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
   dataset,
   onSaveKasKeluar,
+  onUpdateKasKeluar,
+  onDeleteKasKeluar,
 }) => {
   const [jenis, setJenis] = useState('Operasional');
   const [jumlah, setJumlah] = useState('');
   const [keterangan, setKeterangan] = useState('');
   const [search, setSearch] = useState('');
+  const [editing, setEditing] = useState<KasKeluar | null>(null);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -596,13 +737,14 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
                   <th className="py-2.5 pr-3">Kategori</th>
                   <th className="py-2.5 pr-3">Keterangan</th>
                   <th className="py-2.5 pr-3">Petugas</th>
-                  <th className="py-2.5 text-right">Nominal Debit</th>
+                  <th className="py-2.5 pr-3 text-right">Nominal Debit</th>
+                  <th className="py-2.5 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                    <td colSpan={6} className="py-8 text-center text-sm text-slate-400">
                       Belum ada pengeluaran tercatat.
                     </td>
                   </tr>
@@ -615,8 +757,28 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
                       <td className="py-3 pr-3 font-semibold text-slate-900">{r.jenis}</td>
                       <td className="py-3 pr-3 text-slate-600">{r.keterangan || '-'}</td>
                       <td className="py-3 pr-3 text-xs text-slate-500">{r.user || '-'}</td>
-                      <td className="whitespace-nowrap py-3 text-right font-mono font-bold tabular-nums text-amber-600">
+                      <td className="whitespace-nowrap py-3 pr-3 text-right font-mono font-bold tabular-nums text-amber-600">
                         - {rupiah(r.jumlah)}
+                      </td>
+                      <td className="whitespace-nowrap py-3 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setEditing(r)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteKasKeluar(r)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -626,6 +788,104 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
           </div>
         </div>
       </div>
+
+      {editing && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">
+                Edit Kas Keluar · {editing.id}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Kategori
+                  </label>
+                  <select
+                    value={editing.jenis}
+                    onChange={(e) => setEditing({ ...editing, jenis: e.target.value })}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="Operasional">Operasional</option>
+                    <option value="Pencairan Pinjaman">Pencairan Pinjaman</option>
+                    <option value="Konsumsi Rapat">Konsumsi Rapat</option>
+                    <option value="Sosial / Santunan">Sosial / Santunan</option>
+                    <option value="Lainnya">Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Tanggal
+                  </label>
+                  <input
+                    type="text"
+                    value={editing.tanggal}
+                    onChange={(e) => setEditing({ ...editing, tanggal: e.target.value })}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Nominal (Rp)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={editing.jumlah}
+                  onChange={(e) => setEditing({ ...editing, jumlah: Number(e.target.value) || 0 })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Keterangan
+                </label>
+                <textarea
+                  rows={2}
+                  value={editing.keterangan}
+                  onChange={(e) => setEditing({ ...editing, keterangan: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={editing.jumlah <= 0}
+                onClick={() => {
+                  const target = editing;
+                  setEditing(null);
+                  onUpdateKasKeluar(target);
+                }}
+                className="rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-50"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

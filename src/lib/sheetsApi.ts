@@ -314,7 +314,6 @@ export async function loadAllFinanceData(
 
   const anggota: Anggota[] = (tabRows['Anggota'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       id: String(r[0] || '').trim(),
       nama: String(r[1] || '').trim(),
@@ -323,11 +322,11 @@ export async function loadAllFinanceData(
       tanggal: String(r[4] || '').trim(),
       status: String(r[5] || 'Aktif').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.id !== '');
 
   const kasMasuk: KasMasuk[] = (tabRows['KasMasuk'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       id: String(r[0] || '').trim(),
       tanggal: String(r[1] || '').trim(),
@@ -337,11 +336,11 @@ export async function loadAllFinanceData(
       keterangan: String(r[5] || '').trim(),
       user: String(r[6] || '').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.id !== '');
 
   const kasKeluar: KasKeluar[] = (tabRows['KasKeluar'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       id: String(r[0] || '').trim(),
       tanggal: String(r[1] || '').trim(),
@@ -350,11 +349,11 @@ export async function loadAllFinanceData(
       keterangan: String(r[4] || '').trim(),
       user: String(r[5] || '').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.id !== '');
 
   const pinjaman: Pinjaman[] = (tabRows['Pinjaman'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       idPinjaman: String(r[0] || '').trim(),
       tanggal: String(r[1] || '').trim(),
@@ -366,11 +365,11 @@ export async function loadAllFinanceData(
       sisa: toNumber(r[7]),
       status: String(r[8] || '').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.idPinjaman !== '');
 
   const angsuran: Angsuran[] = (tabRows['Angsuran'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       idAngsuran: String(r[0] || '').trim(),
       tanggal: String(r[1] || '').trim(),
@@ -381,11 +380,11 @@ export async function loadAllFinanceData(
       sisa: toNumber(r[6]),
       user: String(r[7] || '').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.idAngsuran !== '');
 
   const laporanBulanan: LaporanBulanan[] = (tabRows['LaporanBulanan'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       idLaporan: String(r[0] || '').trim(),
       periode: String(r[1] || '').trim(),
@@ -398,11 +397,11 @@ export async function loadAllFinanceData(
       dibuatPada: String(r[8] || '').trim(),
       statusKirimWa: String(r[9] || '').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.idLaporan !== '');
 
   const logWhatsApp: LogWhatsApp[] = (tabRows['LogWhatsApp'] || [])
     .slice(1)
-    .filter((r) => String(r[0] || '').trim() !== '')
     .map((r, idx) => ({
       idLog: String(r[0] || '').trim(),
       tanggal: String(r[1] || '').trim(),
@@ -414,7 +413,8 @@ export async function loadAllFinanceData(
       status: String(r[7] || '').trim(),
       ringkasan: String(r[8] || '').trim(),
       rowIndex: idx + 2,
-    }));
+    }))
+    .filter((item) => item.idLog !== '');
 
   return {
     spreadsheetTitle: meta.title,

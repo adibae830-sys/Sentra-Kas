@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { CheckCircle, MessageCircle, Receipt, XCircle } from 'lucide-react';
+import { CheckCircle, MessageCircle, Pencil, Receipt, Trash2, X, XCircle } from 'lucide-react';
 import { formatNoWA, formatTanggalId, rupiah } from '../lib/financeEngine';
 import { Angsuran, FinanceDataset, Pinjaman, RoleType } from '../types/finance';
 
@@ -9,6 +9,8 @@ interface PinjamanAndAccViewProps {
   onSavePinjaman: (payload: { idAnggota: string; jumlah: number; tenor: number }) => void;
   onAccPinjaman: (pinjaman: Pinjaman) => void;
   onTolakPinjaman: (pinjaman: Pinjaman) => void;
+  onUpdatePinjaman: (pinjaman: Pinjaman) => void;
+  onDeletePinjaman: (pinjaman: Pinjaman) => void;
 }
 
 export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
@@ -17,10 +19,13 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
   onSavePinjaman,
   onAccPinjaman,
   onTolakPinjaman,
+  onUpdatePinjaman,
+  onDeletePinjaman,
 }) => {
   const [idAnggota, setIdAnggota] = useState('');
   const [jumlah, setJumlah] = useState('');
   const [tenor, setTenor] = useState('');
+  const [editingLoan, setEditingLoan] = useState<Pinjaman | null>(null);
 
   const activeMembers = useMemo(
     () => dataset.anggota.filter((a) => a.status === 'Aktif'),
@@ -227,13 +232,14 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                 <th className="py-2.5 pr-3 text-right">Angsuran/Bln</th>
                 <th className="py-2.5 pr-3 text-right">Total Dibayar</th>
                 <th className="py-2.5 pr-3 text-right">Sisa</th>
-                <th className="py-2.5">Status</th>
+                <th className="py-2.5 pr-3">Status</th>
+                <th className="py-2.5 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {allLoans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-sm text-slate-400">
                     Belum ada catatan pinjaman.
                   </td>
                 </tr>
@@ -261,7 +267,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                     <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-slate-900">
                       {rupiah(p.sisa)}
                     </td>
-                    <td className="py-3 text-xs font-semibold">
+                    <td className="py-3 pr-3 text-xs font-semibold">
                       <span
                         className={
                           p.status === 'Lunas'
@@ -276,6 +282,26 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                         {p.status}
                       </span>
                     </td>
+                    <td className="whitespace-nowrap py-3 text-right">
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditingLoan(p)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeletePinjaman(p)}
+                          className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -283,6 +309,149 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
           </table>
         </div>
       </div>
+
+      {editingLoan && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">
+                Edit Data Pinjaman · {editingLoan.idPinjaman}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingLoan(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">Anggota</label>
+                <select
+                  value={editingLoan.idAnggota}
+                  onChange={(e) => setEditingLoan({ ...editingLoan, idAnggota: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                >
+                  {dataset.anggota.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.id} - {m.nama}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Pokok Pinjaman (Rp)
+                  </label>
+                  <input
+                    type="number"
+                    min={1000}
+                    value={editingLoan.jumlah}
+                    onChange={(e) => {
+                      const jml = Number(e.target.value) || 0;
+                      const tnr = Math.max(editingLoan.tenor, 1);
+                      const sisa = Math.max(jml - editingLoan.totalDibayar, 0);
+                      setEditingLoan({
+                        ...editingLoan,
+                        jumlah: jml,
+                        angsuranPerBulan: Math.round(jml / tnr),
+                        sisa,
+                      });
+                    }}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Tenor (Bulan)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingLoan.tenor}
+                    onChange={(e) => {
+                      const tnr = Math.max(Number(e.target.value) || 1, 1);
+                      setEditingLoan({
+                        ...editingLoan,
+                        tenor: tnr,
+                        angsuranPerBulan: Math.round(editingLoan.jumlah / tnr),
+                      });
+                    }}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">Status</label>
+                  <select
+                    value={editingLoan.status}
+                    onChange={(e) => setEditingLoan({ ...editingLoan, status: e.target.value })}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                  >
+                    <option value="Menunggu">Menunggu</option>
+                    <option value="Berjalan">Berjalan</option>
+                    <option value="Lunas">Lunas</option>
+                    <option value="Ditolak">Ditolak</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Tanggal
+                  </label>
+                  <input
+                    type="text"
+                    value={editingLoan.tanggal}
+                    onChange={(e) => setEditingLoan({ ...editingLoan, tanggal: e.target.value })}
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs"
+                  />
+                </div>
+              </div>
+              <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Angsuran/Bulan</span>
+                  <span className="font-mono font-bold text-[#004A8F]">
+                    {rupiah(editingLoan.angsuranPerBulan)}
+                  </span>
+                </div>
+                <div className="mt-1 flex justify-between">
+                  <span className="text-slate-600">Sisa Pinjaman</span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {rupiah(editingLoan.sisa)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingLoan(null)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={editingLoan.jumlah <= 0 || editingLoan.tenor <= 0}
+                onClick={() => {
+                  const target = editingLoan;
+                  setEditingLoan(null);
+                  onUpdatePinjaman(target);
+                }}
+                className="rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-50"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -294,17 +463,22 @@ interface AngsuranAndTunggakanViewProps {
     angsuranKe: number;
     jumlah: number;
   }) => void;
+  onUpdateAngsuran: (angsuran: Angsuran) => void;
+  onDeleteAngsuran: (angsuran: Angsuran) => void;
   onShowKwitansi: (angsuran: Angsuran) => void;
 }
 
 export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> = ({
   dataset,
   onSaveAngsuran,
+  onUpdateAngsuran,
+  onDeleteAngsuran,
   onShowKwitansi,
 }) => {
   const [selectedPinjamanId, setSelectedPinjamanId] = useState('');
   const [angsuranKe, setAngsuranKe] = useState('');
   const [jumlahBayar, setJumlahBayar] = useState('');
+  const [editingAngsuran, setEditingAngsuran] = useState<Angsuran | null>(null);
 
   const memberMap = useMemo(() => {
     const map = new Map<string, { nama: string; nohp: string }>();
@@ -526,7 +700,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                 <th className="py-2 pr-3">Ke</th>
                 <th className="py-2 pr-3 text-right">Dibayar</th>
                 <th className="py-2 pr-3 text-right">Sisa</th>
-                <th className="py-2 text-right">Bukti</th>
+                <th className="py-2 text-right">Bukti & Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -560,15 +734,35 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                       <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-700">
                         {rupiah(ang.sisa)}
                       </td>
-                      <td className="py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => onShowKwitansi(ang)}
-                          className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-[#004A8F] hover:bg-[#EBF3FC]"
-                        >
-                          <Receipt className="h-3.5 w-3.5" />
-                          e-Resi
-                        </button>
+                      <td className="whitespace-nowrap py-3 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => onShowKwitansi(ang)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-[#004A8F] hover:bg-[#EBF3FC]"
+                          >
+                            <Receipt className="h-3.5 w-3.5" />
+                            e-Resi
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingAngsuran(ang)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            title="Edit nominal angsuran"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteAngsuran(ang)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50"
+                            title="Hapus pembayaran angsuran"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Hapus
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -577,6 +771,105 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
           </table>
         </div>
       </div>
+
+      {editingAngsuran && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">
+                Edit Pembayaran · {editingAngsuran.idAngsuran}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingAngsuran(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs text-slate-700">
+                Pinjaman: <span className="font-mono font-bold">{editingAngsuran.idPinjaman}</span> ·
+                Sisa pinjaman di sheet Pinjaman akan otomatis dihitung ulang setelah disimpan.
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Angsuran Ke
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingAngsuran.angsuranKe}
+                    onChange={(e) =>
+                      setEditingAngsuran({
+                        ...editingAngsuran,
+                        angsuranKe: Number(e.target.value) || 1,
+                      })
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Tanggal
+                  </label>
+                  <input
+                    type="text"
+                    value={editingAngsuran.tanggal}
+                    onChange={(e) =>
+                      setEditingAngsuran({ ...editingAngsuran, tanggal: e.target.value })
+                    }
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Nominal Bayar (Rp)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={editingAngsuran.jumlah}
+                  onChange={(e) =>
+                    setEditingAngsuran({
+                      ...editingAngsuran,
+                      jumlah: Number(e.target.value) || 0,
+                    })
+                  }
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingAngsuran(null)}
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={editingAngsuran.jumlah <= 0}
+                onClick={() => {
+                  const target = editingAngsuran;
+                  setEditingAngsuran(null);
+                  onUpdateAngsuran(target);
+                }}
+                className="rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-50"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
