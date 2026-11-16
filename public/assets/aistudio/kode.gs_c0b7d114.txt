@@ -1,0 +1,837 @@
+const SS_ID = "1ktrWJ5YsED71cPxbo0Om_J-9f0PlAgsThEhKL-TTBSU";
+const SS = SpreadsheetApp.openById(SS_ID);
+
+/* =========================================================
+   STRUKTUR SHEET & HEADER
+   Semua sheet & header akan dibuat OTOMATIS kalau belum ada.
+========================================================= */
+
+const STRUKTUR_SHEET = {
+  "Users": ["Username", "Password", "Nama", "Role", "Status", "IdAnggota"],
+  "Anggota": ["IdAnggota", "Nama", "Alamat", "NoHP", "Tanggal", "Status"],
+  "KasMasuk": ["IdKasMasuk", "Tanggal", "IdAnggota", "Jenis", "Jumlah", "Keterangan", "User"],
+  "KasKeluar": ["IdKasKeluar", "Tanggal", "Jenis", "Jumlah", "Keterangan", "User"],
+  "Pinjaman": ["IdPinjaman", "Tanggal", "IdAnggota", "Jumlah", "Tenor", "AngsuranPerBulan", "TotalDibayar", "Sisa", "Status"],
+  "Angsuran": ["IdAngsuran", "Tanggal", "IdPinjaman", "IdAnggota", "AngsuranKe", "Jumlah", "Sisa", "User"]
+};
+
+function setupDatabase() {
+  Object.keys(STRUKTUR_SHEET).forEach(namaSheet => {
+    let sheet = SS.getSheetByName(namaSheet);
+
+    if (!sheet) {
+      sheet = SS.insertSheet(namaSheet);
+    }
+
+    const header = STRUKTUR_SHEET[namaSheet];
+    const headerSekarang = sheet.getRange(1, 1, 1, header.length).getValues()[0];
+    const headerKosong = headerSekarang.every(v => v === "");
+
+    if (headerKosong) {
+      sheet.getRange(1, 1, 1, header.length).setValues([header]);
+      sheet.getRange(1, 1, 1, header.length).setFontWeight("bold");
+    }
+  });
+
+  const shUsers = SS.getSheetByName("Users");
+  const dataUsers = shUsers.getDataRange().getValues();
+
+  const sudahAdaAdmin = dataUsers.slice(1).some(r => String(r[3] || "").trim() === "Admin" || String(r[3] || "").trim() === "Administrator");
+
+  if (!sudahAdaAdmin) {
+    shUsers.appendRow(["admin", "admin123", "Administrator", "Admin", "Aktif", ""]);
+  }
+
+  return "Setup database selesai. Login admin: username=admin, password=admin123";
+}
+
+function doGet() {
+  setupDatabase();
+
+  return HtmlService.createHtmlOutputFromFile("Index")
+    .setTitle("Sistem Keuangan Anggota")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function sh(name) {
+  const sheet = SS.getSheetByName(name);
+  if (!sheet) {
+    throw new Error("Sheet tidak ditemukan: " + name);
+  }
+  return sheet;
+}
+
+/* =========================================================
+   LOGIN & AKUN
+========================================================= */
+
+function login(username, password) {
+  const users = sh("Users").getDataRange().getValues();
+  const anggota = sh("Anggota").getDataRange().getValues();
+
+  username = String(username || "").trim();
+  password = String(password || "").trim();
+
+  for (let i = 1; i < users.length; i++) {
+    const u = String(users[i][0] || "").trim();
+    const p = String(users[i][1] || "").trim();
+    const nama = String(users[i][2] || "").trim();
+    let role = String(users[i][3] || "").trim();
+    const status = String(users[i][4] || "").trim();
+    let idAnggota = String(users[i][5] || "").trim();
+
+    if (role === "Admin") role = "Administrator";
+
+    if (u === username && p === password && status === "Aktif") {
+
+      if (role === "Anggota" && !idAnggota) {
+        for (let j = 1; j < anggota.length; j++) {
+          const idA = String(anggota[j][0] || "").trim();
+          const namaA = String(anggota[j][1] || "").trim();
+
+          if (namaA.toLowerCase() === nama.toLowerCase()) {
+            idAnggota = idA;
+            sh("Users").getRange(i + 1, 6).setValue(idAnggota);
+            break;
+          }
+        }
+      }
+
+      return {
+        status: true,
+        username: u,
+        nama: nama,
+        role: role,
+        idAnggota: idAnggota
+      };
+    }
+  }
+
+  return {
+    status: false,
+    message: "Login gagal. Periksa username, password, role, status, dan ID anggota."
+  };
+}
+
+function updateAkun(data) {
+  const sheet = sh("Users");
+  const rows = sheet.getDataRange().getValues();
+
+  const usernameLama = String(data.usernameLama || "").trim();
+  const usernameBaru = String(data.usernameBaru || "").trim();
+  const passwordLama = String(data.passwordLama || "").trim();
+  const passwordBaru = String(data.passwordBaru || "").trim();
+
+  if (!usernameBaru || !passwordLama || !passwordBaru) {
+    return {
+      status: false,
+      message: "Semua data wajib diisi"
+    };
+  }
+
+  for (let i = 1; i < rows.length; i++) {
+    const usernameSheet = String(rows[i][0] || "").trim();
+
+    if (usernameSheet === usernameBaru && usernameSheet !== usernameLama) {
+      return {
+        status: false,
+        message: "Username baru sudah digunakan"
+      };
+    }
+  }
+
+  for (let i = 1; i < rows.length; i++) {
+    const usernameSheet = String(rows[i][0] || "").trim();
+    const passwordSheet = String(rows[i][1] || "").trim();
+
+    if (usernameSheet === usernameLama) {
+      if (passwordSheet !== passwordLama) {
+        return {
+          status: false,
+          message: "Password lama salah"
+        };
+      }
+
+      sheet.getRange(i + 1, 1).setValue(usernameBaru);
+      sheet.getRange(i + 1, 2).setValue(passwordBaru);
+
+      return {
+        status: true,
+        message: "Username dan password berhasil diubah. Silakan login ulang."
+      };
+    }
+  }
+
+  return {
+    status: false,
+    message: "Akun tidak ditemukan"
+  };
+}
+
+/* =========================================================
+   DAFTAR ANGGOTA MANDIRI
+========================================================= */
+
+function daftarAnggotaMandiri(data) {
+  const shAnggota = sh("Anggota");
+  const shUsers = sh("Users");
+
+  const nama = String(data.nama || "").trim();
+  const alamat = String(data.alamat || "").trim();
+  const nohp = String(data.nohp || "").trim();
+  const username = String(data.username || "").trim();
+  const password = String(data.password || "").trim();
+
+  if (!nama || !nohp || !username || !password) {
+    return {
+      status: false,
+      message: "Nama, No HP, username, dan password wajib diisi"
+    };
+  }
+
+  const users = shUsers.getDataRange().getValues();
+
+  for (let i = 1; i < users.length; i++) {
+    if (String(users[i][0] || "").trim() === username) {
+      return {
+        status: false,
+        message: "Username sudah digunakan"
+      };
+    }
+  }
+
+  const idAnggota = "AGT-" + Date.now();
+
+  shAnggota.appendRow([
+    idAnggota,
+    nama,
+    alamat,
+    nohp,
+    new Date(),
+    "Aktif"
+  ]);
+
+  shUsers.appendRow([
+    username,
+    password,
+    nama,
+    "Anggota",
+    "Aktif",
+    idAnggota
+  ]);
+
+  return {
+    status: true,
+    message: "Pendaftaran berhasil. Silakan login.",
+    idAnggota: idAnggota
+  };
+}
+
+/* =========================================================
+   DROPDOWN
+========================================================= */
+
+function getPilihanAnggota() {
+  const data = sh("Anggota").getDataRange().getValues().slice(1);
+
+  return data
+    .filter(r => String(r[5] || "").trim() === "Aktif")
+    .map(r => ({
+      id: r[0],
+      nama: r[1]
+    }));
+}
+
+function getPilihanPinjaman() {
+  const data = sh("Pinjaman").getDataRange().getValues().slice(1);
+
+  return data
+    .filter(r => String(r[8] || "").trim() === "Berjalan")
+    .map(r => ({
+      idPinjaman: r[0],
+      idAnggota: r[2],
+      sisa: Number(r[7] || 0)
+    }));
+}
+
+function getDetailPinjaman(idPinjaman) {
+  const data = sh("Pinjaman").getDataRange().getValues().slice(1);
+  idPinjaman = String(idPinjaman || "").trim();
+
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][0] || "").trim() === idPinjaman) {
+      return {
+        idPinjaman: data[i][0],
+        idAnggota: data[i][2],
+        jumlah: Number(data[i][3] || 0),
+        tenor: Number(data[i][4] || 0),
+        angsuranPerBulan: Number(data[i][5] || 0),
+        totalDibayar: Number(data[i][6] || 0),
+        sisa: Number(data[i][7] || 0),
+        status: data[i][8]
+      };
+    }
+  }
+
+  return null;
+}
+
+/* =========================================================
+   DASHBOARD ADMINISTRATOR
+========================================================= */
+
+function getDashboard() {
+  const kasMasuk = sh("KasMasuk").getDataRange().getValues().slice(1);
+  const kasKeluar = sh("KasKeluar").getDataRange().getValues().slice(1);
+  const pinjaman = sh("Pinjaman").getDataRange().getValues().slice(1);
+  const anggota = sh("Anggota").getDataRange().getValues().slice(1);
+
+  const totalMasuk = kasMasuk.reduce((a, r) => a + Number(r[4] || 0), 0);
+  const totalKeluar = kasKeluar.reduce((a, r) => a + Number(r[3] || 0), 0);
+
+  const piutang = pinjaman
+    .filter(r => String(r[8] || "").trim() === "Berjalan")
+    .reduce((a, r) => a + Number(r[7] || 0), 0);
+
+  return {
+    anggota: anggota.length,
+    masuk: totalMasuk,
+    keluar: totalKeluar,
+    saldo: totalMasuk - totalKeluar,
+    piutang: piutang
+  };
+}
+
+function getRingkasanAnggota() {
+  const anggota = sh("Anggota").getDataRange().getValues().slice(1);
+  const kasMasuk = sh("KasMasuk").getDataRange().getValues().slice(1);
+  const pinjaman = sh("Pinjaman").getDataRange().getValues().slice(1);
+
+  return anggota.map(a => {
+    const idAnggota = a[0];
+    const nama = a[1];
+
+    const totalSimpanan = kasMasuk
+      .filter(k => k[2] == idAnggota && k[3] == "Simpanan")
+      .reduce((total, k) => total + Number(k[4] || 0), 0);
+
+    const pinjamanAnggota = pinjaman.filter(p => p[2] == idAnggota);
+
+    const totalPinjaman = pinjamanAnggota
+      .filter(p => p[8] == "Berjalan" || p[8] == "Lunas")
+      .reduce((total, p) => total + Number(p[3] || 0), 0);
+
+    const totalDibayar = pinjamanAnggota
+      .reduce((total, p) => total + Number(p[6] || 0), 0);
+
+    const totalSisaPinjaman = pinjamanAnggota
+      .filter(p => p[8] == "Berjalan")
+      .reduce((total, p) => total + Number(p[7] || 0), 0);
+
+    let totalSisaAngsuran = 0;
+
+    pinjamanAnggota.forEach(p => {
+      const angsuranPerBulan = Number(p[5] || 0);
+      const sisaPinjaman = Number(p[7] || 0);
+
+      if (p[8] == "Berjalan" && angsuranPerBulan > 0 && sisaPinjaman > 0) {
+        totalSisaAngsuran += Math.ceil(sisaPinjaman / angsuranPerBulan);
+      }
+    });
+
+    return {
+      idAnggota: idAnggota,
+      nama: nama,
+      totalSimpanan: totalSimpanan,
+      totalPinjaman: totalPinjaman,
+      totalDibayar: totalDibayar,
+      totalSisaPinjaman: totalSisaPinjaman,
+      saldoAnggotaSaatIni: totalSimpanan - totalSisaPinjaman,
+      totalSisaAngsuran: totalSisaAngsuran
+    };
+  });
+}
+
+/* =========================================================
+   DASHBOARD ANGGOTA
+========================================================= */
+
+function getDashboardAnggota(idAnggota) {
+
+  idAnggota = String(idAnggota || "").trim();
+
+  const kasMasuk = sh("KasMasuk").getDataRange().getValues().slice(1);
+  const kasKeluar = sh("KasKeluar").getDataRange().getValues().slice(1);
+  const pinjaman = sh("Pinjaman").getDataRange().getValues().slice(1);
+
+  const totalKasMasuk = kasMasuk.reduce(
+    (a, r) => a + Number(r[4] || 0),
+    0
+  );
+
+  const totalKasKeluar = kasKeluar.reduce(
+    (a, r) => a + Number(r[3] || 0),
+    0
+  );
+
+  const saldoKelompok = totalKasMasuk - totalKasKeluar;
+
+  /* =========================
+     TOTAL SIMPANAN ANGGOTA
+  ========================= */
+
+  let simpananSaya = 0;
+
+  kasMasuk.forEach(r => {
+
+    const idData = String(r[2] || "").trim();
+    const jenis = String(r[3] || "").trim();
+
+    if (
+      idData === idAnggota &&
+      jenis === "Simpanan"
+    ) {
+      simpananSaya += Number(r[4] || 0);
+    }
+  });
+
+  /* =========================
+     DATA PINJAMAN ANGGOTA
+  ========================= */
+
+  const pinjamanSaya = [];
+
+  pinjaman.forEach(r => {
+
+    const idData = String(r[2] || "").trim();
+
+    if (idData === idAnggota) {
+
+      pinjamanSaya.push({
+        idPinjaman: r[0],
+        tanggal: r[1],
+        jumlah: Number(r[3] || 0),
+        tenor: Number(r[4] || 0),
+        angsuranPerBulan: Number(r[5] || 0),
+        totalDibayar: Number(r[6] || 0),
+        sisa: Number(r[7] || 0),
+        status: r[8]
+      });
+    }
+  });
+
+  /* =========================
+     TOTAL SISA PINJAMAN
+  ========================= */
+
+  let totalSisaPinjaman = 0;
+
+  pinjamanSaya.forEach(p => {
+
+    if (p.status === "Berjalan") {
+
+      totalSisaPinjaman += Number(p.sisa || 0);
+    }
+  });
+
+  /* =========================
+     SALDO ANGGOTA
+  ========================= */
+
+  const saldoAnggotaSaatIni =
+    simpananSaya - totalSisaPinjaman;
+
+  /* =========================
+     IURAN
+  ========================= */
+
+  const iuranWajibPerBulan = 100000;
+
+  const targetIuranWajib = 2400000;
+
+  const kekuranganIuran =
+    Math.max(
+      targetIuranWajib - simpananSaya,
+      0
+    );
+
+  return {
+
+    idAnggota: idAnggota,
+
+    saldoKelompok: saldoKelompok,
+
+    simpananSaya: simpananSaya,
+
+    totalSisaPinjaman: totalSisaPinjaman,
+
+    saldoAnggotaSaatIni: saldoAnggotaSaatIni,
+
+    iuranWajibPerBulan: iuranWajibPerBulan,
+
+    targetIuranWajib: targetIuranWajib,
+
+    kekuranganIuran: kekuranganIuran,
+
+    pinjamanSaya: pinjamanSaya
+  };
+}
+
+/* =========================================================
+   ANGGOTA
+========================================================= */
+
+function getAnggota() {
+  return sh("Anggota").getDataRange().getValues().slice(1);
+}
+
+function simpanAnggota(data) {
+  const nama = String(data.nama || "").trim();
+  const alamat = String(data.alamat || "").trim();
+  const nohp = String(data.nohp || "").trim();
+
+  if (!nama || !nohp) {
+    return "Nama dan No HP wajib diisi";
+  }
+
+  const idAnggota = "AGT-" + Date.now();
+
+  sh("Anggota").appendRow([
+    idAnggota,
+    nama,
+    alamat,
+    nohp,
+    new Date(),
+    "Aktif"
+  ]);
+
+  return "Anggota berhasil disimpan dengan ID: " + idAnggota;
+}
+
+function updateAnggota(data) {
+  const sheet = sh("Anggota");
+  const rows = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] == data.id) {
+      sheet.getRange(i + 1, 2).setValue(data.nama);
+      sheet.getRange(i + 1, 3).setValue(data.alamat);
+      sheet.getRange(i + 1, 4).setValue(data.nohp);
+      sheet.getRange(i + 1, 6).setValue(data.status);
+      return "Data anggota berhasil diupdate";
+    }
+  }
+
+  return "ID anggota tidak ditemukan";
+}
+
+function hapusAnggota(id) {
+  const sheet = sh("Anggota");
+  const rows = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] == id) {
+      sheet.deleteRow(i + 1);
+      return "Anggota berhasil dihapus";
+    }
+  }
+
+  return "ID anggota tidak ditemukan";
+}
+
+/* =========================================================
+   KAS MASUK / KAS KELUAR
+========================================================= */
+
+function simpanKasMasuk(data) {
+  const jumlah = Number(data.jumlah);
+
+  if (!jumlah || jumlah <= 0) {
+    return "Jumlah kas masuk tidak valid";
+  }
+
+  sh("KasMasuk").appendRow([
+    "KM-" + Date.now(),
+    new Date(),
+    data.idAnggota || "",
+    data.jenis,
+    jumlah,
+    data.keterangan || "",
+    data.user || "Admin"
+  ]);
+
+  return "Kas masuk berhasil disimpan";
+}
+
+function simpanKasKeluar(data) {
+  const jumlah = Number(data.jumlah);
+
+  if (!jumlah || jumlah <= 0) {
+    return "Jumlah kas keluar tidak valid";
+  }
+
+  sh("KasKeluar").appendRow([
+    "KK-" + Date.now(),
+    new Date(),
+    data.jenis,
+    jumlah,
+    data.keterangan || "",
+    data.user || "Admin"
+  ]);
+
+  return "Kas keluar berhasil disimpan";
+}
+
+/* =========================================================
+   PINJAMAN
+========================================================= */
+
+function simpanPinjaman(data) {
+  const jumlah = Number(data.jumlah);
+  const tenor = Number(data.tenor);
+
+  if (!data.idanggota) return "ID anggota wajib diisi";
+  if (!jumlah || jumlah <= 0) return "Jumlah pinjaman tidak valid";
+  if (!tenor || tenor <= 0) return "Tenor tidak valid";
+
+  const angsuran = jumlah / tenor;
+  const idPinjaman = "PJM-" + Date.now();
+
+  sh("Pinjaman").appendRow([
+    idPinjaman,
+    new Date(),
+    data.idanggota,
+    jumlah,
+    tenor,
+    angsuran,
+    0,
+    jumlah,
+    "Berjalan"
+  ]);
+
+  sh("KasKeluar").appendRow([
+    "KK-" + Date.now(),
+    new Date(),
+    "Pencairan Pinjaman",
+    jumlah,
+    "Pinjaman anggota " + data.idanggota,
+    data.user || "Admin"
+  ]);
+
+  return "Pinjaman berhasil disimpan dengan ID: " + idPinjaman;
+}
+
+function ajukanPinjamanAnggota(data) {
+  const jumlah = Number(data.jumlah);
+  const tenor = Number(data.tenor);
+
+  if (!data.idanggota) return "ID anggota tidak ditemukan";
+  if (!jumlah || jumlah <= 0) return "Jumlah pinjaman tidak valid";
+  if (!tenor || tenor <= 0) return "Tenor tidak valid";
+
+  const angsuran = jumlah / tenor;
+  const idPinjaman = "PJM-" + Date.now();
+
+  sh("Pinjaman").appendRow([
+    idPinjaman,
+    new Date(),
+    data.idanggota,
+    jumlah,
+    tenor,
+    angsuran,
+    0,
+    jumlah,
+    "Menunggu"
+  ]);
+
+  return "Pengajuan pinjaman berhasil dikirim. Menunggu persetujuan administrator.";
+}
+
+function getPengajuanPinjaman() {
+  return sh("Pinjaman").getDataRange().getValues().slice(1)
+    .filter(r => String(r[8] || "").trim() === "Menunggu");
+}
+
+function accPinjaman(idPinjaman, user) {
+  const sheet = sh("Pinjaman");
+  const rows = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] == idPinjaman) {
+      const idAnggota = rows[i][2];
+      const jumlah = Number(rows[i][3] || 0);
+
+      sheet.getRange(i + 1, 9).setValue("Berjalan");
+
+      sh("KasKeluar").appendRow([
+        "KK-" + Date.now(),
+        new Date(),
+        "Pencairan Pinjaman",
+        jumlah,
+        "ACC pinjaman anggota " + idAnggota + " / " + idPinjaman,
+        user || "Administrator"
+      ]);
+
+      return "Pinjaman berhasil di-ACC";
+    }
+  }
+
+  return "ID pinjaman tidak ditemukan";
+}
+
+function tolakPinjaman(idPinjaman) {
+  const sheet = sh("Pinjaman");
+  const rows = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] == idPinjaman) {
+      sheet.getRange(i + 1, 9).setValue("Ditolak");
+      return "Pinjaman berhasil ditolak";
+    }
+  }
+
+  return "ID pinjaman tidak ditemukan";
+}
+
+/* =========================================================
+   ANGSURAN / TUNGGAKAN
+========================================================= */
+
+function simpanAngsuran(data) {
+  const pinjam = sh("Pinjaman");
+  const rows = pinjam.getDataRange().getValues();
+  const bayar = Number(data.jumlah);
+
+  if (!data.idpinjaman) return { message: "ID pinjaman wajib diisi" };
+  if (!data.idanggota) return { message: "ID anggota tidak ditemukan dari pinjaman" };
+  if (!bayar || bayar <= 0) return { message: "Jumlah bayar tidak valid" };
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] == data.idpinjaman) {
+      if (rows[i][2] != data.idanggota) {
+        return { message: "ID anggota tidak sesuai dengan ID pinjaman" };
+      }
+
+      const totalBaru = Number(rows[i][6] || 0) + bayar;
+      let sisaBaru = Number(rows[i][7] || 0) - bayar;
+
+      if (sisaBaru < 0) sisaBaru = 0;
+
+      const status = sisaBaru <= 0 ? "Lunas" : "Berjalan";
+      const idAngsuran = "ANG-" + Date.now();
+
+      pinjam.getRange(i + 1, 7).setValue(totalBaru);
+      pinjam.getRange(i + 1, 8).setValue(sisaBaru);
+      pinjam.getRange(i + 1, 9).setValue(status);
+
+      sh("Angsuran").appendRow([
+        idAngsuran,
+        new Date(),
+        data.idpinjaman,
+        data.idanggota,
+        data.angsuranke,
+        bayar,
+        sisaBaru,
+        data.user || "Admin"
+      ]);
+
+      sh("KasMasuk").appendRow([
+        "KM-" + Date.now(),
+        new Date(),
+        data.idanggota,
+        "Angsuran",
+        bayar,
+        "Pembayaran pinjaman " + data.idpinjaman,
+        data.user || "Admin"
+      ]);
+
+      return {
+        message: "Angsuran berhasil disimpan",
+        idAngsuran: idAngsuran
+      };
+    }
+  }
+
+  return {
+    message: "ID pinjaman tidak ditemukan"
+  };
+}
+
+function getTunggakan() {
+  const pinjaman = sh("Pinjaman").getDataRange().getValues().slice(1);
+  const anggota = sh("Anggota").getDataRange().getValues().slice(1);
+
+  return pinjaman
+    .filter(r => r[8] == "Berjalan" && Number(r[7] || 0) > 0)
+    .map(p => {
+      const dataAnggota = anggota.find(a => a[0] == p[2]);
+
+      return {
+        idPinjaman: p[0],
+        idAnggota: p[2],
+        nama: dataAnggota ? dataAnggota[1] : "",
+        nohp: dataAnggota ? dataAnggota[3] : "",
+        angsuranPerBulan: Number(p[5] || 0),
+        sisa: Number(p[7] || 0),
+        status: p[8]
+      };
+    });
+}
+
+/* =========================================================
+   CETAK KWITANSI
+========================================================= */
+
+function cetakKwitansi(idAngsuran) {
+  const data = sh("Angsuran").getDataRange().getValues();
+
+  let row = null;
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] == idAngsuran) {
+      row = data[i];
+      break;
+    }
+  }
+
+  if (!row) return null;
+
+  const html = `
+    <div style="font-family:Arial;padding:30px">
+      <h2 style="text-align:center">KWITANSI PEMBAYARAN ANGSURAN</h2>
+      <hr>
+      <p>ID Angsuran: <b>${row[0]}</b></p>
+      <p>Tanggal: ${row[1]}</p>
+      <p>ID Pinjaman: ${row[2]}</p>
+      <p>ID Anggota: ${row[3]}</p>
+      <p>Angsuran Ke: ${row[4]}</p>
+      <h3>Jumlah Bayar: Rp ${Number(row[5]).toLocaleString("id-ID")}</h3>
+      <p>Sisa Pinjaman: Rp ${Number(row[6]).toLocaleString("id-ID")}</p>
+      <br><br>
+      <table style="width:100%">
+        <tr>
+          <td style="text-align:center">
+            Anggota
+            <br><br><br><br>
+            ____________________
+          </td>
+          <td style="text-align:center">
+            Petugas
+            <br><br><br><br>
+            ${row[7]}
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+
+  const blob = Utilities.newBlob(html, "text/html")
+    .getAs("application/pdf")
+    .setName("Kwitansi-" + idAngsuran + ".pdf");
+
+  return DriveApp.createFile(blob).getUrl();
+}
+
+function exportExcel() {
+  return SS.getUrl();
+}

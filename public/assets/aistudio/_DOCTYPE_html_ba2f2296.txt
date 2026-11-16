@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body { overflow-x: hidden; background: #f6f7fb; }
+    .sidebar {
+      width: 270px; min-height: 100vh; position: fixed; left: 0; top: 0;
+      background: #17202a; color: white; padding: 20px; overflow-y: auto;
+    }
+    .main { margin-left: 270px; width: calc(100% - 270px); }
+    .menu-btn { width: 100%; text-align: left; margin-bottom: 8px; border-radius: 10px; }
+    .role-box { background: rgba(255,255,255,.08); border-radius: 12px; padding: 12px; margin-bottom: 15px; }
+    .card { border: none; border-radius: 14px; }
+    .stat-card { min-height: 110px; }
+    .small-muted { font-size: 12px; color: #6c757d; }
+    @media(max-width: 768px) {
+      .sidebar { position: relative; width: 100%; min-height: auto; }
+      .main { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="loginBox" class="container mt-5">
+  <div class="card shadow mx-auto" style="max-width:420px">
+    <div class="card-body p-4">
+      <h3 class="mb-2 text-center">Login Sistem</h3>
+      <p class="text-center text-muted mb-4">Sistem Keuangan Anggota</p>
+
+      <input id="username" class="form-control mb-3" placeholder="Username">
+      <input id="password" type="password" class="form-control mb-3" placeholder="Password">
+
+      <button class="btn btn-primary w-100" onclick="login()">Login</button>
+      <button class="btn btn-outline-success w-100 mt-2" onclick="bukaDaftar()">Daftar Anggota Baru</button>
+    </div>
+  </div>
+</div>
+
+<div id="daftarBox" class="container mt-5" style="display:none">
+  <div class="card shadow mx-auto" style="max-width:480px">
+    <div class="card-body p-4">
+      <h3 class="mb-2 text-center">Daftar Anggota</h3>
+      <p class="text-center text-muted mb-4">Buat akun anggota baru</p>
+
+      <input id="regNama" class="form-control mb-2" placeholder="Nama lengkap">
+      <input id="regAlamat" class="form-control mb-2" placeholder="Alamat">
+      <input id="regNohp" class="form-control mb-2" placeholder="No HP">
+      <input id="regUsername" class="form-control mb-2" placeholder="Username">
+      <input id="regPassword" type="password" class="form-control mb-3" placeholder="Password">
+
+      <button class="btn btn-success w-100" onclick="daftarMandiri()">Daftar Sekarang</button>
+      <button class="btn btn-outline-secondary w-100 mt-2" onclick="kembaliLogin()">Kembali ke Login</button>
+    </div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+
+  <div class="sidebar">
+    <h4 class="mb-3">Keuangan</h4>
+
+    <div class="role-box">
+      <div class="small text-white-50">Login sebagai</div>
+      <div id="sideUserName" class="fw-bold">-</div>
+      <div id="sideUserRole" class="small text-white-50">-</div>
+    </div>
+
+    <button id="menuDashboard" class="btn btn-dark menu-btn" onclick="showPage('dashboard')">Dashboard Admin</button>
+    <button id="menuAnggota" class="btn btn-dark menu-btn" onclick="showPage('anggota')">Data Anggota</button>
+    <button id="menuKasMasuk" class="btn btn-dark menu-btn" onclick="showPage('kasMasuk')">Kas Masuk</button>
+    <button id="menuKasKeluar" class="btn btn-dark menu-btn" onclick="showPage('kasKeluar')">Kas Keluar</button>
+    <button id="menuPinjaman" class="btn btn-dark menu-btn" onclick="showPage('pinjaman')">Input Pinjaman</button>
+    <button id="menuAngsuran" class="btn btn-dark menu-btn" onclick="showPage('angsuran')">Input Angsuran</button>
+    <button id="menuTunggakan" class="btn btn-dark menu-btn" onclick="showPage('tunggakan')">Tunggakan</button>
+    <button id="menuAnggotaSaya" class="btn btn-dark menu-btn" onclick="showPage('anggotaSaya')">Saldo Saya</button>
+    <button id="menuAjukanPinjaman" class="btn btn-dark menu-btn" onclick="showPage('ajukanPinjaman')">Ajukan Pinjaman</button>
+    <button id="menuPengajuanPinjaman" class="btn btn-dark menu-btn" onclick="showPage('pengajuanPinjaman')">ACC Pengajuan</button>
+    <button id="menuPengaturan" class="btn btn-dark menu-btn" onclick="showPage('pengaturan')">Pengaturan Akun</button>
+    <button id="menuExport" class="btn btn-dark menu-btn" onclick="showPage('export')">Export</button>
+
+    <hr>
+    <button class="btn btn-outline-light w-100" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="main">
+    <nav class="navbar bg-white shadow-sm px-4">
+      <span class="navbar-brand fw-bold">Sistem Keuangan Anggota</span>
+      <span id="userInfo" class="text-muted"></span>
+    </nav>
+
+    <div class="container-fluid p-4">
+
+      <div id="pageDashboard" class="page">
+        <h4 class="mb-1">Dashboard Administrator</h4>
+        <p class="text-muted">Ringkasan saldo kelompok, kas, piutang, dan kondisi setiap anggota.</p>
+
+        <div class="row" id="dashboard"></div>
+
+        <div class="card shadow-sm mt-4">
+          <div class="card-header bg-white fw-bold">Ringkasan Anggota</div>
+          <div class="card-body table-responsive">
+            <table id="tblRingkasanAnggota" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>ID Anggota</th>
+                  <th>Nama</th>
+                  <th>Total Simpanan</th>
+                  <th>Sisa Pinjaman</th>
+                  <th>Saldo Saat Ini</th>
+                  <th>Total Pinjaman</th>
+                  <th>Total Dibayar</th>
+                  <th>Sisa Angsuran</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageAnggota" class="page d-none">
+        <h4 class="mb-1">Data Anggota</h4>
+        <p class="text-muted">Administrator dapat menambah, mengedit, dan menghapus data anggota.</p>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white fw-bold">Input Anggota</div>
+          <div class="card-body">
+            <input id="nama" class="form-control mb-2" placeholder="Nama">
+            <input id="alamat" class="form-control mb-2" placeholder="Alamat">
+            <input id="nohp" class="form-control mb-3" placeholder="No HP">
+            <button class="btn btn-success" onclick="simpanAnggota()">Simpan Anggota</button>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Tabel Anggota</div>
+          <div class="card-body table-responsive">
+            <table id="tblAnggota" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>ID</th><th>Nama</th><th>Alamat</th><th>No HP</th><th>Tanggal</th><th>Status</th><th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageKasMasuk" class="page d-none">
+        <h4 class="mb-1">Kas Masuk</h4>
+        <p class="text-muted">Mencatat simpanan, denda, angsuran, atau pemasukan lain.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Input Kas Masuk</div>
+          <div class="card-body">
+            <label class="form-label">Anggota</label>
+            <select id="kmIdAnggota" class="form-control mb-2"></select>
+
+            <label class="form-label">Jenis</label>
+            <select id="kmJenis" class="form-control mb-2">
+              <option value="Simpanan">Simpanan</option>
+              <option value="Angsuran">Angsuran</option>
+              <option value="Denda">Denda</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+
+            <label class="form-label">Jumlah</label>
+            <input id="kmJumlah" type="number" class="form-control mb-2" placeholder="Jumlah">
+
+            <label class="form-label">Keterangan</label>
+            <textarea id="kmKeterangan" class="form-control mb-3" placeholder="Keterangan"></textarea>
+
+            <button class="btn btn-success" onclick="simpanKasMasuk()">Simpan Kas Masuk</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageKasKeluar" class="page d-none">
+        <h4 class="mb-1">Kas Keluar</h4>
+        <p class="text-muted">Mencatat pengeluaran kelompok.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Input Kas Keluar</div>
+          <div class="card-body">
+            <label class="form-label">Jenis</label>
+            <select id="kkJenis" class="form-control mb-2">
+              <option value="Operasional">Operasional</option>
+              <option value="Pencairan Pinjaman">Pencairan Pinjaman</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+
+            <label class="form-label">Jumlah</label>
+            <input id="kkJumlah" type="number" class="form-control mb-2" placeholder="Jumlah">
+
+            <label class="form-label">Keterangan</label>
+            <textarea id="kkKeterangan" class="form-control mb-3" placeholder="Keterangan"></textarea>
+
+            <button class="btn btn-danger" onclick="simpanKasKeluar()">Simpan Kas Keluar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pagePinjaman" class="page d-none">
+        <h4 class="mb-1">Input Pinjaman</h4>
+        <p class="text-muted">Pinjaman yang diinput admin/bendahara langsung berstatus berjalan.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Input Pinjaman</div>
+          <div class="card-body">
+            <label class="form-label">Anggota</label>
+            <select id="idanggotaPinjam" class="form-control mb-2"></select>
+
+            <label class="form-label">Jumlah Pinjaman</label>
+            <input id="jumlahPinjam" type="number" class="form-control mb-2" placeholder="Jumlah Pinjaman">
+
+            <label class="form-label">Tenor</label>
+            <input id="tenor" type="number" class="form-control mb-3" placeholder="Tenor / jumlah angsuran">
+
+            <button class="btn btn-warning" onclick="simpanPinjaman()">Simpan Pinjaman</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageAngsuran" class="page d-none">
+        <h4 class="mb-1">Input Angsuran</h4>
+        <p class="text-muted">Pilih ID pinjaman, ID anggota dan sisa pinjaman otomatis muncul.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Input Angsuran</div>
+          <div class="card-body">
+            <label class="form-label">ID Pinjaman</label>
+            <select id="idpinjaman" class="form-control mb-2" onchange="pilihPinjamanAngsuran()"></select>
+
+            <label class="form-label">ID Anggota</label>
+            <input id="idanggotaAngsuran" class="form-control mb-2" readonly>
+
+            <label class="form-label">Sisa Pinjaman</label>
+            <input id="infoSisaPinjaman" class="form-control mb-2" readonly>
+
+            <label class="form-label">Angsuran Ke</label>
+            <input id="angsuranke" type="number" class="form-control mb-2" placeholder="Angsuran ke">
+
+            <label class="form-label">Jumlah Bayar</label>
+            <input id="jumlahBayar" type="number" class="form-control mb-3" placeholder="Jumlah Bayar">
+
+            <button class="btn btn-primary" onclick="simpanAngsuran()">Simpan Angsuran</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageTunggakan" class="page d-none">
+        <h4 class="mb-1">Tunggakan</h4>
+        <p class="text-muted">Daftar pinjaman berjalan yang masih memiliki sisa.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <button class="btn btn-danger mb-3" onclick="loadTunggakan()">Refresh Tunggakan</button>
+            <div id="tunggakan"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageAnggotaSaya" class="page d-none">
+        <h4 class="mb-1">Saldo Saya</h4>
+        <p class="text-muted">Anggota melihat saldo, simpanan, dan pinjaman miliknya sendiri.</p>
+
+        <div class="row mb-4" id="dashboardAnggota"></div>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Pinjaman Saya</div>
+          <div class="card-body">
+            <div id="pinjamanSaya"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageAjukanPinjaman" class="page d-none">
+        <h4 class="mb-1">Ajukan Pinjaman</h4>
+        <p class="text-muted">Pengajuan akan masuk ke administrator untuk di-ACC atau ditolak.</p>
+
+        <div class="card shadow-sm" style="max-width:520px">
+          <div class="card-header bg-white fw-bold">Form Pengajuan Pinjaman</div>
+          <div class="card-body">
+            <label class="form-label">Jumlah Pinjaman</label>
+            <input id="ajuJumlah" type="number" class="form-control mb-2" placeholder="Jumlah Pinjaman">
+
+            <label class="form-label">Tenor</label>
+            <input id="ajuTenor" type="number" class="form-control mb-3" placeholder="Tenor">
+
+            <button class="btn btn-primary" onclick="kirimPengajuanPinjaman()">Kirim Pengajuan</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pagePengajuanPinjaman" class="page d-none">
+        <h4 class="mb-1">ACC Pengajuan Pinjaman</h4>
+        <p class="text-muted">Hanya administrator yang dapat menyetujui atau menolak pengajuan.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-bold">Daftar Pengajuan Menunggu ACC</div>
+          <div class="card-body table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>ID Pinjaman</th><th>Tanggal</th><th>ID Anggota</th><th>Jumlah</th><th>Tenor</th><th>Angsuran</th><th>Status</th><th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyPengajuanPinjaman"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="pagePengaturan" class="page d-none">
+        <h4 class="mb-1">Pengaturan Akun</h4>
+        <p class="text-muted">Ubah username dan password akun yang sedang login.</p>
+
+        <div class="card shadow-sm" style="max-width:520px">
+          <div class="card-header bg-white fw-bold">Ubah Username & Password</div>
+          <div class="card-body">
+            <label class="form-label">Username Baru</label>
+            <input id="usernameBaru" class="form-control mb-2" placeholder="Username baru">
+
+            <label class="form-label">Password Lama</label>
+            <input id="passwordLama" type="password" class="form-control mb-2" placeholder="Password lama">
+
+            <label class="form-label">Password Baru</label>
+            <input id="passwordBaru" type="password" class="form-control mb-3" placeholder="Password baru">
+
+            <button class="btn btn-primary" onclick="simpanPengaturanAkun()">Simpan Perubahan</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pageExport" class="page d-none">
+        <h4 class="mb-1">Export</h4>
+        <p class="text-muted">Membuka spreadsheet database.</p>
+
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <button class="btn btn-success" onclick="exportExcel()">Buka Spreadsheet</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let USER = null;
+let USERNAME = null;
+let ROLE = null;
+let ID_ANGGOTA = null;
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function notifSukses(pesan) {
+  Swal.fire({ icon: "success", title: "Berhasil", text: pesan, timer: 1800, showConfirmButton: false });
+}
+
+function notifError(pesan) {
+  Swal.fire({ icon: "error", title: "Gagal", text: pesan });
+}
+
+function rupiah(n) {
+  return "Rp " + Number(n || 0).toLocaleString("id-ID");
+}
+
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.add("d-none"));
+
+  if (page === "dashboard") {
+    byId("pageDashboard").classList.remove("d-none");
+    loadDashboard();
+    loadRingkasanAnggota();
+  }
+
+  if (page === "anggota") {
+    byId("pageAnggota").classList.remove("d-none");
+    loadAnggota();
+  }
+
+  if (page === "kasMasuk") {
+    byId("pageKasMasuk").classList.remove("d-none");
+    loadPilihanAnggota();
+  }
+
+  if (page === "kasKeluar") {
+    byId("pageKasKeluar").classList.remove("d-none");
+  }
+
+  if (page === "pinjaman") {
+    byId("pagePinjaman").classList.remove("d-none");
+    loadPilihanAnggota();
+  }
+
+  if (page === "angsuran") {
+    byId("pageAngsuran").classList.remove("d-none");
+    loadPilihanPinjaman();
+  }
+
+  if (page === "tunggakan") {
+    byId("pageTunggakan").classList.remove("d-none");
+    loadTunggakan();
+  }
+
+  if (page === "anggotaSaya") {
+    byId("pageAnggotaSaya").classList.remove("d-none");
+    loadDashboardAnggota();
+  }
+
+  if (page === "ajukanPinjaman") {
+    byId("pageAjukanPinjaman").classList.remove("d-none");
+  }
+
+  if (page === "pengajuanPinjaman") {
+    byId("pagePengajuanPinjaman").classList.remove("d-none");
+    loadPengajuanPinjaman();
+  }
+
+  if (page === "pengaturan") {
+    byId("pagePengaturan").classList.remove("d-none");
+    byId("usernameBaru").value = USERNAME;
+  }
+
+  if (page === "export") {
+    byId("pageExport").classList.remove("d-none");
+  }
+}
+
+function login() {
+  const username = byId("username").value;
+  const password = byId("password").value;
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res.status) {
+        notifError(res.message);
+        return;
+      }
+
+      USER = res.nama;
+      USERNAME = res.username;
+      ROLE = res.role;
+      ID_ANGGOTA = res.idAnggota;
+
+      byId("userInfo").innerText = res.nama + " (" + res.role + ")";
+      byId("sideUserName").innerText = res.nama;
+      byId("sideUserRole").innerText = res.role;
+
+      byId("loginBox").style.display = "none";
+      byId("daftarBox").style.display = "none";
+      byId("app").style.display = "block";
+
+      setMenuByRole(ROLE);
+    })
+    .withFailureHandler(err => notifError(err.message))
+    .login(username, password);
+}
+
+function setMenuByRole(role) {
+  const menuIds = [
+    "menuDashboard", "menuAnggota", "menuKasMasuk", "menuKasKeluar",
+    "menuPinjaman", "menuAngsuran", "menuTunggakan", "menuAnggotaSaya",
+    "menuAjukanPinjaman", "menuPengajuanPinjaman", "menuPengaturan", "menuExport"
+  ];
+
+  menuIds.forEach(id => byId(id).style.display = "none");
+
+  if (role === "Administrator") {
+    ["menuDashboard", "menuAnggota", "menuKasMasuk", "menuKasKeluar", "menuPinjaman", "menuAngsuran", "menuTunggakan", "menuPengajuanPinjaman", "menuPengaturan", "menuExport"]
+      .forEach(id => byId(id).style.display = "block");
+    showPage("dashboard");
+    return;
+  }
+
+  if (role === "Bendahara") {
+    ["menuKasMasuk", "menuKasKeluar", "menuPinjaman", "menuAngsuran", "menuTunggakan", "menuPengaturan"]
+      .forEach(id => byId(id).style.display = "block");
+    showPage("kasMasuk");
+    return;
+  }
+
+  if (role === "Anggota") {
+    ["menuAnggotaSaya", "menuAjukanPinjaman", "menuPengaturan"]
+      .forEach(id => byId(id).style.display = "block");
+    showPage("anggotaSaya");
+    return;
+  }
+
+  notifError("Role tidak dikenal: " + role);
+}
+
+function logout() {
+  USER = null;
+  USERNAME = null;
+  ROLE = null;
+  ID_ANGGOTA = null;
+
+  byId("app").style.display = "none";
+  byId("daftarBox").style.display = "none";
+  byId("loginBox").style.display = "block";
+
+  byId("username").value = "";
+  byId("password").value = "";
+
+  document.querySelectorAll(".page").forEach(p => p.classList.add("d-none"));
+  window.scrollTo(0, 0);
+}
+
+function loadDashboard() {
+  google.script.run.withSuccessHandler(d => {
+    byId("dashboard").innerHTML = `
+      <div class="col-md-3 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Total Anggota</small><h4>${d.anggota}</h4></div></div>
+      <div class="col-md-3 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Saldo Kas Kelompok</small><h4>${rupiah(d.saldo)}</h4></div></div>
+      <div class="col-md-3 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Total Kas Masuk</small><h4>${rupiah(d.masuk)}</h4></div></div>
+      <div class="col-md-3 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Total Piutang</small><h4>${rupiah(d.piutang)}</h4></div></div>
+    `;
+  }).withFailureHandler(err => notifError(err.message)).getDashboard();
+}
+
+function loadDashboardAnggota() {
+  google.script.run
+    .withSuccessHandler(d => {
+      byId("dashboardAnggota").innerHTML = `
+        <div class="col-md-4 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Total Saldo Kelompok</small><h4>${rupiah(d.saldoKelompok)}</h4><div class="small-muted">Saldo kas semua anggota</div></div></div>
+        <div class="col-md-4 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Total Simpanan Saya</small><h4>${rupiah(d.simpananSaya)}</h4><div class="small-muted">Jumlah simpanan yang tercatat</div></div></div>
+        <div class="col-md-4 mb-3"><div class="card shadow-sm p-3 stat-card border-success"><small>Saldo Anggota Saat Ini</small><h4 class="text-success">${rupiah(d.saldoAnggotaSaatIni)}</h4><div class="small-muted">Simpanan - sisa pinjaman</div></div></div>
+        <div class="col-md-4 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Sisa Pinjaman Saya</small><h4>${rupiah(d.totalSisaPinjaman)}</h4></div></div>
+        <div class="col-md-4 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Iuran Wajib Per Bulan</small><h4>${rupiah(d.iuranWajibPerBulan)}</h4></div></div>
+        <div class="col-md-4 mb-3"><div class="card shadow-sm p-3 stat-card"><small>Target Iuran Wajib</small><h4>${rupiah(d.targetIuranWajib)}</h4><div class="small-muted">Kekurangan: ${rupiah(d.kekuranganIuran)}</div></div></div>
+      `;
+
+      let html = `
+        <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead><tr><th>ID Pinjaman</th><th>Jumlah</th><th>Total Dibayar</th><th>Sisa</th><th>Status</th></tr></thead>
+          <tbody>
+      `;
+
+      if (!d.pinjamanSaya || d.pinjamanSaya.length === 0) {
+        html += `<tr><td colspan="5" class="text-center">Tidak ada pinjaman</td></tr>`;
+      } else {
+        d.pinjamanSaya.forEach(p => {
+          html += `<tr><td>${p.idPinjaman}</td><td>${rupiah(p.jumlah)}</td><td>${rupiah(p.totalDibayar)}</td><td>${rupiah(p.sisa)}</td><td>${p.status}</td></tr>`;
+        });
+      }
+
+      html += `</tbody></table></div>`;
+      byId("pinjamanSaya").innerHTML = html;
+    })
+    .withFailureHandler(err => notifError(err.message))
+    .getDashboardAnggota(ID_ANGGOTA);
+}
+
+function simpanAnggota() {
+  const data = {
+    nama: byId("nama").value,
+    alamat: byId("alamat").value,
+    nohp: byId("nohp").value
+  };
+
+  google.script.run.withSuccessHandler(msg => {
+    notifSukses(msg);
+    byId("nama").value = "";
+    byId("alamat").value = "";
+    byId("nohp").value = "";
+    loadAnggota();
+    loadDashboard();
+  }).withFailureHandler(err => notifError(err.message)).simpanAnggota(data);
+}
+
+function loadAnggota() {
+  google.script.run.withSuccessHandler(rows => {
+    if ($.fn.DataTable.isDataTable("#tblAnggota")) {
+      $("#tblAnggota").DataTable().destroy();
+    }
+
+    const tbody = document.querySelector("#tblAnggota tbody");
+    tbody.innerHTML = "";
+
+    rows.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r[0]}</td>
+          <td contenteditable="true">${r[1]}</td>
+          <td contenteditable="true">${r[2]}</td>
+          <td contenteditable="true">${r[3]}</td>
+          <td>${r[4]}</td>
+          <td contenteditable="true">${r[5]}</td>
+          <td>
+            <button class="btn btn-sm btn-primary mb-1" onclick="updateAnggota(this)">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="hapusAnggota('${r[0]}')">Hapus</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    $("#tblAnggota").DataTable();
+  }).withFailureHandler(err => notifError(err.message)).getAnggota();
+}
+
+function updateAnggota(btn) {
+  const tr = btn.closest("tr").children;
+
+  const data = {
+    id: tr[0].innerText,
+    nama: tr[1].innerText,
+    alamat: tr[2].innerText,
+    nohp: tr[3].innerText,
+    status: tr[5].innerText
+  };
+
+  google.script.run.withSuccessHandler(msg => {
+    notifSukses(msg);
+    loadAnggota();
+  }).withFailureHandler(err => notifError(err.message)).updateAnggota(data);
+}
+
+function hapusAnggota(id) {
+  Swal.fire({
+    title: "Hapus anggota?",
+    text: "Data anggota akan dihapus.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Ya, hapus",
+    cancelButtonText: "Batal"
+  }).then(result => {
+    if (!result.isConfirmed) return;
+
+    google.script.run.withSuccessHandler(msg => {
+      notifSukses(msg);
+      loadAnggota();
+      loadDashboard();
+    }).withFailureHandler(err => notifError(err.message)).hapusAnggota(id);
+  });
+}
+
+function simpanKasMasuk() {
+  const data = {
+    idAnggota: byId("kmIdAnggota").value,
+    jenis: byId("kmJenis").value,
+    jumlah: byId("kmJumlah").value,
+    keterangan: byId("kmKeterangan").value,
+    user: USER
+  };
+
+  google.script.run.withSuccessHandler(msg => {
+    notifSukses(msg);
+    byId("kmIdAnggota").value = "";
+    byId("kmJumlah").value = "";
+    byId("kmKeterangan").value = "";
+    loadDashboard();
+  }).withFailureHandler(err => notifError(err.message)).simpanKasMasuk(data);
+}
+
+function simpanKasKeluar() {
+  const data = {
+    jenis: byId("kkJenis").value,
+    jumlah: byId("kkJumlah").value,
+    keterangan: byId("kkKeterangan").value,
+    user: USER
+  };
+
+  google.script.run.withSuccessHandler(msg => {
+    notifSukses(msg);
+    byId("kkJumlah").value = "";
+    byId("kkKeterangan").value = "";
+    loadDashboard();
+  }).withFailureHandler(err => notifError(err.message)).simpanKasKeluar(data);
+}
+
+function simpanPinjaman() {
+  const data = {
+    idanggota: byId("idanggotaPinjam").value,
+    jumlah: byId("jumlahPinjam").value,
+    tenor: byId("tenor").value,
+    user: USER
+  };
+
+  google.script.run.withSuccessHandler(msg => {
+    notifSukses(msg);
+    byId("idanggotaPinjam").value = "";
+    byId("jumlahPinjam").value = "";
+    byId("tenor").value = "";
+    loadDashboard();
+  }).withFailureHandler(err => notifError(err.message)).simpanPinjaman(data);
+}
+
+function simpanAngsuran() {
+  const data = {
+    idpinjaman: byId("idpinjaman").value,
+    idanggota: byId("idanggotaAngsuran").value,
+    angsuranke: byId("angsuranke").value,
+    jumlah: byId("jumlahBayar").value,
+    user: USER
+  };
+
+  google.script.run.withSuccessHandler(res => {
+    notifSukses(res.message);
+
+    if (res.idAngsuran) {
+      Swal.fire({
+        title: "Cetak kwitansi?",
+        text: "Kwitansi PDF akan dibuat.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Cetak",
+        cancelButtonText: "Nanti"
+      }).then(result => {
+        if (result.isConfirmed) {
+          google.script.run.withSuccessHandler(url => window.open(url, "_blank")).cetakKwitansi(res.idAngsuran);
+        }
+      });
+    }
+
+    byId("idpinjaman").value = "";
+    byId("idanggotaAngsuran").value = "";
+    byId("infoSisaPinjaman").value = "";
+    byId("angsuranke").value = "";
+    byId("jumlahBayar").value = "";
+    loadDashboard();
+  }).withFailureHandler(err => notifError(err.message)).simpanAngsuran(data);
+}
+
+function loadTunggakan() {
+  google.script.run.withSuccessHandler(rows => {
+    let html = `
+      <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>ID Pinjaman</th>
+          <th>Nama</th>
+          <th>No HP</th>
+          <th>Angsuran/Bulan</th>
+          <th>Sisa Pinjaman</th>
+          <th>Status</th>
+          <th>WhatsApp</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+
+    if (!rows || rows.length === 0) {
+      html += `<tr><td colspan="7" class="text-center">Tidak ada tunggakan</td></tr>`;
+    } else {
+      rows.forEach(r => {
+        html += `
+          <tr>
+            <td>${r.idPinjaman}</td>
+            <td>${r.nama}</td>
+            <td>${r.nohp}</td>
+            <td>${rupiah(r.angsuranPerBulan)}</td>
+            <td>${rupiah(r.sisa)}</td>
+            <td>${r.status}</td>
+            <td>
+              <button class="btn btn-success btn-sm" onclick="kirimWAAngsuran('${r.nohp}', '${r.nama}', '${r.idPinjaman}', '${r.angsuranPerBulan}', '${r.sisa}')">
+                WA
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div>`;
+    byId("tunggakan").innerHTML = html;
+  }).withFailureHandler(err => notifError(err.message)).getTunggakan();
+}
+
+function simpanPengaturanAkun() {
+  const data = {
+    usernameLama: USERNAME,
+    usernameBaru: byId("usernameBaru").value,
+    passwordLama: byId("passwordLama").value,
+    passwordBaru: byId("passwordBaru").value
+  };
+
+  google.script.run.withSuccessHandler(res => {
+    if (res.status) {
+      Swal.fire({ icon: "success", title: "Berhasil", text: res.message }).then(() => logout());
+    } else {
+      notifError(res.message);
+    }
+  }).withFailureHandler(err => notifError(err.message)).updateAkun(data);
+}
+
+function exportExcel() {
+  google.script.run.withSuccessHandler(url => window.open(url, "_blank")).withFailureHandler(err => notifError(err.message)).exportExcel();
+}
+
+function loadRingkasanAnggota() {
+  google.script.run.withSuccessHandler(rows => {
+    if ($.fn.DataTable.isDataTable("#tblRingkasanAnggota")) {
+      $("#tblRingkasanAnggota").DataTable().destroy();
+    }
+
+    const tbody = document.querySelector("#tblRingkasanAnggota tbody");
+    tbody.innerHTML = "";
+
+    rows.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.idAnggota}</td>
+          <td>${r.nama}</td>
+          <td>${rupiah(r.totalSimpanan)}</td>
+          <td>${rupiah(r.totalSisaPinjaman)}</td>
+          <td>${rupiah(r.saldoAnggotaSaatIni)}</td>
+          <td>${rupiah(r.totalPinjaman)}</td>
+          <td>${rupiah(r.totalDibayar)}</td>
+          <td>${r.totalSisaAngsuran} kali</td>
+        </tr>
+      `;
+    });
+
+    $("#tblRingkasanAnggota").DataTable();
+  }).withFailureHandler(err => notifError(err.message)).getRingkasanAnggota();
+}
+
+function loadPilihanAnggota() {
+  google.script.run.withSuccessHandler(rows => {
+    let html = `<option value="">-- Pilih Anggota --</option>`;
+
+    rows.forEach(r => {
+      html += `<option value="${r.id}">${r.id} - ${r.nama}</option>`;
+    });
+
+    if (byId("kmIdAnggota")) byId("kmIdAnggota").innerHTML = html;
+    if (byId("idanggotaPinjam")) byId("idanggotaPinjam").innerHTML = html;
+  }).withFailureHandler(err => notifError(err.message)).getPilihanAnggota();
+}
+
+function loadPilihanPinjaman() {
+  google.script.run.withSuccessHandler(rows => {
+    let html = `<option value="">-- Pilih Pinjaman --</option>`;
+
+    rows.forEach(r => {
+      html += `<option value="${r.idPinjaman}">${r.idPinjaman} - ${r.idAnggota} - Sisa ${rupiah(r.sisa)}</option>`;
+    });
+
+    byId("idpinjaman").innerHTML = html;
+  }).withFailureHandler(err => notifError(err.message)).getPilihanPinjaman();
+}
+
+function pilihPinjamanAngsuran() {
+  const id = byId("idpinjaman").value;
+
+  if (!id) {
+    byId("idanggotaAngsuran").value = "";
+    byId("infoSisaPinjaman").value = "";
+    return;
+  }
+
+  google.script.run.withSuccessHandler(d => {
+    if (!d) {
+      notifError("Data pinjaman tidak ditemukan");
+      return;
+    }
+
+    byId("idanggotaAngsuran").value = d.idAnggota;
+    byId("infoSisaPinjaman").value = "Sisa: " + rupiah(d.sisa);
+  }).withFailureHandler(err => notifError(err.message)).getDetailPinjaman(id);
+}
+
+function kirimPengajuanPinjaman() {
+  const data = {
+    idanggota: ID_ANGGOTA,
+    jumlah: byId("ajuJumlah").value,
+    tenor: byId("ajuTenor").value
+  };
+
+  google.script.run.withSuccessHandler(msg => {
+    notifSukses(msg);
+    byId("ajuJumlah").value = "";
+    byId("ajuTenor").value = "";
+    loadDashboardAnggota();
+  }).withFailureHandler(err => notifError(err.message)).ajukanPinjamanAnggota(data);
+}
+
+function loadPengajuanPinjaman() {
+  google.script.run.withSuccessHandler(rows => {
+    const tbody = byId("tbodyPengajuanPinjaman");
+    tbody.innerHTML = "";
+
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center">Tidak ada pengajuan pinjaman</td></tr>`;
+      return;
+    }
+
+    rows.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r[0]}</td>
+          <td>${r[1]}</td>
+          <td>${r[2]}</td>
+          <td>${rupiah(r[3])}</td>
+          <td>${r[4]}</td>
+          <td>${rupiah(r[5])}</td>
+          <td>${r[8]}</td>
+          <td>
+            <button class="btn btn-sm btn-success mb-1" onclick="accPinjamanAdmin('${r[0]}')">ACC</button>
+            <button class="btn btn-sm btn-danger mb-1" onclick="tolakPinjamanAdmin('${r[0]}')">Tolak</button>
+          </td>
+        </tr>
+      `;
+    });
+  }).withFailureHandler(err => notifError(err.message)).getPengajuanPinjaman();
+}
+
+function accPinjamanAdmin(idPinjaman) {
+  Swal.fire({
+    title: "ACC pinjaman?",
+    text: "Pinjaman akan disetujui dan dicatat sebagai kas keluar.",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Ya, ACC",
+    cancelButtonText: "Batal"
+  }).then(result => {
+    if (!result.isConfirmed) return;
+
+    google.script.run.withSuccessHandler(msg => {
+      notifSukses(msg);
+      loadPengajuanPinjaman();
+      loadDashboard();
+      loadRingkasanAnggota();
+    }).withFailureHandler(err => notifError(err.message)).accPinjaman(idPinjaman, USER);
+  });
+}
+
+function tolakPinjamanAdmin(idPinjaman) {
+  Swal.fire({
+    title: "Tolak pinjaman?",
+    text: "Status pinjaman akan menjadi Ditolak.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Ya, tolak",
+    cancelButtonText: "Batal"
+  }).then(result => {
+    if (!result.isConfirmed) return;
+
+    google.script.run.withSuccessHandler(msg => {
+      notifSukses(msg);
+      loadPengajuanPinjaman();
+      loadDashboard();
+      loadRingkasanAnggota();
+    }).withFailureHandler(err => notifError(err.message)).tolakPinjaman(idPinjaman);
+  });
+}
+
+function bukaDaftar() {
+  byId("loginBox").style.display = "none";
+  byId("daftarBox").style.display = "block";
+}
+
+function kembaliLogin() {
+  byId("daftarBox").style.display = "none";
+  byId("loginBox").style.display = "block";
+}
+
+function daftarMandiri() {
+  const data = {
+    nama: byId("regNama").value,
+    alamat: byId("regAlamat").value,
+    nohp: byId("regNohp").value,
+    username: byId("regUsername").value,
+    password: byId("regPassword").value
+  };
+
+  google.script.run.withSuccessHandler(res => {
+    if (!res.status) {
+      notifError(res.message);
+      return;
+    }
+
+    Swal.fire({
+      icon: "success",
+      title: "Pendaftaran Berhasil",
+      text: res.message + " ID Anggota: " + res.idAnggota
+    }).then(() => {
+      byId("regNama").value = "";
+      byId("regAlamat").value = "";
+      byId("regNohp").value = "";
+      byId("regUsername").value = "";
+      byId("regPassword").value = "";
+      kembaliLogin();
+    });
+  }).withFailureHandler(err => notifError(err.message)).daftarAnggotaMandiri(data);
+}
+
+function formatNoWA(nohp) {
+  let nomor = String(nohp || "").replace(/\D/g, "");
+
+  if (nomor.startsWith("0")) {
+    nomor = "62" + nomor.substring(1);
+  }
+
+  if (!nomor.startsWith("62")) {
+    nomor = "62" + nomor;
+  }
+
+  return nomor;
+}
+
+function kirimWAAngsuran(nohp, nama, idPinjaman, angsuranPerBulan, sisa) {
+  const nomor = formatNoWA(nohp);
+
+  if (!nomor || nomor.length < 10) {
+    notifError("Nomor WhatsApp anggota belum valid");
+    return;
+  }
+
+  const pesan =
+    `Assalamu'alaikum ${nama},%0A%0A` +
+    `Kami informasikan bahwa angsuran pinjaman Anda masih berjalan.%0A%0A` +
+    `ID Pinjaman: ${idPinjaman}%0A` +
+    `Angsuran yang harus dibayar: ${rupiah(angsuranPerBulan)}%0A` +
+    `Sisa pinjaman: ${rupiah(sisa)}%0A%0A` +
+    `Mohon segera melakukan pembayaran angsuran.%0A%0A` +
+    `Terima kasih.`;
+
+  const url = `https://wa.me/${nomor}?text=${pesan}`;
+  window.open(url, "_blank");
+}
+
+</script>
+
+</body>
+</html>

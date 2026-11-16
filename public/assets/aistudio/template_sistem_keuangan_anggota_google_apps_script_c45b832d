@@ -1,0 +1,11 @@
+DASHBOARD SISTEM KEUANGAN ANGGOTA,,,,
+,,,,
+Total Anggota Aktif,7,,Ringkasan Status Pinjaman,
+Total Kas Masuk,Rp19.046.848,,Status,Jumlah
+Total Kas Keluar,Rp17.361.846,,Diajukan,0
+Saldo Kas,Rp1.685.002,,Berjalan,7
+Total Piutang Pinjaman,Rp9.660.000,,Lunas,3
+Pinjaman Berjalan,7,,Macet,0
+,,,,
+Catatan penggunaan,,,,
+"Spreadsheet ini dipakai sebagai database. Input utama sebaiknya dari Web App Google Apps Script, bukan diketik manual. Nama sheet dan kolom sudah disesuaikan dengan kode Apps Script: Anggota, KasMasuk, KasKeluar, Pinjaman, Angsuran, Users.",,,,
