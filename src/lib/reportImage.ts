@@ -18,6 +18,9 @@ export interface RingkasanImageOptions {
   subtitle?: string;
 }
 
+const FONT_SANS =
+  '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
 function drawRoundedRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -49,6 +52,63 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number):
   return clipped + '...';
 }
 
+function formatCleanGroupTitle(rawTitle?: string): string {
+  const trimmed = String(rawTitle || '').trim();
+  if (!trimmed) return 'Laporan Keuangan Kelompok';
+  if (/template/i.test(trimmed) || /^buku_besar/i.test(trimmed)) {
+    return 'Rekapitulasi Keuangan Kelompok';
+  }
+  return trimmed.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function getInitials(name: string): string {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return 'AG';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function drawBankEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+  // Golden rounded square container
+  drawRoundedRect(ctx, cx, cy, 44, 44, 12);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+  ctx.fill();
+  ctx.lineWidth = 1.25;
+  ctx.strokeStyle = 'rgba(252, 211, 77, 0.55)';
+  ctx.stroke();
+
+  // Minimalist bank pediment + pillars icon
+  ctx.strokeStyle = '#FCD34D';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Roof triangle
+  ctx.beginPath();
+  ctx.moveTo(cx + 10, cy + 18);
+  ctx.lineTo(cx + 22, cy + 10);
+  ctx.lineTo(cx + 34, cy + 18);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Pillars
+  [14, 22, 30].forEach((px) => {
+    ctx.beginPath();
+    ctx.moveTo(cx + px, cy + 18);
+    ctx.lineTo(cx + px, cy + 31);
+    ctx.stroke();
+  });
+
+  // Base line
+  ctx.beginPath();
+  ctx.moveTo(cx + 10, cy + 32);
+  ctx.lineTo(cx + 34, cy + 32);
+  ctx.stroke();
+}
+
 export function dataUrlToBlob(dataUrl: string): Blob {
   const parts = dataUrl.split(',');
   const mimeMatch = parts[0].match(/:(.*?);/);
@@ -69,35 +129,47 @@ export function generateRingkasanSaldoImage(
   const admin = computeAdminDashboard(dataset);
   const members = computeRingkasanAnggota(dataset);
 
-  const width = 1080;
-  const padX = 36;
-  const innerW = width - padX * 2;
-  const headerH = 148;
-  const hasHighlight = Boolean(options?.highlightText);
-  const highlightH = hasHighlight ? 54 : 0;
-  const highlightGap = hasHighlight ? 16 : 0;
-  const kpiSectionH = 132;
-  const tableHeaderAreaH = 108; // Card title + column headers
-  const rowH = 56;
-  const visibleRows = Math.max(members.length, 1);
-  const tableTotalRowH = 56;
-  const tableCardH = tableHeaderAreaH + visibleRows * rowH + tableTotalRowH + 16;
-  const footerH = 54;
+  // 2x Retina logical coordinate space
+  const scale = 2;
+  const width = 1040;
+  const outerPad = 36;
+  const cardX = outerPad;
+  const cardW = width - outerPad * 2;
+  const innerPad = 32;
+  const contentX = cardX + innerPad;
+  const contentW = cardW - innerPad * 2;
 
-  const height =
-    32 +
-    headerH +
-    20 +
-    highlightH +
+  const heroH = 166;
+  const hasHighlight = Boolean(options?.highlightText);
+  const highlightH = hasHighlight ? 52 : 0;
+  const highlightGap = hasHighlight ? 18 : 0;
+  const balanceSectionH = 144;
+  const sectionTitleH = 54;
+  const tableHeaderH = 44;
+  const rowH = 68;
+  const visibleRows = Math.max(members.length, 1);
+  const totalBarH = 60;
+  const footerH = 64;
+
+  const cardH =
+    heroH +
+    28 +
+    balanceSectionH +
     highlightGap +
-    kpiSectionH +
-    24 +
-    tableCardH +
+    highlightH +
+    28 +
+    sectionTitleH +
+    tableHeaderH +
+    visibleRows * rowH +
+    14 +
+    totalBarH +
     footerH;
 
+  const height = outerPad * 2 + cardH;
+
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = width * scale;
+  canvas.height = height * scale;
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
@@ -109,52 +181,87 @@ export function generateRingkasanSaldoImage(
     };
   }
 
-  // Canvas background
-  ctx.fillStyle = '#F2F6FA';
+  ctx.scale(scale, scale);
+
+  // Outer soft banking canvas backdrop
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+  bgGrad.addColorStop(0, '#E6EEF8');
+  bgGrad.addColorStop(1, '#F1F5FA');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
 
-  // Header Card (Banking Cobalt Gradient)
-  let cursorY = 32;
-  const headerGrad = ctx.createLinearGradient(padX, cursorY, width - padX, cursorY + headerH);
-  headerGrad.addColorStop(0, '#002855');
-  headerGrad.addColorStop(0.55, '#004A8F');
-  headerGrad.addColorStop(1, '#0066CC');
-  drawRoundedRect(ctx, padX, cursorY, innerW, headerH, 20);
-  ctx.fillStyle = headerGrad;
-  ctx.fill();
-
-  // Decorative circle inside header
+  // Main elevated white statement sheet
   ctx.save();
-  drawRoundedRect(ctx, padX, cursorY, innerW, headerH, 20);
-  ctx.clip();
-  ctx.beginPath();
-  ctx.arc(width - padX - 40, cursorY + 24, 130, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+  ctx.shadowColor = 'rgba(10, 36, 99, 0.11)';
+  ctx.shadowBlur = 32;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 12;
+  drawRoundedRect(ctx, cardX, outerPad, cardW, cardH, 26);
+  ctx.fillStyle = '#FFFFFF';
   ctx.fill();
   ctx.restore();
 
-  // Header Text Left
-  ctx.fillStyle = '#FCD34D';
-  ctx.font = '700 15px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText('SENTRA KAS · LAPORAN POSISI KEUANGAN', padX + 30, cursorY + 42);
+  // Hairline border around statement sheet
+  drawRoundedRect(ctx, cardX, outerPad, cardW, cardH, 26);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#DCE5F2';
+  ctx.stroke();
 
+  // Clip hero top inside sheet rounded corners
+  ctx.save();
+  drawRoundedRect(ctx, cardX, outerPad, cardW, cardH, 26);
+  ctx.clip();
+
+  // Hero Cobalt-Navy Header
+  const heroGrad = ctx.createLinearGradient(cardX, outerPad, cardX + cardW, outerPad + heroH);
+  heroGrad.addColorStop(0, '#071E4A');
+  heroGrad.addColorStop(0.5, '#003B7A');
+  heroGrad.addColorStop(1, '#005EB8');
+  ctx.fillStyle = heroGrad;
+  ctx.fillRect(cardX, outerPad, cardW, heroH);
+
+  // Subtle decorative banking arcs in header
+  ctx.beginPath();
+  ctx.arc(cardX + cardW - 60, outerPad + 20, 175, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cardX + cardW - 140, outerPad + heroH + 30, 130, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
+  ctx.fill();
+
+  // Subtle golden bottom accent stripe under hero
+  const goldLine = ctx.createLinearGradient(cardX, 0, cardX + cardW, 0);
+  goldLine.addColorStop(0, '#F59E0B');
+  goldLine.addColorStop(0.5, '#FCD34D');
+  goldLine.addColorStop(1, '#38BDF8');
+  ctx.fillStyle = goldLine;
+  ctx.fillRect(cardX, outerPad + heroH - 4, cardW, 4);
+
+  ctx.restore();
+
+  // Hero Brand Emblem & Title
+  drawBankEmblem(ctx, contentX, outerPad + 30);
+
+  ctx.fillStyle = '#FCD34D';
+  ctx.font = `700 12.5px ${FONT_SANS}`;
+  ctx.fillText('SENTRA KAS  ·  E-STATEMENT KELOMPOK', contentX + 58, outerPad + 47);
+
+  const cleanTitle = formatCleanGroupTitle(dataset.spreadsheetTitle);
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = '800 30px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText(
-    fitText(ctx, dataset.spreadsheetTitle || 'Keuangan Anggota Kelompok', 620),
-    padX + 30,
-    cursorY + 84
-  );
+  ctx.font = `800 26px ${FONT_SANS}`;
+  ctx.fillText(fitText(ctx, cleanTitle, 520), contentX + 58, outerPad + 76);
 
   ctx.fillStyle = 'rgba(219, 234, 254, 0.9)';
-  ctx.font = '500 16px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
+  ctx.font = `500 14.5px ${FONT_SANS}`;
   ctx.fillText(
-    options?.subtitle || 'Rincian Saldo Kelompok & Posisi Simpanan / Pinjaman Anggota',
-    padX + 30,
-    cursorY + 116
+    options?.subtitle || 'Rincian Saldo Terkini & Posisi Keuangan Anggota',
+    contentX,
+    outerPad + 124
   );
 
-  // Header Text Right (Date & Active Members)
+  // Hero Right Timestamp Pill
   const nowStr = new Date().toLocaleString('id-ID', {
     day: '2-digit',
     month: 'short',
@@ -162,256 +269,378 @@ export function generateRingkasanSaldoImage(
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const pillW = 248;
+  const pillX = contentX + contentW - pillW;
+  const pillY = outerPad + 32;
+  drawRoundedRect(ctx, pillX, pillY, pillW, 56, 14);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+  ctx.stroke();
+
   ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(219, 234, 254, 0.85)';
-  ctx.font = '600 14px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText('Update Posisi Kas', width - padX - 30, cursorY + 46);
+  ctx.fillStyle = '#BFDBFE';
+  ctx.font = `600 11px ${FONT_SANS}`;
+  ctx.fillText('POSISI PER TANGGAL', pillX + pillW - 16, pillY + 21);
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = '700 18px "JetBrains Mono", monospace';
-  ctx.fillText(nowStr + ' WIB', width - padX - 30, cursorY + 78);
+  ctx.font = `700 14.5px ${FONT_SANS}`;
+  ctx.fillText(`${nowStr} WIB`, pillX + pillW - 16, pillY + 43);
 
   ctx.fillStyle = '#FCD34D';
-  ctx.font = '700 15px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
+  ctx.font = `600 13px ${FONT_SANS}`;
   ctx.fillText(
-    `${admin.anggotaAktif} Anggota Aktif · ${admin.pinjamanStatusCounts.Berjalan} Pinjaman Aktif`,
-    width - padX - 30,
-    cursorY + 114
+    `${admin.anggotaAktif} Anggota Aktif  ·  ${admin.pinjamanStatusCounts.Berjalan} Pinjaman Aktif`,
+    contentX + contentW,
+    outerPad + 124
   );
   ctx.textAlign = 'left';
 
-  cursorY += headerH + 20;
+  // Cursor inside statement body
+  let cursorY = outerPad + heroH + 28;
 
-  // Optional Latest Mutation Strip
-  if (hasHighlight && options?.highlightText) {
-    const isDebit = options.highlightTone === 'debit';
-    drawRoundedRect(ctx, padX, cursorY, innerW, highlightH, 14);
-    ctx.fillStyle = isDebit ? '#FFFBEB' : '#ECFDF5';
-    ctx.fill();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = isDebit ? '#FDE68A' : '#A7F3D0';
-    ctx.stroke();
+  // Balance Overview Panel (Hero Saldo + 3 Metric Columns)
+  drawRoundedRect(ctx, contentX, cursorY, contentW, balanceSectionH, 18);
+  ctx.fillStyle = '#F8FAFD';
+  ctx.fill();
+  ctx.lineWidth = 1.25;
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.stroke();
 
-    ctx.fillStyle = isDebit ? '#B45309' : '#047857';
-    ctx.font = '700 16px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-    ctx.fillText(
-      fitText(ctx, `MUTASI TERBARU: ${options.highlightText}`, innerW - 44),
-      padX + 22,
-      cursorY + 33
-    );
+  // Left Primary Cash Balance
+  const primaryW = 335;
+  drawRoundedRect(ctx, contentX + 10, cursorY + 10, primaryW - 10, balanceSectionH - 20, 14);
+  const focalGrad = ctx.createLinearGradient(
+    contentX + 10,
+    cursorY + 10,
+    contentX + primaryW,
+    cursorY + balanceSectionH - 10
+  );
+  focalGrad.addColorStop(0, '#072456');
+  focalGrad.addColorStop(1, '#004A8F');
+  ctx.fillStyle = focalGrad;
+  ctx.fill();
 
-    cursorY += highlightH + highlightGap;
-  }
+  ctx.fillStyle = '#FCD34D';
+  ctx.font = `700 11.5px ${FONT_SANS}`;
+  ctx.fillText('SALDO KAS SAAT INI', contentX + 30, cursorY + 38);
 
-  // 4 Summary KPI Cards (Rincian Saldo Saat Ini)
-  const kpiGap = 14;
-  const kpiW = (innerW - kpiGap * 3) / 4;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `800 32px ${FONT_SANS}`;
+  ctx.fillText(fitText(ctx, rupiah(admin.saldo), primaryW - 50), contentX + 30, cursorY + 82);
 
-  const kpiItems = [
-    {
-      label: 'SALDO KAS SAAT INI',
-      value: rupiah(admin.saldo),
-      sub: 'Saldo bersih tersedia',
-      focal: true,
-      valColor: '#FFFFFF',
-    },
+  // Subtle green status dot
+  ctx.beginPath();
+  ctx.arc(contentX + 35, cursorY + 111, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#34D399';
+  ctx.fill();
+
+  ctx.fillStyle = '#DBEAFE';
+  ctx.font = `500 12.5px ${FONT_SANS}`;
+  ctx.fillText('Saldo bersih tersedia di kas', contentX + 46, cursorY + 115);
+
+  // Right 3 Metric Columns
+  const rightAreaX = contentX + primaryW + 12;
+  const rightAreaW = contentW - primaryW - 22;
+  const colW = rightAreaW / 3;
+
+  const metrics = [
     {
       label: 'TOTAL DANA MASUK',
-      value: rupiah(admin.masuk),
+      value: `+ ${rupiah(admin.masuk)}`,
       sub: `${dataset.kasMasuk.length} transaksi kredit`,
-      focal: false,
-      valColor: '#047857',
+      color: '#059669',
+      dot: '#10B981',
     },
     {
       label: 'TOTAL DANA KELUAR',
-      value: rupiah(admin.keluar),
+      value: `- ${rupiah(admin.keluar)}`,
       sub: `${dataset.kasKeluar.length} transaksi debit`,
-      focal: false,
-      valColor: '#D97706',
+      color: '#D97706',
+      dot: '#F59E0B',
     },
     {
       label: 'PIUTANG PINJAMAN',
       value: rupiah(admin.piutang),
       sub: `${admin.pinjamanStatusCounts.Berjalan} pinjaman berjalan`,
-      focal: false,
-      valColor: '#004A8F',
+      color: '#004A8F',
+      dot: '#2563EB',
     },
   ];
 
-  kpiItems.forEach((item, i) => {
-    const kx = padX + i * (kpiW + kpiGap);
-    drawRoundedRect(ctx, kx, cursorY, kpiW, kpiSectionH, 16);
-    if (item.focal) {
-      const cardGrad = ctx.createLinearGradient(kx, cursorY, kx + kpiW, cursorY + kpiSectionH);
-      cardGrad.addColorStop(0, '#00356B');
-      cardGrad.addColorStop(1, '#0056A8');
-      ctx.fillStyle = cardGrad;
-      ctx.fill();
-    } else {
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#E2E8F0';
-      ctx.stroke();
+  metrics.forEach((m, idx) => {
+    const mx = rightAreaX + idx * colW;
+    if (idx > 0) {
+      ctx.fillStyle = '#E2E8F0';
+      ctx.fillRect(mx - 6, cursorY + 24, 1, balanceSectionH - 48);
     }
 
-    ctx.fillStyle = item.focal ? '#FCD34D' : '#64748B';
-    ctx.font = '700 12px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-    ctx.fillText(item.label, kx + 18, cursorY + 32);
+    ctx.beginPath();
+    ctx.arc(mx + 14, cursorY + 38, 4, 0, Math.PI * 2);
+    ctx.fillStyle = m.dot;
+    ctx.fill();
 
-    ctx.fillStyle = item.valColor;
-    ctx.font = '800 22px "JetBrains Mono", monospace';
-    ctx.fillText(fitText(ctx, item.value, kpiW - 32), kx + 18, cursorY + 74);
+    ctx.fillStyle = '#64748B';
+    ctx.font = `700 11px ${FONT_SANS}`;
+    ctx.fillText(m.label, mx + 25, cursorY + 42);
 
-    ctx.fillStyle = item.focal ? 'rgba(219, 234, 254, 0.85)' : '#64748B';
-    ctx.font = '500 13px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-    ctx.fillText(fitText(ctx, item.sub, kpiW - 32), kx + 18, cursorY + 108);
+    ctx.fillStyle = m.color;
+    ctx.font = `800 20px ${FONT_SANS}`;
+    ctx.fillText(fitText(ctx, m.value, colW - 22), mx + 10, cursorY + 79);
+
+    ctx.fillStyle = '#64748B';
+    ctx.font = `500 12.5px ${FONT_SANS}`;
+    ctx.fillText(fitText(ctx, m.sub, colW - 22), mx + 10, cursorY + 110);
   });
 
-  cursorY += kpiSectionH + 24;
+  cursorY += balanceSectionH;
 
-  // Rincian Masing-Masing Anggota Card
-  drawRoundedRect(ctx, padX, cursorY, innerW, tableCardH, 20);
-  ctx.fillStyle = '#FFFFFF';
+  // Optional Latest Mutation Highlight Strip
+  if (hasHighlight && options?.highlightText) {
+    cursorY += highlightGap;
+    const isDebit = options.highlightTone === 'debit';
+    drawRoundedRect(ctx, contentX, cursorY, contentW, highlightH, 12);
+    ctx.fillStyle = isDebit ? '#FFFBEB' : '#ECFDF5';
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = isDebit ? '#FDE68A' : '#A7F3D0';
+    ctx.stroke();
+
+    // Left accent bar
+    drawRoundedRect(ctx, contentX, cursorY, 6, highlightH, 3);
+    ctx.fillStyle = isDebit ? '#D97706' : '#059669';
+    ctx.fill();
+
+    ctx.fillStyle = isDebit ? '#92400E' : '#065F46';
+    ctx.font = `700 14px ${FONT_SANS}`;
+    ctx.fillText(
+      fitText(ctx, `MUTASI TERBARU:  ${options.highlightText}`, contentW - 40),
+      contentX + 20,
+      cursorY + 31
+    );
+    cursorY += highlightH;
+  }
+
+  cursorY += 28;
+
+  // Member Breakdown Section Header
+  ctx.fillStyle = '#0F172A';
+  ctx.font = `800 19px ${FONT_SANS}`;
+  ctx.fillText('Rincian Saldo & Pinjaman Anggota', contentX, cursorY + 22);
+
+  ctx.fillStyle = '#64748B';
+  ctx.font = `500 12.5px ${FONT_SANS}`;
+  ctx.fillText('Total simpanan, sisa pinjaman, dan saldo bersih masing-masing anggota', contentX, cursorY + 42);
+
+  // Formula Pill on Right
+  const formulaLabel = 'Saldo = Simpanan - Pinjaman';
+  ctx.font = `600 11.5px ${FONT_SANS}`;
+  const fWidth = ctx.measureText(formulaLabel).width + 24;
+  drawRoundedRect(ctx, contentX + contentW - fWidth, cursorY + 8, fWidth, 28, 14);
+  ctx.fillStyle = '#EFF6FF';
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#E2E8F0';
+  ctx.strokeStyle = '#BFDBFE';
+  ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Section Title
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '800 20px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText('Rincian Keuangan Masing-Masing Anggota', padX + 24, cursorY + 38);
-
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#64748B';
-  ctx.font = '600 13px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText(
-    'Saldo Saat Ini = Total Simpanan - Sisa Pinjaman',
-    width - padX - 24,
-    cursorY + 38
-  );
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#004A8F';
+  ctx.fillText(formulaLabel, contentX + contentW - fWidth / 2, cursorY + 26);
   ctx.textAlign = 'left';
 
-  // Table Column Header Bar
-  const thY = cursorY + 58;
-  const thH = 44;
-  ctx.fillStyle = '#EBF3FC';
-  ctx.fillRect(padX + 16, thY, innerW - 32, thH);
+  cursorY += sectionTitleH;
 
-  const colNoX = padX + 32;
-  const colNamaX = padX + 82;
-  const colSimpananRightX = padX + 590;
-  const colPinjamanRightX = padX + 795;
-  const colSaldoRightX = width - padX - 32;
+  // Column Header Pill Bar
+  drawRoundedRect(ctx, contentX, cursorY, contentW, tableHeaderH, 12);
+  ctx.fillStyle = '#F1F5F9';
+  ctx.fill();
 
-  ctx.fillStyle = '#002855';
-  ctx.font = '700 13px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText('NO', colNoX, thY + 27);
-  ctx.fillText('NAMA ANGGOTA', colNamaX, thY + 27);
+  const colMemberX = contentX + 18;
+  const colSimpananRightX = contentX + 515;
+  const colPinjamanRightX = contentX + 705;
+  const colSaldoRightX = contentX + contentW - 18;
+
+  ctx.fillStyle = '#475569';
+  ctx.font = `700 11.5px ${FONT_SANS}`;
+  ctx.fillText('ANGGOTA', colMemberX, cursorY + 26);
 
   ctx.textAlign = 'right';
-  ctx.fillText('TOTAL SALDO (SIMPANAN)', colSimpananRightX, thY + 27);
-  ctx.fillText('PINJAMAN (SISA)', colPinjamanRightX, thY + 27);
-  ctx.fillText('SALDO SAAT INI', colSaldoRightX, thY + 27);
+  ctx.fillText('TOTAL SALDO (SIMPANAN)', colSimpananRightX, cursorY + 26);
+  ctx.fillText('PINJAMAN (SISA)', colPinjamanRightX, cursorY + 26);
+  ctx.fillText('SALDO SAAT INI', colSaldoRightX, cursorY + 26);
   ctx.textAlign = 'left';
 
-  let rowY = thY + thH;
+  cursorY += tableHeaderH;
+
+  const avatarPalette = [
+    { bg: '#DBEAFE', fg: '#1E40AF' },
+    { bg: '#D1FAE5', fg: '#065F46' },
+    { bg: '#E0E7FF', fg: '#3730A3' },
+    { bg: '#FEF3C7', fg: '#92400E' },
+    { bg: '#E0F2FE', fg: '#075985' },
+  ];
 
   if (members.length === 0) {
     ctx.fillStyle = '#94A3B8';
-    ctx.font = '500 15px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
+    ctx.font = `500 14px ${FONT_SANS}`;
     ctx.textAlign = 'center';
-    ctx.fillText('Belum ada data anggota terdaftar.', width / 2, rowY + 34);
+    ctx.fillText('Belum ada data anggota terdaftar.', width / 2, cursorY + 40);
     ctx.textAlign = 'left';
-    rowY += rowH;
+    cursorY += rowH;
   } else {
     members.forEach((m, index) => {
       if (index % 2 === 1) {
-        ctx.fillStyle = '#F8FAFC';
-        ctx.fillRect(padX + 16, rowY, innerW - 32, rowH);
+        ctx.fillStyle = '#FAFBFD';
+        ctx.fillRect(contentX, cursorY, contentW, rowH);
       }
 
-      // Row divider
-      ctx.fillStyle = '#F1F5F9';
-      ctx.fillRect(padX + 16, rowY + rowH - 1, innerW - 32, 1);
+      // Row hairline divider
+      if (index < members.length - 1) {
+        ctx.fillStyle = '#F1F5F9';
+        ctx.fillRect(contentX + 14, cursorY + rowH - 1, contentW - 28, 1);
+      }
 
-      // No
-      ctx.fillStyle = '#64748B';
-      ctx.font = '600 14px "JetBrains Mono", monospace';
-      ctx.fillText(String(index + 1), colNoX, rowY + 33);
+      // Circular monogram avatar
+      const pal = avatarPalette[index % avatarPalette.length];
+      const avatarX = colMemberX + 19;
+      const avatarY = cursorY + rowH / 2;
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, 19, 0, Math.PI * 2);
+      ctx.fillStyle = pal.bg;
+      ctx.fill();
 
-      // Name & ID subtitle
+      ctx.textAlign = 'center';
+      ctx.fillStyle = pal.fg;
+      ctx.font = `700 13px ${FONT_SANS}`;
+      ctx.fillText(getInitials(m.nama), avatarX, avatarY + 4.5);
+      ctx.textAlign = 'left';
+
+      // Member name & clean human subtitle (no raw timestamp ID)
+      const textX = colMemberX + 50;
       ctx.fillStyle = '#0F172A';
-      ctx.font = '700 16px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-      ctx.fillText(fitText(ctx, m.nama, 300), colNamaX, rowY + 26);
+      ctx.font = `700 15.5px ${FONT_SANS}`;
+      ctx.fillText(fitText(ctx, m.nama, 270), textX, cursorY + 29);
 
-      ctx.fillStyle = m.status === 'Aktif' ? '#64748B' : '#94A3B8';
-      ctx.font = '500 12px "JetBrains Mono", monospace';
-      ctx.fillText(
-        `${m.idAnggota}${m.status !== 'Aktif' ? ` · ${m.status}` : ''}`,
-        colNamaX,
-        rowY + 45
-      );
+      const subtitleParts: string[] = [];
+      subtitleParts.push(m.status === 'Aktif' ? 'Aktif' : m.status);
+      if (m.totalSisaPinjaman > 0) {
+        subtitleParts.push(
+          m.totalSisaAngsuran > 0
+            ? `Sisa ${m.totalSisaAngsuran}x angsuran`
+            : 'Pinjaman berjalan'
+        );
+      } else {
+        subtitleParts.push('Bebas pinjaman');
+      }
+
+      ctx.fillStyle = m.totalSisaPinjaman > 0 ? '#B45309' : '#64748B';
+      ctx.font = `500 12px ${FONT_SANS}`;
+      ctx.fillText(subtitleParts.join('  ·  '), textX, cursorY + 49);
 
       // Total Simpanan
       ctx.textAlign = 'right';
-      ctx.fillStyle = '#047857';
-      ctx.font = '700 16px "JetBrains Mono", monospace';
-      ctx.fillText(rupiah(m.totalSimpanan), colSimpananRightX, rowY + 34);
+      ctx.fillStyle = m.totalSimpanan > 0 ? '#059669' : '#94A3B8';
+      ctx.font = `700 15.5px ${FONT_SANS}`;
+      ctx.fillText(rupiah(m.totalSimpanan), colSimpananRightX, cursorY + 39);
 
       // Sisa Pinjaman
       ctx.fillStyle = m.totalSisaPinjaman > 0 ? '#D97706' : '#94A3B8';
-      ctx.font = '700 16px "JetBrains Mono", monospace';
-      ctx.fillText(rupiah(m.totalSisaPinjaman), colPinjamanRightX, rowY + 34);
+      ctx.font = `700 15.5px ${FONT_SANS}`;
+      ctx.fillText(
+        m.totalSisaPinjaman > 0 ? rupiah(m.totalSisaPinjaman) : 'Rp 0',
+        colPinjamanRightX,
+        cursorY + 39
+      );
 
-      // Saldo Saat Ini
-      ctx.fillStyle = m.saldoAnggotaSaatIni >= 0 ? '#004A8F' : '#DC2626';
-      ctx.font = '800 17px "JetBrains Mono", monospace';
-      ctx.fillText(rupiah(m.saldoAnggotaSaatIni), colSaldoRightX, rowY + 34);
+      // Saldo Saat Ini inside soft tinted pill
+      const saldoText = rupiah(m.saldoAnggotaSaatIni);
+      ctx.font = `800 15px ${FONT_SANS}`;
+      const pillTextW = ctx.measureText(saldoText).width;
+      const saldoPillW = Math.max(pillTextW + 24, 108);
+      const saldoPillX = colSaldoRightX - saldoPillW;
+      const saldoPillY = cursorY + 17;
+      drawRoundedRect(ctx, saldoPillX, saldoPillY, saldoPillW, 34, 10);
+
+      if (m.saldoAnggotaSaatIni < 0) {
+        ctx.fillStyle = '#FEF2F2';
+        ctx.fill();
+        ctx.fillStyle = '#DC2626';
+      } else if (m.saldoAnggotaSaatIni > 0) {
+        ctx.fillStyle = '#EFF6FF';
+        ctx.fill();
+        ctx.fillStyle = '#004A8F';
+      } else {
+        ctx.fillStyle = '#F8FAFC';
+        ctx.fill();
+        ctx.fillStyle = '#64748B';
+      }
+
+      ctx.fillText(saldoText, colSaldoRightX - 12, cursorY + 39);
       ctx.textAlign = 'left';
 
-      rowY += rowH;
+      cursorY += rowH;
     });
   }
 
-  // Summary Totals Row
+  cursorY += 14;
+
+  // Grand Totals Bar
   const sumSimpanan = members.reduce((s, m) => s + m.totalSimpanan, 0);
   const sumPinjaman = members.reduce((s, m) => s + m.totalSisaPinjaman, 0);
   const sumSaldoSaatIni = members.reduce((s, m) => s + m.saldoAnggotaSaatIni, 0);
 
-  ctx.fillStyle = '#002855';
-  drawRoundedRect(ctx, padX + 16, rowY + 4, innerW - 32, tableTotalRowH - 8, 12);
+  drawRoundedRect(ctx, contentX, cursorY, contentW, totalBarH, 14);
+  const totalGrad = ctx.createLinearGradient(contentX, cursorY, contentX + contentW, cursorY);
+  totalGrad.addColorStop(0, '#071E4A');
+  totalGrad.addColorStop(1, '#003B7A');
+  ctx.fillStyle = totalGrad;
   ctx.fill();
 
   ctx.fillStyle = '#FCD34D';
-  ctx.font = '700 15px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText(`TOTAL (${members.length} ANGGOTA)`, colNamaX, rowY + 35);
+  ctx.font = `800 13.5px ${FONT_SANS}`;
+  ctx.fillText(`TOTAL KESELURUHAN (${members.length} ANGGOTA)`, colMemberX, cursorY + 35);
 
   ctx.textAlign = 'right';
   ctx.fillStyle = '#6EE7B7';
-  ctx.font = '800 16px "JetBrains Mono", monospace';
-  ctx.fillText(rupiah(sumSimpanan), colSimpananRightX, rowY + 35);
+  ctx.font = `800 16px ${FONT_SANS}`;
+  ctx.fillText(rupiah(sumSimpanan), colSimpananRightX, cursorY + 36);
 
   ctx.fillStyle = '#FCD34D';
-  ctx.fillText(rupiah(sumPinjaman), colPinjamanRightX, rowY + 35);
+  ctx.fillText(rupiah(sumPinjaman), colPinjamanRightX, cursorY + 36);
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = '800 17px "JetBrains Mono", monospace';
-  ctx.fillText(rupiah(sumSaldoSaatIni), colSaldoRightX, rowY + 35);
+  ctx.font = `800 17px ${FONT_SANS}`;
+  ctx.fillText(rupiah(sumSaldoSaatIni), colSaldoRightX - 12, cursorY + 36);
   ctx.textAlign = 'left';
 
-  // Footer
-  const footerY = height - 20;
+  cursorY += totalBarH;
+
+  // Footer inside Statement Sheet
+  ctx.fillStyle = '#E2E8F0';
+  ctx.fillRect(contentX, cursorY + 20, contentW, 1);
+
+  ctx.beginPath();
+  ctx.arc(contentX + 5, cursorY + 42, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#10B981';
+  ctx.fill();
+
   ctx.fillStyle = '#64748B';
-  ctx.font = '600 13px "Plus Jakarta Sans", system-ui, -apple-system, sans-serif';
-  ctx.fillText('Sentra Kas · Transparansi Keuangan Kelompok', padX + 6, footerY);
+  ctx.font = `600 12px ${FONT_SANS}`;
+  ctx.fillText(
+    'Sentra Kas  ·  Transparansi Keuangan Kelompok Terintegrasi',
+    contentX + 16,
+    cursorY + 46
+  );
 
   ctx.textAlign = 'right';
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = `500 12px ${FONT_SANS}`;
   ctx.fillText(
-    'Dokumen ringkasan otomatis siap bagikan ke Grup WA',
-    width - padX - 6,
-    footerY
+    'Dokumen Ringkasan Resmi · Siap Bagikan ke Grup WhatsApp',
+    contentX + contentW,
+    cursorY + 46
   );
   ctx.textAlign = 'left';
 
