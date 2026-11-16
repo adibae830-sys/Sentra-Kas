@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { formatTanggalId, rupiah } from '../lib/financeEngine';
 import { Anggota, FinanceDataset, KasKeluar, KasMasuk } from '../types/finance';
+import { CurrencyInput } from './CurrencyInput';
 
 interface DataAnggotaViewProps {
   dataset: FinanceDataset;
@@ -376,13 +377,11 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-700">Jumlah (Rp)</label>
-              <input
-                type="number"
-                min={1}
+              <CurrencyInput
                 required
                 value={jumlah}
-                onChange={(e) => setJumlah(e.target.value)}
-                placeholder="100000"
+                onValueChange={(digits) => setJumlah(digits)}
+                placeholder="100.000"
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
               />
             </div>
@@ -555,11 +554,10 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
                 <label className="mb-1 block text-xs font-semibold text-slate-700">
                   Nominal (Rp)
                 </label>
-                <input
-                  type="number"
-                  min={1}
+                <CurrencyInput
                   value={editing.jumlah}
-                  onChange={(e) => setEditing({ ...editing, jumlah: Number(e.target.value) || 0 })}
+                  onValueChange={(_, num) => setEditing({ ...editing, jumlah: num })}
+                  placeholder="100.000"
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                 />
               </div>
@@ -678,13 +676,11 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-700">Jumlah (Rp)</label>
-              <input
-                type="number"
-                min={1}
+              <CurrencyInput
                 required
                 value={jumlah}
-                onChange={(e) => setJumlah(e.target.value)}
-                placeholder="50000"
+                onValueChange={(digits) => setJumlah(digits)}
+                placeholder="50.000"
                 className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
               />
             </div>
@@ -842,11 +838,10 @@ export const KasKeluarView: React.FC<KasKeluarViewProps> = ({
                 <label className="mb-1 block text-xs font-semibold text-slate-700">
                   Nominal (Rp)
                 </label>
-                <input
-                  type="number"
-                  min={1}
+                <CurrencyInput
                   value={editing.jumlah}
-                  onChange={(e) => setEditing({ ...editing, jumlah: Number(e.target.value) || 0 })}
+                  onValueChange={(_, num) => setEditing({ ...editing, jumlah: num })}
+                  placeholder="50.000"
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                 />
               </div>

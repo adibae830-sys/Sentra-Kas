@@ -2,10 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Check,
   Copy,
+  Download,
   FileSpreadsheet,
+  Image as ImageIcon,
   MessageCircle,
   Printer,
   Send,
+  Share2,
 } from 'lucide-react';
 import {
   buildWhatsAppMonthlyMessage,
@@ -16,6 +19,7 @@ import {
   getAvailablePeriods,
   rupiah,
 } from '../lib/financeEngine';
+import { dataUrlToBlob, generateRingkasanSaldoImage } from '../lib/reportImage';
 import {
   FinanceDataset,
   MonthlyMemberBreakdown,
@@ -70,6 +74,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
   });
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [copiedGroupMsg, setCopiedGroupMsg] = useState(false);
+  const [copiedSummaryImg, setCopiedSummaryImg] = useState(false);
 
   useEffect(() => {
     if (!periods.includes(selectedPeriode) && periods.length > 0) {
@@ -99,6 +104,14 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
     [report, selectedMember]
   );
 
+  const summaryImage = useMemo(
+    () =>
+      generateRingkasanSaldoImage(dataset, {
+        subtitle: `Rekapitulasi Periode ${report.periodeLabel}`,
+      }),
+    [dataset, report.periodeLabel]
+  );
+
   const isAdminOrBendahara = role === 'Administrator' || role === 'Bendahara';
 
   const handleCopyGroupMessage = async () => {
@@ -107,6 +120,56 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
     setCopiedGroupMsg(true);
     setTimeout(() => setCopiedGroupMsg(false), 2000);
     onNotify('success', 'Ringkasan pesan grup WhatsApp berhasil disalin.');
+  };
+
+  const handleDownloadSummaryImage = () => {
+    if (!summaryImage.dataUrl) return;
+    const link = document.createElement('a');
+    link.href = summaryImage.dataUrl;
+    link.download = summaryImage.filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    onNotify('success', 'Gambar rincian saldo & anggota berhasil diunduh.');
+  };
+
+  const handleCopySummaryImage = async () => {
+    if (!summaryImage.dataUrl) return;
+    try {
+      if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) {
+        onNotify('error', 'Browser belum mendukung salin gambar langsung. Silakan klik Unduh Gambar (.png).');
+        return;
+      }
+      const blob = dataUrlToBlob(summaryImage.dataUrl);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      setCopiedSummaryImg(true);
+      setTimeout(() => setCopiedSummaryImg(false), 2000);
+      onNotify('success', 'Gambar rincian saldo disalin! Tinggal Ctrl+V di grup WhatsApp.');
+    } catch {
+      onNotify('error', 'Gagal menyalin gambar ke clipboard. Gunakan tombol Unduh Gambar (.png).');
+    }
+  };
+
+  const handleShareImageAndText = async () => {
+    if (!summaryImage.dataUrl) return;
+    const groupText = buildWhatsAppMonthlyMessage(report);
+    try {
+      const blob = dataUrlToBlob(summaryImage.dataUrl);
+      const file = new File([blob], summaryImage.filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: `Ringkasan Saldo Sentra Kas · ${report.periodeLabel}`,
+          text: groupText,
+          files: [file],
+        });
+        return;
+      }
+      onNotify('error', 'Perangkat tidak mendukung bagikan file langsung. Salin Gambar atau Unduh (.png).');
+    } catch (err) {
+      if ((err as { name?: string })?.name !== 'AbortError') {
+        onNotify('error', 'Gagal membuka menu berbagi sistem.');
+      }
+    }
   };
 
   const handleServerBroadcast = async () => {
@@ -417,6 +480,55 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
               {previewMessage}
             </pre>
 
+            {summaryImage.dataUrl && (
+              <div className="mt-4 rounded-xl border border-slate-200 bg-[#F8FAFC] p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    <ImageIcon className="h-3.5 w-3.5 text-[#004A8F]" />
+                    Lampiran Gambar Rincian Saldo & Anggota
+                  </span>
+                  <span className="text-[11px] text-slate-500">PNG · Siap Tempel WA</span>
+                </div>
+                <img
+                  src={summaryImage.dataUrl}
+                  alt="Gambar Rincian Saldo Kelompok dan Anggota"
+                  className="max-h-52 w-full rounded-lg border border-slate-200 bg-white object-contain"
+                />
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopySummaryImage}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    {copiedSummaryImg ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-[#00529C]" />
+                    )}
+                    {copiedSummaryImg ? 'Gambar Disalin' : 'Salin Gambar'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadSummaryImage}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Download className="h-3.5 w-3.5 text-[#00529C]" />
+                    Unduh (.png)
+                  </button>
+                  {typeof navigator !== 'undefined' && 'share' in navigator && (
+                    <button
+                      type="button"
+                      onClick={handleShareImageAndText}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#004A8F] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#003870]"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      Bagikan Gambar + Teks
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap items-center gap-2.5">
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
@@ -467,8 +579,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
 
             {!gatewayStatus.configured && isAdminOrBendahara && (
               <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                Gunakan tombol <strong>Kirim WA</strong> pada daftar anggota di bawah untuk mengirim ringkasan pengeluaran langsung, atau atur{' '}
-                <code className="font-mono text-slate-700">WHATSAPP_API_TOKEN</code> di environment server untuk broadcast massal otomatis.
+                Tip: Klik <strong>Salin Gambar</strong> lalu tempel (Ctrl+V) ke grup WhatsApp bersama ringkasan pesan, atau gunakan <strong>Bagikan Gambar + Teks</strong> di HP.
               </p>
             )}
           </div>

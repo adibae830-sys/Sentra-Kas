@@ -9,10 +9,12 @@ import {
   CheckCircle2,
   Copy,
   CreditCard,
+  Download,
   ExternalLink,
   Eye,
   EyeOff,
   FileSpreadsheet,
+  Image as ImageIcon,
   LayoutDashboard,
   Lock,
   LogOut,
@@ -22,6 +24,7 @@ import {
   Search,
   Send,
   Settings,
+  Share2,
   Users,
   Wallet,
   X,
@@ -29,6 +32,7 @@ import {
 import { AuthGate } from './components/AuthGate';
 import { CashflowChart } from './components/CashflowChart';
 import { ConfirmActionModal } from './components/ConfirmActionModal';
+import { CurrencyInput } from './components/CurrencyInput';
 import { KwitansiModal } from './components/KwitansiModal';
 import {
   AngsuranAndTunggakanView,
@@ -51,6 +55,11 @@ import {
   nowIsoShort,
   rupiah,
 } from './lib/financeEngine';
+import {
+  dataUrlToBlob,
+  generateRingkasanSaldoImage,
+  RingkasanImageResult,
+} from './lib/reportImage';
 import {
   clearAccessToken,
   getAccessToken,
@@ -218,8 +227,10 @@ export default function App() {
     title: string;
     message: string;
     autoSentError?: string;
+    image?: RingkasanImageResult;
   } | null>(null);
   const [copiedWaMsg, setCopiedWaMsg] = useState(false);
+  const [copiedWaImg, setCopiedWaImg] = useState(false);
   const [isSendingWaGroup, setIsSendingWaGroup] = useState(false);
 
   const showToast = useCallback((type: 'success' | 'error', message: string) => {
@@ -252,17 +263,21 @@ export default function App() {
       tanggal: string;
       idAnggota?: string;
       keterangan?: string;
+      latestDataset?: FinanceDataset | null;
     }) => {
       if (!waGroupSettings.enabled) return;
 
-      const currentMasuk = (dataset?.kasMasuk || []).reduce((s, r) => s + r.jumlah, 0);
-      const currentKeluar = (dataset?.kasKeluar || []).reduce((s, r) => s + r.jumlah, 0);
+      const targetDataset = params.latestDataset || dataset;
+      const currentMasuk = (targetDataset?.kasMasuk || []).reduce((s, r) => s + r.jumlah, 0);
+      const currentKeluar = (targetDataset?.kasKeluar || []).reduce((s, r) => s + r.jumlah, 0);
       const currentSaldo = currentMasuk - currentKeluar;
-      const saldoSetelahMutasi =
-        currentSaldo + (params.arah === 'MASUK' ? params.jumlah : -params.jumlah);
+      // When latestDataset is provided, the mutation is already reflected inside targetDataset
+      const saldoSetelahMutasi = params.latestDataset
+        ? currentSaldo
+        : currentSaldo + (params.arah === 'MASUK' ? params.jumlah : -params.jumlah);
 
       const anggotaNama = params.idAnggota
-        ? dataset?.anggota.find((a) => a.id === params.idAnggota)?.nama || params.idAnggota
+        ? targetDataset?.anggota.find((a) => a.id === params.idAnggota)?.nama || params.idAnggota
         : undefined;
 
       const message = buildWhatsAppMutasiGroupMessage({
@@ -274,8 +289,21 @@ export default function App() {
         anggotaNama,
         keterangan: params.keterangan,
         petugas: sessionUser?.nama || 'Pengurus',
-        namaKelompok: dataset?.spreadsheetTitle,
+        namaKelompok: targetDataset?.spreadsheetTitle,
       });
+
+      const summaryImage = targetDataset
+        ? generateRingkasanSaldoImage(targetDataset, {
+            highlightText: `${params.arah === 'MASUK' ? '+' : '-'} ${rupiah(params.jumlah)} · ${params.jenis}${
+              anggotaNama ? ` (${anggotaNama})` : ''
+            }`,
+            highlightTone: params.arah === 'MASUK' ? 'credit' : 'debit',
+            subtitle:
+              params.arah === 'MASUK'
+                ? 'Update Saldo Setelah Kas Masuk'
+                : 'Update Saldo Setelah Kas Keluar',
+          })
+        : undefined;
 
       const targetGroup =
         waGroupSettings.groupId.trim() || (waGatewayStatus.hasDefaultGroup ? 'GROUP' : '');
@@ -298,6 +326,7 @@ export default function App() {
                 ? 'Notifikasi Dana Masuk ke Grup WA'
                 : 'Notifikasi Dana Keluar ke Grup WA',
             message,
+            image: summaryImage,
             autoSentError:
               data?.error || 'Auto-kirim server gagal. Silakan bagikan manual 1-klik ke Grup WA.',
           });
@@ -309,6 +338,7 @@ export default function App() {
                 ? 'Notifikasi Dana Masuk ke Grup WA'
                 : 'Notifikasi Dana Keluar ke Grup WA',
             message,
+            image: summaryImage,
             autoSentError: 'Gagal terhubung ke server WhatsApp. Gunakan tombol Bagikan ke Grup WA.',
           });
           return;
@@ -321,6 +351,7 @@ export default function App() {
             ? 'Bagikan Info Kas Masuk ke Grup WA'
             : 'Bagikan Info Kas Keluar ke Grup WA',
         message,
+        image: summaryImage,
       });
     },
     [waGroupSettings, waGatewayStatus, dataset, sessionUser, showToast]
@@ -355,11 +386,11 @@ export default function App() {
   }, []);
 
   const refreshDataset = useCallback(
-    async (explicitToken?: string) => {
+    async (explicitToken?: string): Promise<FinanceDataset | null> => {
       const token = explicitToken || getAccessToken();
       if (!token) {
         setNeedsGoogleAuth(true);
-        return;
+        return null;
       }
       setIsLoadingSheet(true);
       setSheetError(null);
@@ -394,6 +425,7 @@ export default function App() {
             setActivePage((prev) => savedPage || prev || defaultPage);
           }
         }
+        return data;
       } catch (err) {
         if (err instanceof SheetsAuthExpiredError) {
           clearAccessToken();
@@ -406,6 +438,7 @@ export default function App() {
               : 'Gagal memuat data dari Google Spreadsheet.'
           );
         }
+        return null;
       } finally {
         setIsLoadingSheet(false);
       }
@@ -486,7 +519,11 @@ export default function App() {
     setConfirmState((prev) => ({ ...prev, isOpen: false }));
   };
 
-  const runConfirmedMutation = async (fn: () => Promise<void>, successMessage: string) => {
+  const runConfirmedMutation = async (
+    fn: () => Promise<void>,
+    successMessage: string,
+    afterRefresh?: (freshDataset: FinanceDataset | null) => Promise<void> | void
+  ) => {
     const token = getAccessToken();
     if (!token) {
       setNeedsGoogleAuth(true);
@@ -497,9 +534,12 @@ export default function App() {
     setIsMutating(true);
     try {
       await fn();
-      await refreshDataset(token);
+      const fresh = await refreshDataset(token);
       setConfirmState((prev) => ({ ...prev, isOpen: false }));
       showToast('success', successMessage);
+      if (afterRefresh) {
+        await afterRefresh(fresh);
+      }
     } catch (err) {
       if (err instanceof SheetsAuthExpiredError) {
         clearAccessToken();
@@ -730,28 +770,35 @@ export default function App() {
         `Anggota: ${payload.idAnggota || 'Umum'}`,
       ],
       confirmLabel: 'Simpan Kas Masuk',
-      onConfirm: () =>
-        runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
-          const tgl = nowIsoShort();
-          await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
-            newId,
-            tgl,
-            payload.idAnggota,
-            payload.jenis,
-            payload.jumlah,
-            payload.keterangan,
-            sessionUser?.nama || 'Admin',
-          ]);
-          void notifyWhatsAppGroupForMutasi({
-            arah: 'MASUK',
-            jenis: payload.jenis,
-            jumlah: payload.jumlah,
-            tanggal: tgl,
-            idAnggota: payload.idAnggota,
-            keterangan: payload.keterangan,
-          });
-        }, `Kas masuk ${rupiah(payload.jumlah)} berhasil disimpan.`),
+      onConfirm: () => {
+        const tgl = nowIsoShort();
+        return runConfirmedMutation(
+          async () => {
+            const token = getAccessToken()!;
+            await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
+              newId,
+              tgl,
+              payload.idAnggota,
+              payload.jenis,
+              payload.jumlah,
+              payload.keterangan,
+              sessionUser?.nama || 'Admin',
+            ]);
+          },
+          `Kas masuk ${rupiah(payload.jumlah)} berhasil disimpan.`,
+          async (fresh) => {
+            await notifyWhatsAppGroupForMutasi({
+              arah: 'MASUK',
+              jenis: payload.jenis,
+              jumlah: payload.jumlah,
+              tanggal: tgl,
+              idAnggota: payload.idAnggota,
+              keterangan: payload.keterangan,
+              latestDataset: fresh,
+            });
+          }
+        );
+      },
     });
   };
 
@@ -772,26 +819,33 @@ export default function App() {
       ],
       confirmLabel: 'Simpan Kas Keluar',
       variant: 'danger',
-      onConfirm: () =>
-        runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
-          const tgl = nowIsoShort();
-          await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
-            newId,
-            tgl,
-            payload.jenis,
-            payload.jumlah,
-            payload.keterangan,
-            sessionUser?.nama || 'Admin',
-          ]);
-          void notifyWhatsAppGroupForMutasi({
-            arah: 'KELUAR',
-            jenis: payload.jenis,
-            jumlah: payload.jumlah,
-            tanggal: tgl,
-            keterangan: payload.keterangan,
-          });
-        }, `Pengeluaran ${rupiah(payload.jumlah)} berhasil dicatat.`),
+      onConfirm: () => {
+        const tgl = nowIsoShort();
+        return runConfirmedMutation(
+          async () => {
+            const token = getAccessToken()!;
+            await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
+              newId,
+              tgl,
+              payload.jenis,
+              payload.jumlah,
+              payload.keterangan,
+              sessionUser?.nama || 'Admin',
+            ]);
+          },
+          `Pengeluaran ${rupiah(payload.jumlah)} berhasil dicatat.`,
+          async (fresh) => {
+            await notifyWhatsAppGroupForMutasi({
+              arah: 'KELUAR',
+              jenis: payload.jenis,
+              jumlah: payload.jumlah,
+              tanggal: tgl,
+              keterangan: payload.keterangan,
+              latestDataset: fresh,
+            });
+          }
+        );
+      },
     });
   };
 
@@ -910,38 +964,45 @@ export default function App() {
         `Angsuran/Bulan: ${rupiah(angsuran)}`,
       ],
       confirmLabel: 'Simpan & Cairkan',
-      onConfirm: () =>
-        runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
-          const now = nowIsoShort();
-          await appendRow(activeSpreadsheetId, token, 'Pinjaman', [
-            idPinjaman,
-            now,
-            payload.idAnggota,
-            payload.jumlah,
-            payload.tenor,
-            angsuran,
-            0,
-            payload.jumlah,
-            'Berjalan',
-          ]);
-          await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
-            'KK-' + Date.now(),
-            now,
-            'Pencairan Pinjaman',
-            payload.jumlah,
-            `Pinjaman anggota ${payload.idAnggota} (${idPinjaman})`,
-            sessionUser?.nama || 'Admin',
-          ]);
-          void notifyWhatsAppGroupForMutasi({
-            arah: 'KELUAR',
-            jenis: 'Pencairan Pinjaman',
-            jumlah: payload.jumlah,
-            tanggal: now,
-            idAnggota: payload.idAnggota,
-            keterangan: `Pencairan pinjaman ${idPinjaman} (${payload.tenor} bulan)`,
-          });
-        }, `Pinjaman ${idPinjaman} berhasil disimpan dan dicairkan.`),
+      onConfirm: () => {
+        const now = nowIsoShort();
+        return runConfirmedMutation(
+          async () => {
+            const token = getAccessToken()!;
+            await appendRow(activeSpreadsheetId, token, 'Pinjaman', [
+              idPinjaman,
+              now,
+              payload.idAnggota,
+              payload.jumlah,
+              payload.tenor,
+              angsuran,
+              0,
+              payload.jumlah,
+              'Berjalan',
+            ]);
+            await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
+              'KK-' + Date.now(),
+              now,
+              'Pencairan Pinjaman',
+              payload.jumlah,
+              `Pinjaman anggota ${payload.idAnggota} (${idPinjaman})`,
+              sessionUser?.nama || 'Admin',
+            ]);
+          },
+          `Pinjaman ${idPinjaman} berhasil disimpan dan dicairkan.`,
+          async (fresh) => {
+            await notifyWhatsAppGroupForMutasi({
+              arah: 'KELUAR',
+              jenis: 'Pencairan Pinjaman',
+              jumlah: payload.jumlah,
+              tanggal: now,
+              idAnggota: payload.idAnggota,
+              keterangan: `Pencairan pinjaman ${idPinjaman} (${payload.tenor} bulan)`,
+              latestDataset: fresh,
+            });
+          }
+        );
+      },
     });
   };
 
@@ -956,38 +1017,45 @@ export default function App() {
         `Jumlah Cair: ${rupiah(pinjaman.jumlah)}`,
       ],
       confirmLabel: 'Ya, ACC Pinjaman',
-      onConfirm: () =>
-        runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
-          const now = nowIsoShort();
-          await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
-            pinjaman.idPinjaman,
-            pinjaman.tanggal,
-            pinjaman.idAnggota,
-            pinjaman.jumlah,
-            pinjaman.tenor,
-            pinjaman.angsuranPerBulan,
-            pinjaman.totalDibayar,
-            pinjaman.sisa,
-            'Berjalan',
-          ]);
-          await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
-            'KK-' + Date.now(),
-            now,
-            'Pencairan Pinjaman',
-            pinjaman.jumlah,
-            `ACC pinjaman anggota ${pinjaman.idAnggota} / ${pinjaman.idPinjaman}`,
-            sessionUser?.nama || 'Administrator',
-          ]);
-          void notifyWhatsAppGroupForMutasi({
-            arah: 'KELUAR',
-            jenis: 'Pencairan Pinjaman (ACC)',
-            jumlah: pinjaman.jumlah,
-            tanggal: now,
-            idAnggota: pinjaman.idAnggota,
-            keterangan: `ACC pinjaman ${pinjaman.idPinjaman}`,
-          });
-        }, `Pinjaman ${pinjaman.idPinjaman} berhasil disetujui.`),
+      onConfirm: () => {
+        const now = nowIsoShort();
+        return runConfirmedMutation(
+          async () => {
+            const token = getAccessToken()!;
+            await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
+              pinjaman.idPinjaman,
+              pinjaman.tanggal,
+              pinjaman.idAnggota,
+              pinjaman.jumlah,
+              pinjaman.tenor,
+              pinjaman.angsuranPerBulan,
+              pinjaman.totalDibayar,
+              pinjaman.sisa,
+              'Berjalan',
+            ]);
+            await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
+              'KK-' + Date.now(),
+              now,
+              'Pencairan Pinjaman',
+              pinjaman.jumlah,
+              `ACC pinjaman anggota ${pinjaman.idAnggota} / ${pinjaman.idPinjaman}`,
+              sessionUser?.nama || 'Administrator',
+            ]);
+          },
+          `Pinjaman ${pinjaman.idPinjaman} berhasil disetujui.`,
+          async (fresh) => {
+            await notifyWhatsAppGroupForMutasi({
+              arah: 'KELUAR',
+              jenis: 'Pencairan Pinjaman (ACC)',
+              jumlah: pinjaman.jumlah,
+              tanggal: now,
+              idAnggota: pinjaman.idAnggota,
+              keterangan: `ACC pinjaman ${pinjaman.idPinjaman}`,
+              latestDataset: fresh,
+            });
+          }
+        );
+      },
     });
   };
 
@@ -1043,59 +1111,65 @@ export default function App() {
       ],
       confirmLabel: 'Simpan Angsuran',
       onConfirm: () =>
-        runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
-          await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
-            pinjaman.idPinjaman,
-            pinjaman.tanggal,
-            pinjaman.idAnggota,
-            pinjaman.jumlah,
-            pinjaman.tenor,
-            pinjaman.angsuranPerBulan,
-            totalBaru,
-            sisaBaru,
-            statusBaru,
-          ]);
-          await appendRow(activeSpreadsheetId, token, 'Angsuran', [
-            idAngsuran,
-            now,
-            pinjaman.idPinjaman,
-            pinjaman.idAnggota,
-            angsuranKe,
-            jumlah,
-            sisaBaru,
-            sessionUser?.nama || 'Admin',
-          ]);
-          await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
-            'KM-' + Date.now(),
-            now,
-            pinjaman.idAnggota,
-            'Angsuran',
-            jumlah,
-            `Pembayaran pinjaman ${pinjaman.idPinjaman}`,
-            sessionUser?.nama || 'Admin',
-          ]);
+        runConfirmedMutation(
+          async () => {
+            const token = getAccessToken()!;
+            await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
+              pinjaman.idPinjaman,
+              pinjaman.tanggal,
+              pinjaman.idAnggota,
+              pinjaman.jumlah,
+              pinjaman.tenor,
+              pinjaman.angsuranPerBulan,
+              totalBaru,
+              sisaBaru,
+              statusBaru,
+            ]);
+            await appendRow(activeSpreadsheetId, token, 'Angsuran', [
+              idAngsuran,
+              now,
+              pinjaman.idPinjaman,
+              pinjaman.idAnggota,
+              angsuranKe,
+              jumlah,
+              sisaBaru,
+              sessionUser?.nama || 'Admin',
+            ]);
+            await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
+              'KM-' + Date.now(),
+              now,
+              pinjaman.idAnggota,
+              'Angsuran',
+              jumlah,
+              `Pembayaran pinjaman ${pinjaman.idPinjaman}`,
+              sessionUser?.nama || 'Admin',
+            ]);
 
-          setKwitansiModalData({
-            idAngsuran,
-            tanggal: now,
-            idPinjaman: pinjaman.idPinjaman,
-            idAnggota: pinjaman.idAnggota,
-            angsuranKe,
-            jumlah,
-            sisa: sisaBaru,
-            user: sessionUser?.nama || 'Admin',
-            rowIndex: 0,
-          });
-          void notifyWhatsAppGroupForMutasi({
-            arah: 'MASUK',
-            jenis: `Angsuran Ke-${angsuranKe}`,
-            jumlah,
-            tanggal: now,
-            idAnggota: pinjaman.idAnggota,
-            keterangan: `Pembayaran pinjaman ${pinjaman.idPinjaman} (Sisa: ${rupiah(sisaBaru)})`,
-          });
-        }, 'Angsuran berhasil disimpan dan kwitansi siap dicetak.'),
+            setKwitansiModalData({
+              idAngsuran,
+              tanggal: now,
+              idPinjaman: pinjaman.idPinjaman,
+              idAnggota: pinjaman.idAnggota,
+              angsuranKe,
+              jumlah,
+              sisa: sisaBaru,
+              user: sessionUser?.nama || 'Admin',
+              rowIndex: 0,
+            });
+          },
+          'Angsuran berhasil disimpan dan kwitansi siap dicetak.',
+          async (fresh) => {
+            await notifyWhatsAppGroupForMutasi({
+              arah: 'MASUK',
+              jenis: `Angsuran Ke-${angsuranKe}`,
+              jumlah,
+              tanggal: now,
+              idAnggota: pinjaman.idAnggota,
+              keterangan: `Pembayaran pinjaman ${pinjaman.idPinjaman} (Sisa: ${rupiah(sisaBaru)})`,
+              latestDataset: fresh,
+            });
+          }
+        ),
     });
   };
 
@@ -2018,15 +2092,46 @@ export default function App() {
                       Akumulasi simpanan, sisa pinjaman, dan saldo bersih setiap anggota.
                     </p>
                   </div>
-                  <div className="relative w-full max-w-xs">
-                    <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
-                    <input
-                      type="text"
-                      value={memberSearch}
-                      onChange={(e) => setMemberSearch(e.target.value)}
-                      placeholder="Cari nama atau ID anggota..."
-                      className="w-full rounded-xl border border-slate-300 bg-white py-2 pr-3 pl-9 text-sm text-slate-900 placeholder:text-slate-400"
-                    />
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const img = generateRingkasanSaldoImage(dataset, {
+                          subtitle: 'Update Posisi Kas & Rincian Keuangan Anggota',
+                        });
+                        const lines = [
+                          `*UPDATE SALDO & REKAP ANGGOTA*`,
+                          `_${dataset.spreadsheetTitle || 'Sentra Kas'}_`,
+                          `--------------------------------`,
+                          `• *Saldo Kas Saat Ini:* *${rupiah(adminMetrics.saldo)}*`,
+                          `• *Total Kas Masuk:* ${rupiah(adminMetrics.masuk)}`,
+                          `• *Total Kas Keluar:* ${rupiah(adminMetrics.keluar)}`,
+                          `• *Piutang Pinjaman:* ${rupiah(adminMetrics.piutang)}`,
+                          `• *Anggota Aktif:* ${adminMetrics.anggotaAktif} orang`,
+                          `--------------------------------`,
+                          `_Rincian masing-masing anggota (Total Saldo, Pinjaman, Saldo Saat Ini) terlampir pada gambar._`,
+                        ];
+                        setWaShareModal({
+                          title: 'Bagikan Rincian Saldo & Anggota ke Grup',
+                          message: lines.join('\n'),
+                          image: img,
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      Bagikan Saldo & Gambar
+                    </button>
+                    <div className="relative w-full sm:w-64">
+                      <Search className="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={memberSearch}
+                        onChange={(e) => setMemberSearch(e.target.value)}
+                        placeholder="Cari nama atau ID anggota..."
+                        className="w-full rounded-xl border border-slate-300 bg-white py-2 pr-3 pl-9 text-sm text-slate-900 placeholder:text-slate-400"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -2312,13 +2417,11 @@ export default function App() {
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Jumlah Pinjaman (Rp)
                   </label>
-                  <input
-                    type="number"
-                    min={1000}
+                  <CurrencyInput
                     required
                     value={ajuJumlah}
-                    onChange={(e) => setAjuJumlah(e.target.value)}
-                    placeholder="1000000"
+                    onValueChange={(digits) => setAjuJumlah(digits)}
+                    placeholder="1.000.000"
                     className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm text-slate-900"
                   />
                 </div>
@@ -2563,9 +2666,15 @@ export default function App() {
                               petugas: sessionUser.nama,
                               namaKelompok: dataset.spreadsheetTitle,
                             });
+                            const sampleImg = generateRingkasanSaldoImage(dataset, {
+                              highlightText: '+ Rp 100.000 · Simpanan Wajib (Uji Coba)',
+                              highlightTone: 'credit',
+                              subtitle: 'Pratinjau Gambar Rincian Saldo & Anggota',
+                            });
                             setWaShareModal({
-                              title: 'Uji Coba Pesan Grup WhatsApp',
+                              title: 'Uji Coba Pesan & Gambar Grup WA',
                               message: sampleMsg,
+                              image: sampleImg,
                             });
                           }}
                           className="inline-flex items-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
@@ -2621,14 +2730,14 @@ export default function App() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-gradient-to-r from-[#003063] via-[#004A8F] to-[#0062BD] px-5 py-4 text-white">
+          <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between bg-gradient-to-r from-[#003063] via-[#004A8F] to-[#0062BD] px-5 py-4 text-white">
               <div className="flex items-center gap-2.5">
                 <MessageCircle className="h-5 w-5 text-amber-300" />
                 <div>
                   <h3 className="text-sm font-bold">{waShareModal.title}</h3>
                   <p className="text-[11px] text-blue-100">
-                    Siap diteruskan ke grup WhatsApp kelompok
+                    Siap diteruskan ke grup WhatsApp beserta gambar rincian saldo
                   </p>
                 </div>
               </div>
@@ -2642,16 +2751,126 @@ export default function App() {
               </button>
             </div>
 
-            <div className="p-5">
+            <div className="overflow-y-auto p-5">
               {waShareModal.autoSentError && (
                 <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                   {waShareModal.autoSentError}
                 </div>
               )}
 
-              <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-xl border border-slate-200 bg-[#F8FAFC] p-3.5 font-sans text-xs leading-relaxed text-slate-800">
+              <pre className="max-h-44 overflow-y-auto whitespace-pre-wrap rounded-xl border border-slate-200 bg-[#F8FAFC] p-3.5 font-sans text-xs leading-relaxed text-slate-800">
                 {waShareModal.message}
               </pre>
+
+              {waShareModal.image?.dataUrl && (
+                <div className="mt-3.5 rounded-xl border border-slate-200 bg-[#F8FAFC] p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                      <ImageIcon className="h-3.5 w-3.5 text-[#004A8F]" />
+                      Gambar Rincian Saldo & Anggota
+                    </span>
+                    <span className="text-[11px] text-slate-500">Salin & Tempel di WA</span>
+                  </div>
+                  <img
+                    src={waShareModal.image.dataUrl}
+                    alt="Ringkasan Saldo Kelompok dan Rincian Anggota"
+                    className="max-h-56 w-full rounded-lg border border-slate-200 bg-white object-contain"
+                  />
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!waShareModal.image?.dataUrl) return;
+                        try {
+                          if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) {
+                            showToast(
+                              'error',
+                              'Browser tidak mendukung salin gambar. Gunakan Unduh Gambar (.png).'
+                            );
+                            return;
+                          }
+                          const blob = dataUrlToBlob(waShareModal.image.dataUrl);
+                          await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob }),
+                          ]);
+                          setCopiedWaImg(true);
+                          setTimeout(() => setCopiedWaImg(false), 2000);
+                          showToast(
+                            'success',
+                            'Gambar saldo disalin! Tekan Ctrl+V di grup WhatsApp.'
+                          );
+                        } catch {
+                          showToast(
+                            'error',
+                            'Gagal menyalin gambar ke clipboard. Gunakan tombol Unduh (.png).'
+                          );
+                        }
+                      }}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      {copiedWaImg ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-[#00529C]" />
+                      )}
+                      {copiedWaImg ? 'Gambar Disalin' : 'Salin Gambar'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!waShareModal.image?.dataUrl) return;
+                        const link = document.createElement('a');
+                        link.href = waShareModal.image.dataUrl;
+                        link.download = waShareModal.image.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showToast('success', 'Gambar rincian saldo berhasil diunduh.');
+                      }}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      <Download className="h-3.5 w-3.5 text-[#00529C]" />
+                      Unduh (.png)
+                    </button>
+
+                    {typeof navigator !== 'undefined' && 'share' in navigator && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!waShareModal.image?.dataUrl) return;
+                          try {
+                            const blob = dataUrlToBlob(waShareModal.image.dataUrl);
+                            const file = new File([blob], waShareModal.image.filename, {
+                              type: 'image/png',
+                            });
+                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                              await navigator.share({
+                                title: waShareModal.title,
+                                text: waShareModal.message,
+                                files: [file],
+                              });
+                              return;
+                            }
+                            showToast(
+                              'error',
+                              'Perangkat belum mendukung berbagi file langsung. Gunakan Salin Gambar.'
+                            );
+                          } catch (err) {
+                            if ((err as { name?: string })?.name !== 'AbortError') {
+                              showToast('error', 'Gagal membuka menu berbagi sistem.');
+                            }
+                          }
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#004A8F] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#003870]"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        Bagikan Gambar + Teks
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <a
@@ -2680,7 +2899,7 @@ export default function App() {
                   ) : (
                     <Copy className="h-4 w-4 text-[#00529C]" />
                   )}
-                  {copiedWaMsg ? 'Tersalin' : 'Salin'}
+                  {copiedWaMsg ? 'Tersalin' : 'Salin Teks'}
                 </button>
 
                 {waGatewayStatus.configured &&

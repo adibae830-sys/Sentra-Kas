@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { CheckCircle, MessageCircle, Pencil, Receipt, Trash2, X, XCircle } from 'lucide-react';
 import { formatNoWA, formatTanggalId, rupiah } from '../lib/financeEngine';
 import { Angsuran, FinanceDataset, Pinjaman, RoleType } from '../types/finance';
+import { CurrencyInput } from './CurrencyInput';
 
 interface PinjamanAndAccViewProps {
   dataset: FinanceDataset;
@@ -90,13 +91,11 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Plafon Pinjaman (Rp)
                   </label>
-                  <input
-                    type="number"
-                    min={1000}
+                  <CurrencyInput
                     required
                     value={jumlah}
-                    onChange={(e) => setJumlah(e.target.value)}
-                    placeholder="1000000"
+                    onValueChange={(digits) => setJumlah(digits)}
+                    placeholder="1.000.000"
                     className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
@@ -349,12 +348,9 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Pokok Pinjaman (Rp)
                   </label>
-                  <input
-                    type="number"
-                    min={1000}
+                  <CurrencyInput
                     value={editingLoan.jumlah}
-                    onChange={(e) => {
-                      const jml = Number(e.target.value) || 0;
+                    onValueChange={(_, jml) => {
                       const tnr = Math.max(editingLoan.tenor, 1);
                       const sisa = Math.max(jml - editingLoan.totalDibayar, 0);
                       setEditingLoan({
@@ -364,6 +360,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                         sisa,
                       });
                     }}
+                    placeholder="1.000.000"
                     className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
@@ -590,12 +587,11 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
                     Jumlah Bayar (Rp)
                   </label>
-                  <input
-                    type="number"
-                    min={1}
+                  <CurrencyInput
                     required
                     value={jumlahBayar}
-                    onChange={(e) => setJumlahBayar(e.target.value)}
+                    onValueChange={(digits) => setJumlahBayar(digits)}
+                    placeholder="100.000"
                     className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                   />
                 </div>
@@ -832,16 +828,15 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                 <label className="mb-1 block text-xs font-semibold text-slate-700">
                   Nominal Bayar (Rp)
                 </label>
-                <input
-                  type="number"
-                  min={1}
+                <CurrencyInput
                   value={editingAngsuran.jumlah}
-                  onChange={(e) =>
+                  onValueChange={(_, num) =>
                     setEditingAngsuran({
                       ...editingAngsuran,
-                      jumlah: Number(e.target.value) || 0,
+                      jumlah: num,
                     })
                   }
+                  placeholder="100.000"
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm"
                 />
               </div>
