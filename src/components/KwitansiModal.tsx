@@ -18,12 +18,13 @@ export const KwitansiModal: React.FC<KwitansiModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-xs sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="kwitansi-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:pb-5">
+        <div className="no-print mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 sm:hidden" />
         <div className="no-print mb-3 flex items-center justify-between">
           <h3 id="kwitansi-title" className="text-sm font-bold text-slate-900">
             Bukti Transaksi Pembayaran

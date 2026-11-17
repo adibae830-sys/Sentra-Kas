@@ -104,49 +104,55 @@ export const AuthGate: React.FC<AuthGateProps> = ({
 
   return (
     <div className="min-h-screen bg-[#F2F6FA] lg:grid lg:grid-cols-12">
-      {/* Left Banking Cobalt Trust Panel */}
-      <aside className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#002855] via-[#003F88] to-[#0059B3] px-7 py-10 text-blue-50 lg:col-span-5 lg:px-12 lg:py-12">
+      {/* Left Banking Cobalt Trust Panel (Compact App Header on Mobile) */}
+      <aside className="relative flex flex-col justify-between overflow-hidden rounded-b-3xl bg-gradient-to-br from-[#002855] via-[#003F88] to-[#0059B3] px-5 py-6 text-blue-50 shadow-md lg:col-span-5 lg:rounded-none lg:px-12 lg:py-12 lg:shadow-none">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-28 -right-28 h-96 w-96 rounded-full border border-white/10 bg-white/[0.03]"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-white/10 bg-white/[0.03]"
+          className="pointer-events-none hidden lg:block absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-white/10 bg-white/[0.03]"
         />
 
         <div className="relative">
           {/* Brand Emblem */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 backdrop-blur-xs">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 text-amber-300"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path d="M3 20h18M5 20V10m14 10V10M3 10l9-6 9 6M9 20v-6h6v6" />
-              </svg>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 backdrop-blur-xs">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5 text-amber-300"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path d="M3 20h18M5 20V10m14 10V10M3 10l9-6 9 6M9 20v-6h6v6" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-lg font-extrabold tracking-tight text-white lg:text-xl">
+                  Sentra Kas
+                </span>
+                <p className="text-[10.5px] font-medium tracking-wider text-blue-200 uppercase lg:text-[11px]">
+                  e-Treasury & Simpan Pinjam
+                </p>
+              </div>
             </div>
-            <div>
-              <span className="text-xl font-extrabold tracking-tight text-white">
-                Sentra Kas
-              </span>
-              <p className="text-[11px] font-medium tracking-wider text-blue-200 uppercase">
-                e-Treasury & Simpan Pinjam
-              </p>
-            </div>
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-amber-300 lg:hidden">
+              <Lock className="h-3 w-3" />
+              Terverifikasi
+            </span>
           </div>
 
-          <h1 className="mt-10 max-w-md text-3xl leading-snug font-extrabold tracking-tight text-balance text-white sm:text-4xl">
+          <h1 className="mt-4 text-xl leading-snug font-extrabold tracking-tight text-balance text-white lg:mt-10 lg:max-w-md lg:text-4xl">
             Layanan Kas Kelompok Modern, Aman, dan Real-Time.
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-blue-100/85">
+          <p className="mt-2 hidden max-w-md text-sm leading-relaxed text-blue-100/85 lg:mt-4 lg:block">
             Pantau saldo rekening kas, mutasi masuk dan keluar, pengajuan pinjaman, angsuran digital, serta laporan bulanan via WhatsApp dalam satu sistem terpadu.
           </p>
 
-          <div className="mt-10 divide-y divide-white/15 border-y border-white/15">
+          <div className="mt-10 hidden divide-y divide-white/15 border-y border-white/15 lg:block">
             <div className="py-4">
               <p className="text-xs font-bold tracking-wide text-amber-300">
                 01. Mutasi & Rekening Terpusat
@@ -174,7 +180,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({
           </div>
         </div>
 
-        <div className="relative mt-10 flex items-center gap-2.5 text-xs text-blue-100/80">
+        <div className="relative mt-10 hidden items-center gap-2.5 text-xs text-blue-100/80 lg:flex">
           <Lock className="h-3.5 w-3.5 shrink-0 text-amber-300" />
           <span>
             Dilindungi otorisasi resmi Google & verifikasi akses berlapis per peran.
@@ -183,10 +189,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({
       </aside>
 
       {/* Right Interactive Workspace */}
-      <main className="flex flex-col justify-between px-5 py-8 sm:px-8 lg:col-span-7 lg:px-14 lg:py-10">
+      <main className="flex flex-col justify-between px-4 py-5 sm:px-8 lg:col-span-7 lg:px-14 lg:py-10">
         <div className="mx-auto w-full max-w-xl">
           {/* Top Utility Row */}
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-200 pb-3.5 lg:mb-8 lg:pb-4">
             <span className="text-xs font-bold tracking-wide text-[#004A8F] uppercase">
               Portal Akses e-Banking Kas
             </span>

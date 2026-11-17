@@ -297,12 +297,12 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
       </div>
 
       {/* KPI Strip with Banking Cobalt Focal Card */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl bg-gradient-to-br from-[#00356B] via-[#004A8F] to-[#0062BD] p-5 text-white shadow-xs">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="col-span-2 rounded-2xl bg-gradient-to-br from-[#00356B] via-[#004A8F] to-[#0062BD] p-4 sm:col-span-1 sm:p-5 text-white shadow-xs">
           <p className="text-xs font-semibold text-blue-100">
             Saldo Akhir Rekening Kas
           </p>
-          <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-white">
+          <p className="mt-1.5 font-mono text-xl font-bold tabular-nums text-white sm:mt-2 sm:text-2xl">
             {rupiah(report.saldoKasKumulatif)}
           </p>
           <p className="mt-1.5 text-xs font-medium text-amber-300">
@@ -398,7 +398,38 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
               </div>
             )}
 
-            <div className="mt-6 overflow-x-auto">
+            {/* Mobile Card List for Expense Rows */}
+            <div className="mt-5 space-y-2.5 md:hidden">
+              {report.transaksiKeluarBulan.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 py-6 text-center text-xs text-slate-400">
+                  Tidak ada baris kas keluar pada bulan ini.
+                </div>
+              ) : (
+                report.transaksiKeluarBulan.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="rounded-xl border border-slate-200/80 bg-[#F8FAFC] p-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900">{tx.jenis}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          {formatTanggalId(tx.tanggal)}
+                        </p>
+                      </div>
+                      <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-amber-600">
+                        -{rupiah(tx.jumlah)}
+                      </span>
+                    </div>
+                    {tx.keterangan && (
+                      <p className="mt-1.5 text-xs text-slate-600">{tx.keterangan}</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-6 hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -603,7 +634,80 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Card List for Member WhatsApp Dispatch */}
+          <div className="space-y-3 md:hidden">
+            {report.rekapAnggota.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+                Belum ada anggota aktif yang terdaftar.
+              </div>
+            ) : (
+              report.rekapAnggota.map((m) => {
+                const waNum = formatNoWA(m.nohp);
+                const personalText = buildWhatsAppMonthlyMessage(report, m);
+                const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent(personalText)}`;
+
+                return (
+                  <div
+                    key={m.idAnggota}
+                    className="rounded-2xl border border-slate-200/90 bg-[#F8FAFC] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">{m.nama}</p>
+                        <p className="font-mono text-[11px] text-slate-500">
+                          {m.nohp || 'Tanpa No WA'}
+                        </p>
+                      </div>
+                      <span
+                        className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${
+                          m.statusIuranWajib === 'Lunas Bulan Ini'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-amber-50 text-amber-700'
+                        }`}
+                      >
+                        {m.statusIuranWajib}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-200/80 bg-white p-2.5 text-center">
+                      <div>
+                        <p className="text-[10px] text-slate-500">Bulan Ini</p>
+                        <p className="mt-0.5 font-mono text-[11px] font-bold tabular-nums text-slate-800">
+                          {rupiah(m.simpananBulanIni)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Total Saldo</p>
+                        <p className="mt-0.5 font-mono text-[11px] font-bold tabular-nums text-emerald-700">
+                          {rupiah(m.totalSimpananKumulatif)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">Pinjaman</p>
+                        <p className="mt-0.5 font-mono text-[11px] font-bold tabular-nums text-amber-600">
+                          {rupiah(m.sisaPinjamanAktif)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {waNum.length >= 10 && (
+                      <a
+                        href={waHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="no-print mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-2 text-xs font-semibold text-[#004A8F] active:bg-blue-100"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Kirim Ringkasan ke WhatsApp
+                      </a>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">

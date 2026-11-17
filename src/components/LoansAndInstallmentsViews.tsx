@@ -145,7 +145,60 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
               </p>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile Cards (md:hidden) */}
+            <div className="space-y-3 md:hidden">
+              {pendingLoans.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+                  Tidak ada pengajuan pinjaman yang menunggu ACC.
+                </div>
+              ) : (
+                pendingLoans.map((p) => (
+                  <div
+                    key={p.idPinjaman}
+                    className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-slate-900">
+                          {memberMap.get(p.idAnggota) || p.idAnggota}
+                        </p>
+                        <p className="font-mono text-[11px] text-slate-500">
+                          {formatTanggalId(p.tanggal)} · Tenor {p.tenor} bln
+                        </p>
+                      </div>
+                      <p className="font-mono text-sm font-bold tabular-nums text-[#004A8F]">
+                        {rupiah(p.jumlah)}
+                      </p>
+                    </div>
+                    {role === 'Administrator' ? (
+                      <div className="mt-3 flex items-center gap-2 border-t border-slate-200/70 pt-2.5">
+                        <button
+                          type="button"
+                          onClick={() => onAccPinjaman(p)}
+                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#004A8F] px-3 py-2 text-xs font-semibold text-white active:bg-[#003870]"
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          ACC Pinjaman
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onTolakPinjaman(p)}
+                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 active:bg-red-50"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Tolak
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-500">Menunggu ACC Administrator</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -221,7 +274,78 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
         <h3 className="mb-3 text-base font-bold text-slate-900">
           Portofolio Pinjaman Kelompok ({allLoans.length})
         </h3>
-        <div className="overflow-x-auto">
+
+        {/* Mobile Cards (md:hidden) */}
+        <div className="space-y-3 md:hidden">
+          {allLoans.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+              Belum ada catatan pinjaman.
+            </div>
+          ) : (
+            allLoans.map((p) => (
+              <div
+                key={p.idPinjaman}
+                className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-slate-900">
+                      {memberMap.get(p.idAnggota) || p.idAnggota}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      {formatTanggalId(p.tanggal)} · Pokok {rupiah(p.jumlah)}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                      p.status === 'Lunas'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : p.status === 'Berjalan'
+                        ? 'bg-blue-50 text-[#00529C]'
+                        : p.status === 'Ditolak'
+                        ? 'bg-red-50 text-red-600'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {p.status}
+                  </span>
+                </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-2 rounded-lg bg-white p-2.5 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500">Total Dibayar</span>
+                    <p className="font-mono font-semibold text-emerald-700">
+                      {rupiah(p.totalDibayar)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-500">Sisa Pinjaman</span>
+                    <p className="font-mono font-bold text-slate-900">{rupiah(p.sisa)}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingLoan(p)}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 active:bg-slate-100"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeletePinjaman(p)}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 active:bg-red-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -311,11 +435,11 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
 
       {editingLoan && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-xs sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-t-3xl border border-slate-200 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 Edit Data Pinjaman · {editingLoan.idPinjaman}
@@ -616,7 +740,62 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
               Kirim notifikasi tagihan angsuran langsung melalui WhatsApp ke anggota terkait.
             </p>
 
-            <div className="overflow-x-auto">
+            {/* Mobile Pinjaman Berjalan Cards (md:hidden) */}
+            <div className="space-y-3 md:hidden">
+              {activeLoans.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+                  Semua pinjaman sudah lunas.
+                </div>
+              ) : (
+                activeLoans.map((p) => {
+                  const info = memberMap.get(p.idAnggota);
+                  const nama = info?.nama || p.idAnggota;
+                  const nohp = info?.nohp || '';
+                  const waNum = formatNoWA(nohp);
+                  const pesan = `Assalamu'alaikum ${nama},\n\nKami informasikan bahwa angsuran pinjaman Anda masih berjalan.\n\nID Pinjaman: ${p.idPinjaman}\nAngsuran yang harus dibayar: ${rupiah(p.angsuranPerBulan)}\nSisa pinjaman: ${rupiah(p.sisa)}\n\nMohon segera melakukan pembayaran angsuran.\n\nTerima kasih.`;
+                  const waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(pesan)}`;
+
+                  return (
+                    <div
+                      key={p.idPinjaman}
+                      className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-slate-900">{nama}</p>
+                          <p className="text-[11px] text-slate-500">
+                            Angsuran {rupiah(p.angsuranPerBulan)}/bln
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-500">Sisa</span>
+                          <p className="font-mono text-sm font-bold text-amber-600">
+                            {rupiah(p.sisa)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        {waNum.length >= 10 ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-2 text-xs font-semibold text-[#004A8F] active:bg-blue-100"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            Tagih via WhatsApp
+                          </a>
+                        ) : (
+                          <p className="text-center text-xs text-slate-400">No HP belum ada</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -686,7 +865,70 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
         <h3 className="mb-3 text-base font-bold text-slate-900">
           Riwayat Angsuran & e-Resi Pembayaran
         </h3>
-        <div className="overflow-x-auto">
+
+        {/* Mobile Riwayat Angsuran Cards (md:hidden) */}
+        <div className="space-y-3 md:hidden">
+          {dataset.angsuran.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+              Belum ada riwayat pembayaran angsuran.
+            </div>
+          ) : (
+            [...dataset.angsuran]
+              .reverse()
+              .slice(0, 40)
+              .map((ang) => (
+                <div
+                  key={ang.idAngsuran}
+                  className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-bold text-slate-900">
+                        {memberMap.get(ang.idAnggota)?.nama || ang.idAnggota}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Angsuran ke-{ang.angsuranKe} · {formatTanggalId(ang.tanggal)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-sm font-bold text-emerald-700">
+                        {rupiah(ang.jumlah)}
+                      </p>
+                      <p className="text-[11px] text-slate-500">Sisa {rupiah(ang.sisa)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 border-t border-slate-200/70 pt-2.5">
+                    <button
+                      type="button"
+                      onClick={() => onShowKwitansi(ang)}
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-[#004A8F] active:bg-[#EBF3FC]"
+                    >
+                      <Receipt className="h-3.5 w-3.5" />
+                      e-Resi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingAngsuran(ang)}
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 active:bg-slate-100"
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteAngsuran(ang)}
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-red-200 bg-white px-2.5 py-2 text-xs font-semibold text-red-600 active:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Hapus
+                    </button>
+                  </div>
+                </div>
+              ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -770,11 +1012,11 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
 
       {editingAngsuran && (
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-xs sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-t-3xl border border-slate-200 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
                 Edit Pembayaran · {editingAngsuran.idAngsuran}

@@ -1750,98 +1750,150 @@ export default function App() {
         </div>
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Bottom Sheet Menu (Native App Feel) */}
       {mobileMenuOpen && (
-        <div className="no-print fixed inset-0 z-50 flex lg:hidden">
+        <div className="no-print fixed inset-0 z-50 flex items-end justify-center lg:hidden">
           <div
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <aside className="relative flex w-72 max-w-[85vw] flex-col bg-gradient-to-b from-[#002855] via-[#003B7A] to-[#004A8F] text-blue-50 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/12 px-5 py-4">
-              <div className="min-w-0">
-                <span className="font-editorial text-lg font-bold text-white">Sentra Kas</span>
-                <p className="truncate text-[11px] text-blue-200/80">
-                  {sessionUser.nama} · {sessionUser.role}
-                </p>
+          <div className="relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
+            <div className="bg-gradient-to-r from-[#002855] via-[#003B7A] to-[#004A8F] px-5 pt-3 pb-4 text-white">
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/30" />
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white">{sessionUser.nama}</p>
+                  <p className="text-[11px] font-medium text-amber-300">
+                    {sessionUser.role} · Sentra Kas
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl bg-white/10 p-1.5 text-blue-100 hover:bg-white/20"
+                  aria-label="Tutup menu"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg p-1.5 text-blue-100/80 hover:bg-white/10 hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
-            <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-              {navItems.map((item) => {
-                const isActive = activePage === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setActivePage(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'border border-white/18 bg-white/15 text-white'
-                        : 'border border-transparent text-blue-100/80 hover:bg-white/8 hover:text-white'
-                    }`}
-                  >
-                    <span className={isActive ? 'text-amber-300' : 'text-blue-200/80'}>
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-            <div className="space-y-2 border-t border-white/12 p-3">
-              <a
-                href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/8 px-3 py-2 text-xs font-semibold text-white"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-amber-300" />
-                Buka Spreadsheet
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  clearSavedAppSession();
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-blue-100/90 hover:bg-white/10"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                Keluar Akun
-              </button>
+
+            <div className="overflow-y-auto p-4">
+              <p className="mb-2.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                Semua Layanan & Fitur
+              </p>
+              <nav className="grid grid-cols-2 gap-2.5">
+                {navItems.map((item) => {
+                  const isActive = activePage === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActivePage(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left text-xs font-semibold transition-colors ${
+                        isActive
+                          ? 'border-[#004A8F]/30 bg-[#EBF3FC] text-[#004A8F]'
+                          : 'border-slate-200 bg-[#F8FAFD] text-slate-700 active:bg-slate-100'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                          isActive
+                            ? 'bg-[#004A8F] text-white'
+                            : 'bg-white text-[#004A8F] shadow-2xs'
+                        }`}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="line-clamp-2">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className="mt-4 grid grid-cols-2 gap-2.5 border-t border-slate-100 pt-4">
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 active:bg-slate-50"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-[#004A8F]" />
+                  Spreadsheet
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    clearSavedAppSession();
+                  }}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50/70 px-3 py-2.5 text-xs font-semibold text-red-700 active:bg-red-100"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Keluar Akun
+                </button>
+              </div>
             </div>
-          </aside>
+          </div>
         </div>
       )}
 
       {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top Bar */}
-        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-5 py-3.5 backdrop-blur-md lg:px-7">
-          <div className="flex min-w-0 items-center gap-3">
+        {/* Native Cobalt Mobile App Header */}
+        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-[#002855] via-[#003E80] to-[#00529C] px-4 py-3 text-white shadow-sm lg:hidden">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 text-amber-300">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4.5 w-4.5"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 10h18M4 10V7l8-4 8 4v3M5 10v8m4-8v8m6-8v8m4-8v8M3 18h18"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-bold tracking-tight text-white">
+                {currentNavLabel}
+              </h1>
+              <p className="truncate text-[11px] text-blue-100/85">
+                {sessionUser.nama} · <span className="text-amber-300">{sessionUser.role}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <PWAInstallButton />
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 lg:hidden"
-              aria-label="Buka menu navigasi"
+              onClick={() => refreshDataset()}
+              disabled={isLoadingSheet}
+              aria-label="Sinkronkan Sheet"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white active:bg-white/20"
             >
-              <Menu className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${isLoadingSheet ? 'animate-spin' : ''}`} />
             </button>
+          </div>
+        </header>
+
+        {/* Desktop Top Bar */}
+        <header className="no-print sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-7 py-3.5 backdrop-blur-md lg:flex">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="flex items-center gap-2 truncate">
-              <span className="hidden text-xs font-semibold tracking-wide text-[#00529C] uppercase sm:inline">
+              <span className="text-xs font-semibold tracking-wide text-[#00529C] uppercase">
                 Sentra Kas
               </span>
-              <span className="hidden text-slate-300 sm:inline">/</span>
+              <span className="text-slate-300">/</span>
               <h1 className="font-editorial truncate text-lg font-bold tracking-tight text-slate-900">
                 {currentNavLabel}
               </h1>
@@ -1865,7 +1917,7 @@ export default function App() {
         </header>
 
         {/* Viewport */}
-        <main className="mx-auto w-full max-w-7xl flex-1 p-5 lg:p-7">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-4 pb-24 sm:px-5 lg:p-7">
           {activePage === 'dashboard' && adminMetrics && (
             <div className="space-y-6">
               {/* Primary Rekening Card (myBCA / BRImo style) + 3 KPI Cards */}
@@ -1932,74 +1984,74 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-7">
-                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:col-span-7">
+                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:p-5">
                     <div>
                       <p className="text-xs font-semibold text-slate-500">Anggota Aktif</p>
-                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
+                      <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
                         {adminMetrics.anggotaAktif}
                       </p>
                     </div>
-                    <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
-                      Dari total {adminMetrics.anggotaTotal} nasabah terdaftar
+                    <p className="mt-3 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500 sm:text-xs">
+                      Total {adminMetrics.anggotaTotal} terdaftar
                     </p>
                   </div>
 
-                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:p-5">
                     <div>
                       <p className="text-xs font-semibold text-slate-500">
-                        Total Piutang Pinjaman
+                        Menunggu ACC
                       </p>
-                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-amber-600">
-                        {hideBalance ? 'Rp ••••••' : rupiah(adminMetrics.piutang)}
-                      </p>
-                    </div>
-                    <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
-                      {adminMetrics.pinjamanStatusCounts.Berjalan} fasilitas berjalan
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500">
-                        Menunggu Persetujuan
-                      </p>
-                      <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-slate-900">
+                      <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-slate-900">
                         {adminMetrics.pinjamanStatusCounts.Menunggu}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActivePage('pinjaman')}
-                      className="mt-4 border-t border-slate-100 pt-3 text-left text-xs font-semibold text-[#00529C] hover:underline"
+                      className="mt-3 border-t border-slate-100 pt-2.5 text-left text-[11px] font-semibold text-[#00529C] hover:underline sm:text-xs"
                     >
-                      Tinjau antrean ACC →
+                      Tinjau ACC →
                     </button>
+                  </div>
+
+                  <div className="col-span-2 flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:col-span-1 sm:p-5">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">
+                        Total Piutang Pinjaman
+                      </p>
+                      <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-amber-600">
+                        {hideBalance ? 'Rp ••••••' : rupiah(adminMetrics.piutang)}
+                      </p>
+                    </div>
+                    <p className="mt-3 border-t border-slate-100 pt-2.5 text-[11px] text-slate-500 sm:text-xs">
+                      {adminMetrics.pinjamanStatusCounts.Berjalan} fasilitas berjalan
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Menu Cepat Perbankan (BRImo / myBCA style shortcuts) */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {/* Menu Cepat Perbankan (BRImo / myBCA style 3-col mobile shortcuts) */}
+              <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-6">
                 {[
                   {
                     page: 'kasMasuk' as PageId,
-                    label: 'Setor / Kas Masuk',
+                    label: 'Kas Masuk',
                     icon: <ArrowDownLeft className="h-5 w-5" />,
                   },
                   {
                     page: 'kasKeluar' as PageId,
-                    label: 'Tarik / Kas Keluar',
+                    label: 'Kas Keluar',
                     icon: <ArrowUpRight className="h-5 w-5" />,
                   },
                   {
                     page: 'pinjaman' as PageId,
-                    label: 'Pinjaman & ACC',
+                    label: 'Pinjaman',
                     icon: <CreditCard className="h-5 w-5" />,
                   },
                   {
                     page: 'angsuran' as PageId,
-                    label: 'Bayar Angsuran',
+                    label: 'Angsuran',
                     icon: <FileSpreadsheet className="h-5 w-5" />,
                   },
                   {
@@ -2009,7 +2061,7 @@ export default function App() {
                   },
                   {
                     page: 'anggota' as PageId,
-                    label: 'Data Anggota',
+                    label: 'Anggota',
                     icon: <Users className="h-5 w-5" />,
                   },
                 ].map((item) => (
@@ -2017,12 +2069,14 @@ export default function App() {
                     key={item.page}
                     type="button"
                     onClick={() => setActivePage(item.page)}
-                    className="group flex flex-col items-center justify-center gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-3 py-4 text-center shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-2 py-3.5 text-center shadow-xs transition-all active:scale-[0.98] hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EBF3FC] text-[#004A8F] transition-colors group-hover:bg-[#004A8F] group-hover:text-white">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#EBF3FC] text-[#004A8F] transition-colors group-hover:bg-[#004A8F] group-hover:text-white">
                       {item.icon}
                     </span>
-                    <span className="text-xs font-semibold text-slate-800">{item.label}</span>
+                    <span className="text-[11px] font-semibold text-slate-800 sm:text-xs">
+                      {item.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -2135,7 +2189,56 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Member Summary Cards (md:hidden) */}
+                <div className="space-y-3 md:hidden">
+                  {filteredMemberSummaries.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+                      Tidak ada data anggota.
+                    </div>
+                  ) : (
+                    filteredMemberSummaries.map((m) => (
+                      <div
+                        key={m.idAnggota}
+                        className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-slate-900">{m.nama}</p>
+                            <p className="text-[11px] text-slate-500">
+                              {m.status} · Sisa {m.totalSisaAngsuran}x angsuran
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-lg px-2.5 py-1 font-mono text-xs font-bold tabular-nums ${
+                              m.saldoAnggotaSaatIni < 0
+                                ? 'bg-red-50 text-red-600'
+                                : 'bg-[#EBF3FC] text-[#004A8F]'
+                            }`}
+                          >
+                            {rupiah(m.saldoAnggotaSaatIni)}
+                          </span>
+                        </div>
+                        <div className="mt-2.5 grid grid-cols-2 gap-2 rounded-lg bg-white p-2.5 text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500">Total Simpanan</span>
+                            <p className="font-mono font-semibold text-emerald-700">
+                              {rupiah(m.totalSimpanan)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-500">Sisa Pinjaman</span>
+                            <p className="font-mono font-semibold text-amber-600">
+                              {rupiah(m.totalSisaPinjaman)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden overflow-x-auto md:block">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -2349,11 +2452,55 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6">
                 <h3 className="font-editorial mb-4 text-lg font-bold text-slate-900">
                   Fasilitas Pinjaman Saya
                 </h3>
-                <div className="overflow-x-auto">
+
+                {/* Mobile Cards */}
+                <div className="space-y-3 md:hidden">
+                  {anggotaMetrics.pinjamanSaya.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-sm text-slate-400">
+                      Anda tidak memiliki catatan pinjaman.
+                    </div>
+                  ) : (
+                    anggotaMetrics.pinjamanSaya.map((p) => (
+                      <div
+                        key={p.idPinjaman}
+                        className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-bold text-slate-900">{rupiah(p.jumlah)}</p>
+                            <p className="text-[11px] text-slate-500">
+                              {formatTanggalId(p.tanggal)}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#004A8F]">
+                            {p.status}
+                          </span>
+                        </div>
+                        <div className="mt-2.5 grid grid-cols-2 gap-2 rounded-lg bg-white p-2.5 text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500">Dibayar</span>
+                            <p className="font-mono font-semibold text-emerald-700">
+                              {rupiah(p.totalDibayar)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-500">Sisa</span>
+                            <p className="font-mono font-bold text-[#004A8F]">
+                              {rupiah(p.sisa)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden overflow-x-auto md:block">
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
@@ -2726,11 +2873,11 @@ export default function App() {
 
       {waShareModal && !kwitansiModalData && (
         <div
-          className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs"
+          className="no-print fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-xs sm:items-center sm:p-4"
           role="dialog"
           aria-modal="true"
         >
-          <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl sm:rounded-2xl sm:pb-0">
             <div className="flex shrink-0 items-center justify-between bg-gradient-to-r from-[#003063] via-[#004A8F] to-[#0062BD] px-5 py-4 text-white">
               <div className="flex items-center gap-2.5">
                 <MessageCircle className="h-5 w-5 text-amber-300" />
@@ -2942,11 +3089,80 @@ export default function App() {
         </div>
       )}
 
+      {/* Native Mobile Fixed Bottom Navigation Bar */}
+      <nav
+        aria-label="Navigasi Cepat Mobile"
+        className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 px-2 pt-1.5 pb-[calc(0.45rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(15,23,42,0.06)] backdrop-blur-md lg:hidden"
+      >
+        <div className="mx-auto flex max-w-lg items-center justify-around gap-1">
+          {(sessionUser.role === 'Administrator'
+            ? [
+                { id: 'dashboard' as PageId, label: 'Beranda', icon: <LayoutDashboard className="h-5 w-5" /> },
+                { id: 'kasMasuk' as PageId, label: 'Masuk', icon: <ArrowDownLeft className="h-5 w-5" /> },
+                { id: 'kasKeluar' as PageId, label: 'Keluar', icon: <ArrowUpRight className="h-5 w-5" /> },
+                { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
+              ]
+            : sessionUser.role === 'Bendahara'
+              ? [
+                  { id: 'kasMasuk' as PageId, label: 'Masuk', icon: <ArrowDownLeft className="h-5 w-5" /> },
+                  { id: 'kasKeluar' as PageId, label: 'Keluar', icon: <ArrowUpRight className="h-5 w-5" /> },
+                  { id: 'pinjaman' as PageId, label: 'Pinjaman', icon: <CreditCard className="h-5 w-5" /> },
+                  { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
+                ]
+              : [
+                  { id: 'anggotaSaya' as PageId, label: 'Saldo', icon: <Wallet className="h-5 w-5" /> },
+                  { id: 'ajukanPinjaman' as PageId, label: 'Pinjam', icon: <CreditCard className="h-5 w-5" /> },
+                  { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
+                  { id: 'pengaturan' as PageId, label: 'Akun', icon: <Settings className="h-5 w-5" /> },
+                ]
+          ).map((tab) => {
+            const active = activePage === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActivePage(tab.id)}
+                className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
+                  active ? 'text-[#004A8F]' : 'text-slate-500 active:text-slate-900'
+                }`}
+              >
+                <span
+                  className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${
+                    active ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                  }`}
+                >
+                  {tab.icon}
+                </span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+
+          {sessionUser.role !== 'Anggota' && (
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
+                mobileMenuOpen ||
+                ['pinjaman', 'angsuran', 'anggota', 'pengaturan'].includes(activePage)
+                  ? 'text-[#004A8F]'
+                  : 'text-slate-500 active:text-slate-900'
+              }`}
+            >
+              <span className="flex h-7 w-11 items-center justify-center rounded-full">
+                <Menu className="h-5 w-5" />
+              </span>
+              <span>Menu</span>
+            </button>
+          )}
+        </div>
+      </nav>
+
       <OfflineIndicator />
 
       {toast && (
         <div
-          className="no-print fixed right-5 bottom-5 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-lg"
+          className="no-print fixed right-4 bottom-20 z-50 flex max-w-sm items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-lg lg:right-5 lg:bottom-5"
           role="status"
         >
           {toast.type === 'success' ? (
