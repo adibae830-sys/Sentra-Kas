@@ -3,21 +3,20 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { createServer as createViteServer } from 'vite';
 import {
   executePortalLogin,
   executePortalMutate,
   executePortalRefresh,
   executePortalRegister,
   getServiceAccountConfig,
-} from './api/_sheets.js';
+} from './api/_sheets.ts';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 type WhatsAppProvider = 'fonnte' | 'wablas' | 'meta' | 'webhook' | 'telegram';
 
@@ -459,6 +458,7 @@ async function startServer() {
   });
 
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
