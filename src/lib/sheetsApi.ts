@@ -79,6 +79,35 @@ export class SheetsAuthExpiredError extends Error {
   }
 }
 
+export const PORTAL_TOKEN_PREFIX = 'portal:';
+
+export function isPortalToken(token: string | null | undefined): boolean {
+  return Boolean(token && token.startsWith(PORTAL_TOKEN_PREFIX));
+}
+
+export function unwrapPortalToken(token: string): string {
+  return token.startsWith(PORTAL_TOKEN_PREFIX) ? token.slice(PORTAL_TOKEN_PREFIX.length) : token;
+}
+
+async function portalFetch<T>(url: string, portalToken: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${unwrapPortalToken(portalToken)}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json().catch(() => ({}))) as { error?: string };
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new SheetsAuthExpiredError(data.error || 'Sesi portal berakhir. Silakan login kembali.');
+    }
+    throw new Error(data.error || `Gagal memproses permintaan (${res.status}).`);
+  }
+  return data as T;
+}
+
 async function sheetsFetch(url: string, token: string, options: RequestInit = {}) {
   const res = await fetch(url, {
     ...options,
@@ -131,6 +160,16 @@ export async function ensureDatabaseStructure(
   token: string,
   options: { includeReportingTabs?: boolean } = { includeReportingTabs: true }
 ): Promise<{ createdTabs: string[]; initializedHeaders: string[] }> {
+  if (isPortalToken(token)) {
+    return portalFetch<{ createdTabs: string[]; initializedHeaders: string[] }>(
+      '/api/sheets/mutate',
+      token,
+      {
+        spreadsheetId,
+        action: 'ensureSetup',
+      }
+    );
+  }
   const meta = await getSpreadsheetMetadata(spreadsheetId, token);
   const existingTitles = new Set(meta.sheets.map((s) => s.title));
 
@@ -255,6 +294,12 @@ export async function loadAllFinanceData(
   spreadsheetId: string,
   token: string
 ): Promise<FinanceDataset> {
+  if (isPortalToken(token)) {
+    const res = await portalFetch<{ dataset: FinanceDataset }>('/api/sheets/refresh', token, {
+      spreadsheetId,
+    });
+    return res.dataset;
+  }
   const meta = await getSpreadsheetMetadata(spreadsheetId, token);
   const sheetIds: Record<string, number> = {};
   const availableTabs: string[] = [];
@@ -438,6 +483,14 @@ export async function appendRow(
   sheetName: string,
   values: (string | number)[]
 ) {
+  if (isPortalToken(token)) {
+    return portalFetch('/api/sheets/mutate', token, {
+      spreadsheetId,
+      action: 'append',
+      sheetName,
+      values,
+    });
+  }
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
     spreadsheetId
   )}/values/${encodeURIComponent(`${sheetName}!A1`)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
@@ -454,6 +507,15 @@ export async function updateRowValues(
   rowIndex1Based: number,
   values: (string | number)[]
 ) {
+  if (isPortalToken(token)) {
+    return portalFetch('/api/sheets/mutate', token, {
+      spreadsheetId,
+      action: 'update',
+      sheetName,
+      rowIndex: rowIndex1Based,
+      values,
+    });
+  }
   const range = `${sheetName}!A${rowIndex1Based}`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
     spreadsheetId
@@ -470,6 +532,14 @@ export async function deleteRow(
   sheetId: number,
   rowIndex1Based: number
 ) {
+  if (isPortalToken(token)) {
+    return portalFetch('/api/sheets/mutate', token, {
+      spreadsheetId,
+      action: 'delete',
+      sheetId,
+      rowIndex: rowIndex1Based,
+    });
+  }
   const startIndex = rowIndex1Based - 1;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
     spreadsheetId
@@ -490,5 +560,23 @@ export async function deleteRow(
         },
       ],
     }),
+  });
+}
+
+export async function portalUpdateAccount(
+  spreadsheetId: string,
+  token: string,
+  payload: {
+    oldPassword: string;
+    newUsername: string;
+    newPassword: string;
+  }
+): Promise<{ portalToken?: string }> {
+  return portalFetch<{ success: boolean; portalToken?: string }>('/api/sheets/mutate', token, {
+    spreadsheetId,
+    action: 'updateAccount',
+    oldPassword: payload.oldPassword,
+    newUsername: payload.newUsername,
+    newPassword: payload.newPassword,
   });
 }

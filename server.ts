@@ -4,6 +4,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
+import {
+  executePortalLogin,
+  executePortalMutate,
+  executePortalRefresh,
+  executePortalRegister,
+  getServiceAccountConfig,
+} from './api/_sheets.js';
 
 dotenv.config();
 
@@ -251,6 +258,61 @@ async function startServer() {
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'sentra-kas-server' });
+  });
+
+  app.get('/api/sheets/status', (_req, res) => {
+    const cfg = getServiceAccountConfig();
+    res.json({ serviceAccountConfigured: Boolean(cfg) });
+  });
+
+  app.post('/api/sheets/login', async (req, res) => {
+    try {
+      const result = await executePortalLogin(req.body || {});
+      return res.status(result.status).json(result.body);
+    } catch (err) {
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : 'Gagal login ke portal.',
+      });
+    }
+  });
+
+  app.post('/api/sheets/refresh', async (req, res) => {
+    try {
+      const result = await executePortalRefresh({
+        spreadsheetId: req.body?.spreadsheetId,
+        authHeader: req.headers.authorization,
+      });
+      return res.status(result.status).json(result.body);
+    } catch (err) {
+      return res.status(401).json({
+        error: err instanceof Error ? err.message : 'Sesi berakhir.',
+      });
+    }
+  });
+
+  app.post('/api/sheets/register', async (req, res) => {
+    try {
+      const result = await executePortalRegister(req.body || {});
+      return res.status(result.status).json(result.body);
+    } catch (err) {
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : 'Gagal mendaftarkan anggota.',
+      });
+    }
+  });
+
+  app.post('/api/sheets/mutate', async (req, res) => {
+    try {
+      const result = await executePortalMutate({
+        ...(req.body || {}),
+        authHeader: req.headers.authorization,
+      });
+      return res.status(result.status).json(result.body);
+    } catch (err) {
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : 'Gagal memproses perubahan data.',
+      });
+    }
   });
 
   app.get('/api/whatsapp/status', (_req, res) => {

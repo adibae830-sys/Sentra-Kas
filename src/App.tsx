@@ -26,6 +26,7 @@ import {
   Send,
   Settings,
   Share2,
+  ShieldCheck,
   Users,
   Wallet,
   X,
@@ -75,7 +76,10 @@ import {
   deleteRow,
   ensureDatabaseStructure,
   extractSpreadsheetId,
+  isPortalToken,
   loadAllFinanceData,
+  PORTAL_TOKEN_PREFIX,
+  portalUpdateAccount,
   SheetsAuthExpiredError,
   updateRowValues,
 } from './lib/sheetsApi';
@@ -112,6 +116,7 @@ const STORAGE_KEYS = {
   APP_SESSION: 'sentra_kas_app_session',
   ACTIVE_PAGE: 'sentra_kas_active_page',
   WA_GROUP_SETTINGS: 'sentra_kas_wa_group_settings',
+  PORTAL_TOKEN: 'sentra_kas_portal_token',
 } as const;
 
 interface WaGroupSettings {
@@ -176,10 +181,33 @@ function readSavedActivePage(): PageId | null {
   }
 }
 
+function readSavedPortalToken(): string | null {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.PORTAL_TOKEN);
+    return val ? val.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredPortalToken(token: string | null) {
+  try {
+    if (token) {
+      localStorage.setItem(STORAGE_KEYS.PORTAL_TOKEN, token);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.PORTAL_TOKEN);
+    }
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export default function App() {
   const [googleUser, setGoogleUser] = useState<User | null>(null);
   const [needsGoogleAuth, setNeedsGoogleAuth] = useState(true);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [serviceAccountConfigured, setServiceAccountConfigured] = useState(false);
+  const [isPortalSubmitting, setIsPortalSubmitting] = useState(false);
 
   const [spreadsheetInput, setSpreadsheetInput] = useState<string>(readSavedSpreadsheetId);
   const activeSpreadsheetId = useMemo(
@@ -255,6 +283,11 @@ export default function App() {
     fetch('/api/whatsapp/status')
       .then((r) => r.json())
       .then((data) => setWaGatewayStatus(data))
+      .catch(() => {});
+
+    fetch('/api/sheets/status')
+      .then((r) => r.json())
+      .then((data) => setServiceAccountConfigured(Boolean(data?.serviceAccountConfigured)))
       .catch(() => {});
   }, []);
 
@@ -377,9 +410,21 @@ export default function App() {
     }
   }, [activePage, sessionUser]);
 
+  const getActiveSheetToken = useCallback((): string | null => {
+    const googleToken = getAccessToken();
+    if (googleToken) return googleToken;
+    const portalToken = readSavedPortalToken();
+    return portalToken ? `${PORTAL_TOKEN_PREFIX}${portalToken}` : null;
+  }, []);
+
   const clearSavedAppSession = useCallback(() => {
     setSavedSession(null);
     setSessionUser(null);
+    setStoredPortalToken(null);
+    if (!getAccessToken()) {
+      setDataset(null);
+      setNeedsGoogleAuth(true);
+    }
     try {
       localStorage.removeItem(STORAGE_KEYS.APP_SESSION);
       localStorage.removeItem(STORAGE_KEYS.ACTIVE_PAGE);
@@ -390,7 +435,7 @@ export default function App() {
 
   const refreshDataset = useCallback(
     async (explicitToken?: string): Promise<FinanceDataset | null> => {
-      const token = explicitToken || getAccessToken();
+      const token = explicitToken || getActiveSheetToken();
       if (!token) {
         setNeedsGoogleAuth(true);
         return null;
@@ -432,6 +477,7 @@ export default function App() {
       } catch (err) {
         if (err instanceof SheetsAuthExpiredError) {
           clearAccessToken();
+          setStoredPortalToken(null);
           setNeedsGoogleAuth(true);
           setSheetError(err.message);
         } else {
@@ -446,8 +492,60 @@ export default function App() {
         setIsLoadingSheet(false);
       }
     },
-    [activeSpreadsheetId]
+    [activeSpreadsheetId, getActiveSheetToken]
   );
+
+  // Restore saved Service Account Portal session on mount if present
+  useEffect(() => {
+    const portalToken = readSavedPortalToken();
+    if (!portalToken || getAccessToken()) return;
+
+    let cancelled = false;
+    setIsLoadingSheet(true);
+    fetch('/api/sheets/refresh', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${portalToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ spreadsheetId: activeSpreadsheetId }),
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          user?: AppUser;
+          dataset?: FinanceDataset;
+          error?: string;
+        };
+        if (cancelled) return;
+        if (!res.ok || !data.user || !data.dataset) {
+          setStoredPortalToken(null);
+          setNeedsGoogleAuth(true);
+          return;
+        }
+        setDataset(data.dataset);
+        setSessionUser(data.user);
+        setUsernameBaru(data.user.username);
+        setNeedsGoogleAuth(false);
+        const savedPage = readSavedActivePage();
+        const defaultPage: PageId =
+          data.user.role === 'Administrator'
+            ? 'dashboard'
+            : data.user.role === 'Bendahara'
+              ? 'kasMasuk'
+              : 'anggotaSaya';
+        setActivePage(savedPage || defaultPage);
+      })
+      .catch(() => {
+        // Keep token on transient offline errors
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSheet(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSpreadsheetId]);
 
   useEffect(() => {
     const unsubscribe = initAuth(
@@ -457,15 +555,17 @@ export default function App() {
         refreshDataset(token);
       },
       (user) => {
+        setGoogleUser(user);
+        if (readSavedPortalToken()) return;
         // Firebase still remembers the signed-in Google account across refresh;
         // only the in-memory Sheets access token needs a quick 1-click refresh.
-        setGoogleUser(user);
         setNeedsGoogleAuth(true);
         setDataset(null);
         setSessionUser(null);
       },
       () => {
         setGoogleUser(null);
+        if (readSavedPortalToken()) return;
         setNeedsGoogleAuth(true);
         setDataset(null);
         setSessionUser(null);
@@ -483,6 +583,7 @@ export default function App() {
         forceAccountPicker,
       });
       if (res) {
+        setStoredPortalToken(null);
         setGoogleUser(res.user);
         setNeedsGoogleAuth(false);
         await refreshDataset(res.accessToken);
@@ -508,9 +609,110 @@ export default function App() {
   const handleGoogleLogout = async () => {
     await logoutGoogle();
     setGoogleUser(null);
+    setStoredPortalToken(null);
     setNeedsGoogleAuth(true);
     setDataset(null);
     clearSavedAppSession();
+  };
+
+  const handlePortalLogin = async (usernameInput: string, passwordInput: string) => {
+    setLoginError(null);
+    setIsPortalSubmitting(true);
+    try {
+      const res = await fetch('/api/sheets/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spreadsheetId: activeSpreadsheetId,
+          username: usernameInput.trim(),
+          password: passwordInput.trim(),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        user?: AppUser;
+        portalToken?: string;
+        dataset?: FinanceDataset;
+        error?: string;
+      };
+      if (!res.ok || !data.user || !data.portalToken || !data.dataset) {
+        setLoginError(
+          data.error ||
+            'Login gagal. Periksa username, password, dan pastikan akun berstatus Aktif.'
+        );
+        return;
+      }
+
+      setStoredPortalToken(data.portalToken);
+      setDataset(data.dataset);
+      setSessionUser(data.user);
+      setNeedsGoogleAuth(false);
+      setUsernameBaru(data.user.username);
+
+      const toSave: SavedAppSession = {
+        username: data.user.username,
+        nama: data.user.nama,
+        role: data.user.role,
+        idAnggota: data.user.idAnggota,
+      };
+      setSavedSession(toSave);
+      try {
+        localStorage.setItem(STORAGE_KEYS.APP_SESSION, JSON.stringify(toSave));
+      } catch {
+        // ignore
+      }
+
+      if (data.user.role === 'Administrator') {
+        setActivePage('dashboard');
+      } else if (data.user.role === 'Bendahara') {
+        setActivePage('kasMasuk');
+      } else {
+        setActivePage('anggotaSaya');
+      }
+    } catch {
+      setLoginError('Gagal menghubungi server portal login. Periksa koneksi internet Anda.');
+    } finally {
+      setIsPortalSubmitting(false);
+    }
+  };
+
+  const handlePortalRegister = async (payload: {
+    nama: string;
+    alamat: string;
+    nohp: string;
+    username: string;
+    password: string;
+  }): Promise<boolean> => {
+    setLoginError(null);
+    setIsPortalSubmitting(true);
+    try {
+      const res = await fetch('/api/sheets/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spreadsheetId: activeSpreadsheetId,
+          ...payload,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        idAnggota?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.success) {
+        setLoginError(data.error || 'Pendaftaran anggota gagal. Silakan coba lagi.');
+        return false;
+      }
+      showToast(
+        'success',
+        `Pendaftaran berhasil (${data.idAnggota}). Silakan masuk dengan akun Anda.`
+      );
+      return true;
+    } catch {
+      setLoginError('Gagal terhubung ke server pendaftaran.');
+      return false;
+    } finally {
+      setIsPortalSubmitting(false);
+    }
   };
 
   const openConfirm = (config: Omit<ConfirmationState, 'isOpen'>) => {
@@ -527,10 +729,10 @@ export default function App() {
     successMessage: string,
     afterRefresh?: (freshDataset: FinanceDataset | null) => Promise<void> | void
   ) => {
-    const token = getAccessToken();
+    const token = getActiveSheetToken();
     if (!token) {
       setNeedsGoogleAuth(true);
-      showToast('error', 'Sesi Google berakhir. Silakan sambungkan kembali akun Google.');
+      showToast('error', 'Sesi login berakhir. Silakan masuk kembali.');
       return;
     }
 
@@ -546,6 +748,7 @@ export default function App() {
     } catch (err) {
       if (err instanceof SheetsAuthExpiredError) {
         clearAccessToken();
+        setStoredPortalToken(null);
         setNeedsGoogleAuth(true);
         setConfirmState((prev) => ({ ...prev, isOpen: false }));
       }
@@ -571,7 +774,7 @@ export default function App() {
       confirmLabel: 'Setup Struktur Sheet',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await ensureDatabaseStructure(activeSpreadsheetId, token, {
             includeReportingTabs: true,
           });
@@ -662,7 +865,7 @@ export default function App() {
       confirmLabel: 'Ya, Daftarkan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           const now = nowIsoShort();
           await appendRow(activeSpreadsheetId, token, 'Anggota', [
             newId,
@@ -698,7 +901,7 @@ export default function App() {
       confirmLabel: 'Simpan Anggota',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await appendRow(activeSpreadsheetId, token, 'Anggota', [
             newId,
             payload.nama.trim(),
@@ -724,7 +927,7 @@ export default function App() {
       confirmLabel: 'Simpan Perubahan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await updateRowValues(activeSpreadsheetId, token, 'Anggota', updated.rowIndex, [
             updated.id,
             updated.nama,
@@ -749,7 +952,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
         }, `Anggota ${target.nama} berhasil dihapus.`),
     });
@@ -777,7 +980,7 @@ export default function App() {
         const tgl = nowIsoShort();
         return runConfirmedMutation(
           async () => {
-            const token = getAccessToken()!;
+            const token = getActiveSheetToken()!;
             await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
               newId,
               tgl,
@@ -826,7 +1029,7 @@ export default function App() {
         const tgl = nowIsoShort();
         return runConfirmedMutation(
           async () => {
-            const token = getAccessToken()!;
+            const token = getActiveSheetToken()!;
             await appendRow(activeSpreadsheetId, token, 'KasKeluar', [
               newId,
               tgl,
@@ -864,7 +1067,7 @@ export default function App() {
       confirmLabel: 'Simpan Perubahan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await updateRowValues(activeSpreadsheetId, token, 'KasMasuk', updated.rowIndex, [
             updated.id,
             updated.tanggal,
@@ -894,7 +1097,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
         }, `Kas masuk ${target.id} berhasil dihapus.`),
     });
@@ -912,7 +1115,7 @@ export default function App() {
       confirmLabel: 'Simpan Perubahan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await updateRowValues(activeSpreadsheetId, token, 'KasKeluar', updated.rowIndex, [
             updated.id,
             updated.tanggal,
@@ -941,7 +1144,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
         }, `Kas keluar ${target.id} berhasil dihapus.`),
     });
@@ -971,7 +1174,7 @@ export default function App() {
         const now = nowIsoShort();
         return runConfirmedMutation(
           async () => {
-            const token = getAccessToken()!;
+            const token = getActiveSheetToken()!;
             await appendRow(activeSpreadsheetId, token, 'Pinjaman', [
               idPinjaman,
               now,
@@ -1024,7 +1227,7 @@ export default function App() {
         const now = nowIsoShort();
         return runConfirmedMutation(
           async () => {
-            const token = getAccessToken()!;
+            const token = getActiveSheetToken()!;
             await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
               pinjaman.idPinjaman,
               pinjaman.tanggal,
@@ -1074,7 +1277,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
             pinjaman.idPinjaman,
             pinjaman.tanggal,
@@ -1116,7 +1319,7 @@ export default function App() {
       onConfirm: () =>
         runConfirmedMutation(
           async () => {
-            const token = getAccessToken()!;
+            const token = getActiveSheetToken()!;
             await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', pinjaman.rowIndex, [
               pinjaman.idPinjaman,
               pinjaman.tanggal,
@@ -1193,7 +1396,7 @@ export default function App() {
       confirmLabel: 'Simpan Perubahan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', updated.rowIndex, [
             updated.idPinjaman,
             updated.tanggal,
@@ -1226,7 +1429,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
         }, `Pinjaman ${target.idPinjaman} berhasil dihapus.`),
     });
@@ -1264,7 +1467,7 @@ export default function App() {
       confirmLabel: 'Simpan Perubahan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await updateRowValues(activeSpreadsheetId, token, 'Angsuran', updated.rowIndex, [
             updated.idAngsuran,
             updated.tanggal,
@@ -1324,7 +1527,7 @@ export default function App() {
       variant: 'danger',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await deleteRow(activeSpreadsheetId, token, sheetId, target.rowIndex);
           if (linkedLoan) {
             await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', linkedLoan.rowIndex, [
@@ -1369,7 +1572,7 @@ export default function App() {
       confirmLabel: 'Kirim Pengajuan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await appendRow(activeSpreadsheetId, token, 'Pinjaman', [
             idPinjaman,
             nowIsoShort(),
@@ -1411,7 +1614,7 @@ export default function App() {
       confirmLabel: 'Arsipkan Laporan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
+          const token = getActiveSheetToken()!;
           await ensureDatabaseStructure(activeSpreadsheetId, token, {
             includeReportingTabs: true,
           });
@@ -1442,7 +1645,7 @@ export default function App() {
       ringkasan: string;
     }>
   ) => {
-    const token = getAccessToken();
+    const token = getActiveSheetToken();
     if (!token) return;
     await ensureDatabaseStructure(activeSpreadsheetId, token, {
       includeReportingTabs: true,
@@ -1468,7 +1671,10 @@ export default function App() {
     e.preventDefault();
     if (!dataset || !sessionUser) return;
 
-    if (passwordLama !== sessionUser.password) {
+    const activeToken = getActiveSheetToken();
+    const usingPortal = isPortalToken(activeToken);
+
+    if (!usingPortal && passwordLama !== sessionUser.password) {
       showToast('error', 'Password lama tidak sesuai.');
       return;
     }
@@ -1488,18 +1694,26 @@ export default function App() {
       confirmLabel: 'Simpan Perubahan',
       onConfirm: () =>
         runConfirmedMutation(async () => {
-          const token = getAccessToken()!;
-          await updateRowValues(activeSpreadsheetId, token, 'Users', sessionUser.rowIndex, [
-            usernameBaru.trim(),
-            passwordBaru.trim(),
-            sessionUser.nama,
-            sessionUser.role,
-            sessionUser.status,
-            sessionUser.idAnggota,
-          ]);
+          const token = getActiveSheetToken()!;
+          if (isPortalToken(token)) {
+            await portalUpdateAccount(activeSpreadsheetId, token, {
+              oldPassword: passwordLama,
+              newUsername: usernameBaru.trim(),
+              newPassword: passwordBaru.trim(),
+            });
+          } else {
+            await updateRowValues(activeSpreadsheetId, token, 'Users', sessionUser.rowIndex, [
+              usernameBaru.trim(),
+              passwordBaru.trim(),
+              sessionUser.nama,
+              sessionUser.role,
+              sessionUser.status,
+              sessionUser.idAnggota,
+            ]);
+          }
           setPasswordLama('');
           setPasswordBaru('');
-          setSessionUser(null);
+          clearSavedAppSession();
         }, 'Kredensial akun berhasil diperbarui. Silakan login kembali.'),
     });
   };
@@ -1632,6 +1846,8 @@ export default function App() {
           googleUser={googleUser}
           needsGoogleAuth={needsGoogleAuth}
           isGoogleSigningIn={isGoogleSigningIn}
+          serviceAccountConfigured={serviceAccountConfigured}
+          isPortalSubmitting={isPortalSubmitting}
           spreadsheetInput={spreadsheetInput}
           onSpreadsheetInputChange={setSpreadsheetInput}
           onGoogleLogin={handleGoogleLogin}
@@ -1644,7 +1860,9 @@ export default function App() {
           onReloadSheet={() => refreshDataset()}
           onRequestSetupDatabase={handleRequestSetupDatabase}
           onAppLogin={handleAppLogin}
+          onPortalLogin={handlePortalLogin}
           onRegisterMember={handleRegisterMember}
+          onPortalRegister={handlePortalRegister}
           loginError={loginError}
         />
 
@@ -2734,6 +2952,83 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {sessionUser.role === 'Administrator' && (
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-12">
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex items-start gap-2.5">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F]">
+                        <ShieldCheck className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <h3 className="font-editorial text-lg font-bold text-slate-900">
+                          Akses Login Anggota &amp; Solusi Error 403 Google
+                        </h3>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Pengaturan agar seluruh anggota dapat membuka aplikasi dari HP masing-masing tanpa terblokir verifikasi Google.
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                        serviceAccountConfigured
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-amber-200 bg-amber-50 text-amber-800'
+                      }`}
+                    >
+                      {serviceAccountConfigured
+                        ? 'Portal Tanpa Login Google: Aktif'
+                        : 'Mode Login Google (Butuh Test Users)'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-blue-200/80 bg-[#EBF3FC]/55 p-4 text-xs leading-relaxed text-slate-700">
+                      <p className="font-bold text-[#004A8F]">
+                        1. Cara Terbaik: Portal Tanpa Login Google (Disarankan)
+                      </p>
+                      <p className="mt-1.5">
+                        Anggota cukup membuka link web dan langsung masuk pakai{' '}
+                        <strong>Username &amp; Password</strong> — tidak perlu klik Google Sign-In,
+                        tidak kena <strong>Error 403</strong>, dan tidak perlu diberi akses edit Spreadsheet.
+                      </p>
+                      <ol className="mt-2 list-decimal space-y-1 pl-4 text-slate-600">
+                        <li>
+                          Buat 1 <strong>Service Account</strong> di Google Cloud Console &amp; unduh file JSON key-nya.
+                        </li>
+                        <li>
+                          Bagikan Google Spreadsheet kelompok <strong>1 kali saja</strong> ke email bot Service Account sebagai <strong>Editor</strong>.
+                        </li>
+                        <li>
+                          Tambahkan <code className="font-mono text-slate-900">GOOGLE_SERVICE_ACCOUNT_JSON</code> pada Environment Variables Vercel lalu redeploy.
+                        </li>
+                      </ol>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-4 text-xs leading-relaxed text-slate-700">
+                      <p className="font-bold text-slate-900">
+                        2. Cara Cepat Jika Tetap Pakai Login Google (Mengatasi Error 403)
+                      </p>
+                      <p className="mt-1.5">
+                        Error <code className="font-mono text-red-700">403: access_denied</code> muncul karena
+                        status <em>OAuth consent screen</em> masih <strong>Testing</strong>.
+                      </p>
+                      <ol className="mt-2 list-decimal space-y-1 pl-4 text-slate-600">
+                        <li>
+                          Buka <strong>Google Cloud Console</strong> → <em>APIs &amp; Services</em> →{' '}
+                          <em>OAuth consent screen</em>.
+                        </li>
+                        <li>
+                          Pada bagian <strong>Test users</strong>, klik <strong>+ ADD USERS</strong> lalu masukkan email Google anggota (atau klik <strong>Publish App</strong>).
+                        </li>
+                        <li>
+                          Pastikan file Google Spreadsheet juga dibagikan ke email anggota agar bisa membaca data.
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {(sessionUser.role === 'Administrator' || sessionUser.role === 'Bendahara') && (
                 <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-12">

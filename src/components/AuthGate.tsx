@@ -29,6 +29,8 @@ interface AuthGateProps {
   googleUser: User | null;
   needsGoogleAuth: boolean;
   isGoogleSigningIn: boolean;
+  serviceAccountConfigured: boolean;
+  isPortalSubmitting: boolean;
   spreadsheetInput: string;
   onSpreadsheetInputChange: (val: string) => void;
   onGoogleLogin: (forceAccountPicker?: boolean) => void;
@@ -41,6 +43,7 @@ interface AuthGateProps {
   onReloadSheet: () => void;
   onRequestSetupDatabase: () => void;
   onAppLogin: (username: string, password: string) => void;
+  onPortalLogin: (username: string, password: string) => Promise<void>;
   onRegisterMember: (payload: {
     nama: string;
     alamat: string;
@@ -48,6 +51,13 @@ interface AuthGateProps {
     username: string;
     password: string;
   }) => void;
+  onPortalRegister: (payload: {
+    nama: string;
+    alamat: string;
+    nohp: string;
+    username: string;
+    password: string;
+  }) => Promise<boolean>;
   loginError: string | null;
 }
 
@@ -55,6 +65,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   googleUser,
   needsGoogleAuth,
   isGoogleSigningIn,
+  serviceAccountConfigured,
+  isPortalSubmitting,
   spreadsheetInput,
   onSpreadsheetInputChange,
   onGoogleLogin,
@@ -67,10 +79,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   onReloadSheet,
   onRequestSetupDatabase,
   onAppLogin,
+  onPortalLogin,
   onRegisterMember,
+  onPortalRegister,
   loginError,
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [preferGoogleAuth, setPreferGoogleAuth] = useState(false);
   const [showSheetSettings, setShowSheetSettings] = useState(false);
 
   const [username, setUsername] = useState('');
@@ -89,27 +104,49 @@ export const AuthGate: React.FC<AuthGateProps> = ({
       )
     : [];
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // Direct password login without Google popup whenever backend Service Account is configured
+  const useDirectPortal = serviceAccountConfigured && !preferGoogleAuth && needsGoogleAuth;
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAppLogin(username, password);
+    if (useDirectPortal) {
+      await onPortalLogin(username, password);
+    } else {
+      onAppLogin(username, password);
+    }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onRegisterMember({
+    const payload = {
       nama: regNama,
       alamat: regAlamat,
       nohp: regNohp,
       username: regUsername,
       password: regPassword,
-    });
+    };
+    if (useDirectPortal) {
+      const ok = await onPortalRegister(payload);
+      if (ok) {
+        setUsername(regUsername);
+        setPassword('');
+        setRegNama('');
+        setRegAlamat('');
+        setRegNohp('');
+        setRegUsername('');
+        setRegPassword('');
+        setMode('login');
+      }
+    } else {
+      onRegisterMember(payload);
+    }
   };
 
   const quickUsers: AppUser[] = dataset?.users.filter((u) => u.status === 'Aktif') || [];
 
   return (
     <div className="flex min-h-dvh flex-col justify-between bg-[#F2F6FA]">
-      {/* Full-Bleed Cobalt Banking Top Backdrop (BRImo / myBCA style) */}
+      {/* Full-Bleed Cobalt Banking Top Backdrop */}
       <div>
         <header className="relative overflow-hidden rounded-b-[2rem] bg-gradient-to-br from-[#00224A] via-[#003E85] to-[#005EB8] px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-16 text-white shadow-md sm:px-8 sm:pt-8 sm:pb-20">
           <div
@@ -156,9 +193,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({
               {savedSession ? `Halo, ${savedSession.nama}` : 'Selamat Datang'}
             </h1>
             <p className="mt-1 text-xs leading-relaxed text-blue-100/85 sm:text-sm">
-              {needsGoogleAuth
-                ? 'Masuk dengan akun Google untuk mengakses buku kas & mutasi.'
-                : 'Silakan masuk menggunakan akun peran Anda.'}
+              {useDirectPortal
+                ? 'Masuk langsung dengan username & password akun Anda.'
+                : needsGoogleAuth
+                  ? 'Masuk dengan akun Google untuk mengakses buku kas & mutasi.'
+                  : 'Silakan masuk menggunakan akun peran Anda.'}
             </p>
           </div>
         </header>
@@ -166,7 +205,169 @@ export const AuthGate: React.FC<AuthGateProps> = ({
         {/* Overlapping Floating Banking Card */}
         <main className="relative z-10 mx-auto -mt-10 w-full max-w-md px-4 sm:px-0">
           <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-[#002855]/8 sm:p-6">
-            {needsGoogleAuth ? (
+            {useDirectPortal ? (
+              <div className="space-y-4">
+                {mode === 'login' ? (
+                  <form onSubmit={handleLoginSubmit} className="space-y-3.5">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Masukkan username"
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                        Password / PIN
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Masukkan password"
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
+                      />
+                    </div>
+
+                    {loginError && (
+                      <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                        {loginError}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isPortalSubmitting}
+                      className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870] disabled:opacity-60"
+                    >
+                      {isPortalSubmitting ? 'Memeriksa...' : 'Masuk'}
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setMode('register')}
+                        className="inline-flex items-center gap-1.5 font-semibold text-[#004A8F] hover:underline"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Daftar Anggota Baru
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreferGoogleAuth(true)}
+                        className="font-medium text-slate-500 hover:text-slate-800 hover:underline"
+                      >
+                        Login via Google Admin
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                    <p className="text-sm font-bold text-slate-900">Daftar Anggota Baru</p>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                        Nama Lengkap
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={regNama}
+                        onChange={(e) => setRegNama(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          No HP / WhatsApp
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={regNohp}
+                          onChange={(e) => setRegNohp(e.target.value)}
+                          placeholder="0812..."
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Alamat
+                        </label>
+                        <input
+                          type="text"
+                          value={regAlamat}
+                          onChange={(e) => setRegAlamat(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Username
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={regUsername}
+                          onChange={(e) => setRegUsername(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {loginError && (
+                      <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                        {loginError}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setMode('login')}
+                        disabled={isPortalSubmitting}
+                        className="min-h-[44px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        Kembali
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isPortalSubmitting}
+                        className="min-h-[44px] flex-1 rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-60"
+                      >
+                        {isPortalSubmitting ? 'Mendaftar...' : 'Daftar'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ) : needsGoogleAuth ? (
               <div className="space-y-4">
                 {savedSession && (
                   <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-100 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs">
@@ -209,9 +410,24 @@ export const AuthGate: React.FC<AuthGateProps> = ({
                   </div>
                 )}
 
+                {serviceAccountConfigured && (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setPreferGoogleAuth(false)}
+                      className="text-xs font-semibold text-slate-600 hover:text-[#004A8F] hover:underline"
+                    >
+                      ← Kembali ke Login Username & Password
+                    </button>
+                  </div>
+                )}
+
                 {sheetError && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
-                    {sheetError}
+                  <div className="space-y-1.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
+                    <p>{sheetError}</p>
+                    <p className="text-[11px] text-red-600/90">
+                      Jika muncul error <strong>403: access_denied</strong>, email Google anggota perlu didaftarkan di <em>Test users</em> Google Cloud Console, atau aktifkan Service Account agar anggota cukup login pakai Username &amp; Password.
+                    </p>
                   </div>
                 )}
               </div>
