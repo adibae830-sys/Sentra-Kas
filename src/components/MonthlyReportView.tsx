@@ -158,7 +158,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
       const file = new File([blob], summaryImage.filename, { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: `Ringkasan Saldo Sentra Kas · ${report.periodeLabel}`,
+          title: `Ringkasan Saldo KSP SENTRA · ${report.periodeLabel}`,
           text: groupText,
           files: [file],
         });
@@ -268,7 +268,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
             onClick={() => window.print()}
             className="inline-flex items-center gap-2 whitespace-nowrap shrink-0 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
-            <Printer className="h-3.5 w-3.5 text-[#00529C]" />
+            <Printer className="h-3.5 w-3.5 text-[#1E5B2A]" />
             Cetak PDF
           </button>
 
@@ -287,7 +287,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                   statusKirimWa: gatewayStatus.configured ? 'Siap Kirim' : 'Manual WA',
                 })
               }
-              className="inline-flex items-center gap-2 whitespace-nowrap shrink-0 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003870]"
+              className="inline-flex items-center gap-2 whitespace-nowrap shrink-0 rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#154620]"
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
               Arsipkan ke Sheet
@@ -296,10 +296,10 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
         </div>
       </div>
 
-      {/* KPI Strip with Banking Cobalt Focal Card */}
+      {/* KPI Strip with KSP SENTRA Focal Card */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="col-span-2 rounded-2xl bg-gradient-to-br from-[#00356B] via-[#004A8F] to-[#0062BD] p-4 sm:col-span-1 sm:p-5 text-white shadow-xs">
-          <p className="text-xs font-semibold text-blue-100">
+        <div className="col-span-2 rounded-2xl bg-gradient-to-br from-[#103D1B] via-[#1B5727] to-[#287336] p-4 sm:col-span-1 sm:p-5 text-white shadow-xs">
+          <p className="text-xs font-semibold text-emerald-100">
             Saldo Akhir Rekening Kas
           </p>
           <p className="mt-1.5 font-mono text-xl font-bold tabular-nums text-white sm:mt-2 sm:text-2xl">
@@ -338,7 +338,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
           <p className="text-xs font-medium text-slate-500">Surplus / Defisit Bulan Ini</p>
           <p
             className={`mt-2 font-mono text-2xl font-bold tabular-nums ${
-              report.surplusDefisit >= 0 ? 'text-[#004A8F]' : 'text-red-600'
+              report.surplusDefisit >= 0 ? 'text-[#1E5B2A]' : 'text-red-600'
             }`}
           >
             {rupiah(report.surplusDefisit)}
@@ -389,7 +389,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-[#00529C] transition-all"
+                        className="h-full rounded-full bg-[#1E5B2A] transition-all"
                         style={{ width: `${Math.max(cat.percentage, 2)}%` }}
                       />
                     </div>
@@ -479,7 +479,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
               </h3>
               <p className="mt-0.5 text-xs text-slate-500">
                 Mode Pengiriman:{' '}
-                <span className="font-semibold text-[#004A8F]">
+                <span className="font-semibold text-[#1E5B2A]">
                   {gatewayStatus.configured
                     ? `Gateway Server Aktif (${gatewayStatus.provider.toUpperCase()})`
                     : 'Tautan Langsung WhatsApp per Anggota'}
@@ -515,7 +515,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
               <div className="mt-4 rounded-xl border border-slate-200 bg-[#F8FAFC] p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <ImageIcon className="h-3.5 w-3.5 text-[#004A8F]" />
+                    <ImageIcon className="h-3.5 w-3.5 text-[#1E5B2A]" />
                     Lampiran Gambar Rincian Saldo & Anggota
                   </span>
                   <span className="text-[11px] text-slate-500">PNG · Siap Tempel WA</span>
@@ -534,7 +534,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     {copiedSummaryImg ? (
                       <Check className="h-3.5 w-3.5 text-emerald-600" />
                     ) : (
-                      <Copy className="h-3.5 w-3.5 text-[#00529C]" />
+                      <Copy className="h-3.5 w-3.5 text-[#1E5B2A]" />
                     )}
                     {copiedSummaryImg ? 'Gambar Disalin' : 'Salin Gambar'}
                   </button>
@@ -543,14 +543,14 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     onClick={handleDownloadSummaryImage}
                     className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                   >
-                    <Download className="h-3.5 w-3.5 text-[#00529C]" />
+                    <Download className="h-3.5 w-3.5 text-[#1E5B2A]" />
                     Unduh (.png)
                   </button>
                   {typeof navigator !== 'undefined' && 'share' in navigator && (
                     <button
                       type="button"
                       onClick={handleShareImageAndText}
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#004A8F] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#003870]"
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#1E5B2A] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#154620]"
                     >
                       <Share2 className="h-3.5 w-3.5" />
                       Bagikan Gambar + Teks
@@ -581,7 +581,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                 {copiedGroupMsg ? (
                   <Check className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <Copy className="h-4 w-4 text-[#00529C]" />
+                  <Copy className="h-4 w-4 text-[#1E5B2A]" />
                 )}
                 {copiedGroupMsg ? 'Tersalin' : 'Salin Pesan'}
               </button>
@@ -596,7 +596,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                       ? 'Kirim otomatis ke seluruh anggota via gateway server'
                       : 'Aktifkan WHATSAPP_API_TOKEN di environment server untuk kirim massal otomatis, atau gunakan tombol Bagikan ke Grup WA'
                   }
-                  className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#004A8F] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#003870] disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#1E5B2A] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#154620] disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   <Send className="h-4 w-4" />
                   {isBroadcasting
@@ -695,7 +695,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                         href={waHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="no-print mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-2 text-xs font-semibold text-[#004A8F] active:bg-blue-100"
+                        className="no-print mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-[#EAF4EC] px-3 py-2 text-xs font-semibold text-[#1E5B2A] active:bg-emerald-100"
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
                         Kirim Ringkasan ke WhatsApp
@@ -770,7 +770,7 @@ export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                               href={waHref}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-1.5 text-xs font-semibold text-[#004A8F] transition-colors hover:bg-blue-100"
+                              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-200 bg-[#EAF4EC] px-3 py-1.5 text-xs font-semibold text-[#1E5B2A] transition-colors hover:bg-emerald-100"
                             >
                               <MessageCircle className="h-3.5 w-3.5" />
                               Kirim WA

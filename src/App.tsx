@@ -1895,40 +1895,31 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F2F6FA] text-slate-900">
-      {/* Sidebar Desktop - Indonesian Banking Cobalt */}
-      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-[#002247] bg-gradient-to-b from-[#002855] via-[#003B7A] to-[#004A8F] text-blue-50 lg:flex">
+    <div className="flex min-h-screen bg-[#F4F6F3] text-slate-900">
+      {/* Sidebar Desktop - KSP SENTRA Forest Green */}
+      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-[#0D3015] bg-gradient-to-b from-[#103D1B] via-[#1B5727] to-[#1E5B2A] text-emerald-50 lg:flex">
         <div className="border-b border-white/12 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 text-amber-300 shadow-xs">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-4.5 w-4.5"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 10h18M4 10V7l8-4 8 4v3M5 10v8m4-8v8m6-8v8m4-8v8M3 18h18"
-                />
-              </svg>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-amber-300/50 bg-[#F7F5EE] p-0.5 shadow-xs">
+              <img
+                src="/assets/aistudio/image_1d167c98.png"
+                alt="Logo KSP SENTRA"
+                className="h-full w-full rounded-lg object-cover"
+              />
             </div>
             <div className="min-w-0">
               <p className="font-editorial truncate text-lg font-bold tracking-tight text-white">
-                Sentra Kas
+                KSP SENTRA
               </p>
-              <p className="truncate text-[11px] font-medium text-blue-200/80">
-                e-Treasury · {dataset.spreadsheetTitle}
+              <p className="truncate text-[11px] font-medium text-emerald-100/85">
+                Bersama Membangun Umat
               </p>
             </div>
           </div>
         </div>
 
         <div className="border-b border-white/12 bg-white/5 px-5 py-4">
-          <p className="text-[10px] font-semibold tracking-[0.14em] text-blue-200/75 uppercase">
+          <p className="text-[10px] font-semibold tracking-[0.14em] text-emerald-100/75 uppercase">
             Nasabah / Pengurus Aktif
           </p>
           <p className="mt-1 truncate text-sm font-bold text-white">{sessionUser.nama}</p>
@@ -1946,10 +1937,10 @@ export default function App() {
                 className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                   isActive
                     ? 'border border-white/18 bg-white/15 text-white shadow-xs'
-                    : 'border border-transparent text-blue-100/80 hover:bg-white/8 hover:text-white'
+                    : 'border border-transparent text-emerald-100/80 hover:bg-white/8 hover:text-white'
                 }`}
               >
-                <span className={isActive ? 'text-amber-300' : 'text-blue-200/80'}>
+                <span className={isActive ? 'text-amber-300' : 'text-emerald-200/80'}>
                   {item.icon}
                 </span>
                 <span className="truncate">{item.label}</span>
@@ -1971,12 +1962,12 @@ export default function App() {
           <button
             type="button"
             onClick={clearSavedAppSession}
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-blue-100/90 transition-colors hover:bg-white/10 hover:text-white"
+            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100/90 transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-3.5 w-3.5" />
             Keluar Akun
           </button>
-          <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-blue-200/65">
+          <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-emerald-100/65">
             <Lock className="h-3 w-3" />
             Sinkronisasi Terenkripsi
           </p>
@@ -1991,19 +1982,19 @@ export default function App() {
             onClick={() => setMobileMenuOpen(false)}
           />
           <div className="relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl">
-            <div className="bg-gradient-to-r from-[#002855] via-[#003B7A] to-[#004A8F] px-5 pt-3 pb-4 text-white">
+            <div className="bg-gradient-to-r from-[#103D1B] via-[#1B5727] to-[#287336] px-5 pt-3 pb-4 text-white">
               <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/30" />
               <div className="flex items-center justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-white">{sessionUser.nama}</p>
                   <p className="text-[11px] font-medium text-amber-300">
-                    {sessionUser.role} · Sentra Kas
+                    {sessionUser.role} · KSP SENTRA
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-xl bg-white/10 p-1.5 text-blue-100 hover:bg-white/20"
+                  className="rounded-xl bg-white/10 p-1.5 text-emerald-100 hover:bg-white/20"
                   aria-label="Tutup menu"
                 >
                   <X className="h-5 w-5" />
@@ -2028,15 +2019,15 @@ export default function App() {
                       }}
                       className={`flex items-center gap-2.5 rounded-2xl border p-3 text-left text-xs font-semibold transition-colors ${
                         isActive
-                          ? 'border-[#004A8F]/30 bg-[#EBF3FC] text-[#004A8F]'
-                          : 'border-slate-200 bg-[#F8FAFD] text-slate-700 active:bg-slate-100'
+                          ? 'border-[#1E5B2A]/30 bg-[#EAF4EC] text-[#1E5B2A]'
+                          : 'border-slate-200 bg-[#F8FAF8] text-slate-700 active:bg-slate-100'
                       }`}
                     >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
                           isActive
-                            ? 'bg-[#004A8F] text-white'
-                            : 'bg-white text-[#004A8F] shadow-2xs'
+                            ? 'bg-[#1E5B2A] text-white'
+                            : 'bg-white text-[#1E5B2A] shadow-2xs'
                         }`}
                       >
                         {item.icon}
@@ -2054,7 +2045,7 @@ export default function App() {
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 active:bg-slate-50"
                 >
-                  <ExternalLink className="h-3.5 w-3.5 text-[#004A8F]" />
+                  <ExternalLink className="h-3.5 w-3.5 text-[#1E5B2A]" />
                   Spreadsheet
                 </a>
                 <button
@@ -2076,30 +2067,21 @@ export default function App() {
 
       {/* Main Content */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Native Cobalt Mobile App Header */}
-        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-[#002855] via-[#003E80] to-[#00529C] px-4 py-3 text-white shadow-sm lg:hidden">
+        {/* Native Forest Green Mobile App Header */}
+        <header className="no-print sticky top-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-[#103D1B] via-[#1B5727] to-[#287336] px-4 py-3 text-white shadow-sm lg:hidden">
           <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 text-amber-300">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-4.5 w-4.5"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 10h18M4 10V7l8-4 8 4v3M5 10v8m4-8v8m6-8v8m4-8v8M3 18h18"
-                />
-              </svg>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-amber-300/45 bg-[#F7F5EE] p-0.5">
+              <img
+                src="/assets/aistudio/image_1d167c98.png"
+                alt="Logo KSP SENTRA"
+                className="h-full w-full rounded-lg object-cover"
+              />
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-sm font-bold tracking-tight text-white">
                 {currentNavLabel}
               </h1>
-              <p className="truncate text-[11px] text-blue-100/85">
+              <p className="truncate text-[11px] text-emerald-100/85">
                 {sessionUser.nama} · <span className="text-amber-300">{sessionUser.role}</span>
               </p>
             </div>
@@ -2123,8 +2105,8 @@ export default function App() {
         <header className="no-print sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-7 py-3.5 backdrop-blur-md lg:flex">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex items-center gap-2 truncate">
-              <span className="text-xs font-semibold tracking-wide text-[#00529C] uppercase">
-                Sentra Kas
+              <span className="text-xs font-bold tracking-wide text-[#1E5B2A] uppercase">
+                KSP SENTRA
               </span>
               <span className="text-slate-300">/</span>
               <h1 className="font-editorial truncate text-lg font-bold tracking-tight text-slate-900">
@@ -2138,7 +2120,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setQuickRecordOpen(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[#004A8F] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#003870]"
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[#1E5B2A] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Catat
@@ -2149,10 +2131,10 @@ export default function App() {
               type="button"
               onClick={() => refreshDataset()}
               disabled={isLoadingSheet}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-[#00529C]/40 hover:bg-slate-50"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-[#1E5B2A]/40 hover:bg-slate-50"
             >
               <RefreshCw
-                className={`h-3.5 w-3.5 text-[#004A8F] ${isLoadingSheet ? 'animate-spin' : ''}`}
+                className={`h-3.5 w-3.5 text-[#1E5B2A] ${isLoadingSheet ? 'animate-spin' : ''}`}
               />
               Sinkronkan Sheet
             </button>
@@ -2163,9 +2145,9 @@ export default function App() {
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-4 pb-24 sm:px-5 lg:p-7">
           {activePage === 'dashboard' && adminMetrics && (
             <div className="space-y-6">
-              {/* Primary Rekening Card (myBCA / BRImo style) + 3 KPI Cards */}
+              {/* Primary Rekening Card + 3 KPI Cards */}
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-                <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-[#003063] via-[#004A8F] to-[#0066CC] p-6 text-white shadow-sm lg:col-span-5">
+                <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-[#103D1B] via-[#1B5727] to-[#287336] p-6 text-white shadow-sm lg:col-span-5">
                   <div
                     className="pointer-events-none absolute -top-12 -right-10 h-44 w-44 rounded-full bg-white/6"
                     aria-hidden="true"
@@ -2173,12 +2155,12 @@ export default function App() {
                   <div className="relative">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-[11px] font-bold tracking-[0.14em] text-amber-300 uppercase">
-                        Rekening Kas Kelompok
+                        Rekening Kas KSP SENTRA
                       </p>
                       <button
                         type="button"
                         onClick={() => setHideBalance((prev) => !prev)}
-                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-blue-50 transition-colors hover:bg-white/20"
+                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-50 transition-colors hover:bg-white/20"
                         aria-label={hideBalance ? 'Tampilkan nominal saldo' : 'Sembunyikan nominal saldo'}
                       >
                         {hideBalance ? (
@@ -2195,21 +2177,21 @@ export default function App() {
                       </button>
                     </div>
 
-                    <p className="mt-1.5 font-mono text-[11px] text-blue-200/80">
+                    <p className="mt-1.5 font-mono text-[11px] text-emerald-100/80">
                       Buku Besar ID: {activeSpreadsheetId.slice(0, 12)}···
                     </p>
 
                     <p className="mt-3 font-mono text-3xl font-bold tracking-tight tabular-nums text-white sm:text-4xl">
                       {hideBalance ? 'Rp ••••••••' : rupiah(adminMetrics.saldo)}
                     </p>
-                    <p className="mt-1 text-xs text-blue-100/80">
+                    <p className="mt-1 text-xs text-emerald-100/80">
                       Saldo Kas Bersih Tersedia
                     </p>
                   </div>
 
                   <div className="relative mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-4">
                     <div>
-                      <p className="text-[11px] font-medium text-blue-100/75">
+                      <p className="text-[11px] font-medium text-emerald-100/75">
                         Dana Masuk (Kredit)
                       </p>
                       <p className="mt-1 font-mono text-sm font-bold tabular-nums text-emerald-300 sm:text-base">
@@ -2217,7 +2199,7 @@ export default function App() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-[11px] font-medium text-blue-100/75">
+                      <p className="text-[11px] font-medium text-emerald-100/75">
                         Dana Keluar (Debit)
                       </p>
                       <p className="mt-1 font-mono text-sm font-bold tabular-nums text-amber-300 sm:text-base">
@@ -2231,7 +2213,7 @@ export default function App() {
                   <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:p-5">
                     <div>
                       <p className="text-xs font-semibold text-slate-500">Anggota Aktif</p>
-                      <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
+                      <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-[#1E5B2A]">
                         {adminMetrics.anggotaAktif}
                       </p>
                     </div>
@@ -2252,7 +2234,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setActivePage('pinjaman')}
-                      className="mt-3 border-t border-slate-100 pt-2.5 text-left text-[11px] font-semibold text-[#00529C] hover:underline sm:text-xs"
+                      className="mt-3 border-t border-slate-100 pt-2.5 text-left text-[11px] font-semibold text-[#1E5B2A] hover:underline sm:text-xs"
                     >
                       Tinjau ACC →
                     </button>
@@ -2274,7 +2256,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Menu Cepat Perbankan (BRImo / myBCA style 3-col mobile shortcuts) */}
+              {/* Menu Cepat 3-col mobile shortcuts */}
               <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-6">
                 {[
                   {
@@ -2312,9 +2294,9 @@ export default function App() {
                     key={item.page}
                     type="button"
                     onClick={() => setActivePage(item.page)}
-                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-2 py-3.5 text-center shadow-xs transition-all active:scale-[0.98] hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                    className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-2 py-3.5 text-center shadow-xs transition-all active:scale-[0.98] hover:border-[#1E5B2A]/45 hover:bg-[#F4FAF5]"
                   >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#EBF3FC] text-[#004A8F] transition-colors group-hover:bg-[#004A8F] group-hover:text-white">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#EAF4EC] text-[#1E5B2A] transition-colors group-hover:bg-[#1E5B2A] group-hover:text-white">
                       {item.icon}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-800 sm:text-xs">
@@ -2348,7 +2330,7 @@ export default function App() {
                       </div>
                       <div className="flex items-center justify-between py-2.5">
                         <dt className="text-slate-600">Pinjaman Berjalan</dt>
-                        <dd className="font-mono font-semibold tabular-nums text-[#004A8F]">
+                        <dd className="font-mono font-semibold tabular-nums text-[#1E5B2A]">
                           {adminMetrics.pinjamanStatusCounts.Berjalan}
                         </dd>
                       </div>
@@ -2370,7 +2352,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setActivePage('laporan')}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620]"
                   >
                     <BarChart3 className="h-4 w-4 text-amber-300" />
                     Buka Laporan Bulanan & WA
@@ -2398,7 +2380,7 @@ export default function App() {
                         });
                         const lines = [
                           `*UPDATE SALDO & REKAP ANGGOTA*`,
-                          `_${dataset.spreadsheetTitle || 'Sentra Kas'}_`,
+                          `_${dataset.spreadsheetTitle || 'KSP SENTRA'}_`,
                           `--------------------------------`,
                           `• *Saldo Kas Saat Ini:* *${rupiah(adminMetrics.saldo)}*`,
                           `• *Total Kas Masuk:* ${rupiah(adminMetrics.masuk)}`,
@@ -2442,7 +2424,7 @@ export default function App() {
                     filteredMemberSummaries.map((m) => (
                       <div
                         key={m.idAnggota}
-                        className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                        className="rounded-xl border border-slate-200 bg-[#F8FAF8] p-3.5"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="min-w-0">
@@ -2455,7 +2437,7 @@ export default function App() {
                             className={`shrink-0 rounded-lg px-2.5 py-1 font-mono text-xs font-bold tabular-nums ${
                               m.saldoAnggotaSaatIni < 0
                                 ? 'bg-red-50 text-red-600'
-                                : 'bg-[#EBF3FC] text-[#004A8F]'
+                                : 'bg-[#EAF4EC] text-[#1E5B2A]'
                             }`}
                           >
                             {rupiah(m.saldoAnggotaSaatIni)}
@@ -2504,7 +2486,7 @@ export default function App() {
                         </tr>
                       ) : (
                         filteredMemberSummaries.map((m) => (
-                          <tr key={m.idAnggota} className="hover:bg-[#F8FBFF]">
+                          <tr key={m.idAnggota} className="hover:bg-[#F4FAF5]">
                             <td className="py-3 pr-3 font-mono text-xs text-slate-500">
                               {m.idAnggota}
                             </td>
@@ -2515,7 +2497,7 @@ export default function App() {
                             <td className="py-3 pr-3 text-right font-mono tabular-nums text-amber-600">
                               {rupiah(m.totalSisaPinjaman)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-[#004A8F]">
+                            <td className="py-3 pr-3 text-right font-mono font-bold tabular-nums text-[#1E5B2A]">
                               {rupiah(m.saldoAnggotaSaatIni)}
                             </td>
                             <td className="py-3 pr-3 text-right font-mono tabular-nums text-slate-600">
@@ -2599,15 +2581,15 @@ export default function App() {
           {activePage === 'anggotaSaya' && anggotaMetrics && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#003063] via-[#004A8F] to-[#0066CC] p-6 text-white shadow-sm">
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#103D1B] via-[#1B5727] to-[#287336] p-6 text-white shadow-sm">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[11px] font-bold tracking-[0.14em] text-amber-300 uppercase">
-                      Rekening Anggota
+                      Rekening Anggota KSP SENTRA
                     </p>
                     <button
                       type="button"
                       onClick={() => setHideBalance((prev) => !prev)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold text-blue-50 hover:bg-white/20"
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold text-emerald-50 hover:bg-white/20"
                       aria-label={hideBalance ? 'Tampilkan saldo' : 'Sembunyikan saldo'}
                     >
                       {hideBalance ? (
@@ -2617,11 +2599,11 @@ export default function App() {
                       )}
                     </button>
                   </div>
-                  <p className="mt-1 text-xs text-blue-100/80">Saldo Bersih Anda Saat Ini</p>
+                  <p className="mt-1 text-xs text-emerald-100/80">Saldo Bersih Anda Saat Ini</p>
                   <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-white sm:text-3xl">
                     {hideBalance ? 'Rp ••••••••' : rupiah(anggotaMetrics.saldoAnggotaSaatIni)}
                   </p>
-                  <p className="mt-4 border-t border-white/15 pt-3 text-xs text-blue-100/85">
+                  <p className="mt-4 border-t border-white/15 pt-3 text-xs text-emerald-100/85">
                     Sisa pinjaman aktif:{' '}
                     {hideBalance ? 'Rp ••••••' : rupiah(anggotaMetrics.totalSisaPinjaman)}
                   </p>
@@ -2643,7 +2625,7 @@ export default function App() {
                 <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
                   <div>
                     <p className="text-xs font-semibold text-slate-500">Total Saldo Kelompok</p>
-                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
+                    <p className="mt-2.5 font-mono text-2xl font-bold tabular-nums text-[#1E5B2A]">
                       {hideBalance ? 'Rp ••••••' : rupiah(anggotaMetrics.saldoKelompok)}
                     </p>
                   </div>
@@ -2657,9 +2639,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActivePage('ajukanPinjaman')}
-                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#1E5B2A]/45 hover:bg-[#F4FAF5]"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F] group-hover:bg-[#004A8F] group-hover:text-white">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF4EC] text-[#1E5B2A] group-hover:bg-[#1E5B2A] group-hover:text-white">
                     <CreditCard className="h-5 w-5" />
                   </span>
                   <div>
@@ -2670,9 +2652,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActivePage('laporan')}
-                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#1E5B2A]/45 hover:bg-[#F4FAF5]"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F] group-hover:bg-[#004A8F] group-hover:text-white">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF4EC] text-[#1E5B2A] group-hover:bg-[#1E5B2A] group-hover:text-white">
                     <BarChart3 className="h-5 w-5" />
                   </span>
                   <div>
@@ -2683,9 +2665,9 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setActivePage('pengaturan')}
-                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#00529C]/45 hover:bg-[#F8FBFF]"
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-xs transition-all hover:border-[#1E5B2A]/45 hover:bg-[#F4FAF5]"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F] group-hover:bg-[#004A8F] group-hover:text-white">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF4EC] text-[#1E5B2A] group-hover:bg-[#1E5B2A] group-hover:text-white">
                     <Settings className="h-5 w-5" />
                   </span>
                   <div>
@@ -2710,7 +2692,7 @@ export default function App() {
                     anggotaMetrics.pinjamanSaya.map((p) => (
                       <div
                         key={p.idPinjaman}
-                        className="rounded-xl border border-slate-200 bg-[#F8FAFD] p-3.5"
+                        className="rounded-xl border border-slate-200 bg-[#F8FAF8] p-3.5"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div>
@@ -2719,7 +2701,7 @@ export default function App() {
                               {formatTanggalId(p.tanggal)}
                             </p>
                           </div>
-                          <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#004A8F]">
+                          <span className="rounded-full bg-[#EAF4EC] px-2.5 py-0.5 text-[11px] font-semibold text-[#1E5B2A]">
                             {p.status}
                           </span>
                         </div>
@@ -2732,7 +2714,7 @@ export default function App() {
                           </div>
                           <div className="text-right">
                             <span className="text-[10px] text-slate-500">Sisa</span>
-                            <p className="font-mono font-bold text-[#004A8F]">
+                            <p className="font-mono font-bold text-[#1E5B2A]">
                               {rupiah(p.sisa)}
                             </p>
                           </div>
@@ -2764,7 +2746,7 @@ export default function App() {
                         </tr>
                       ) : (
                         anggotaMetrics.pinjamanSaya.map((p) => (
-                          <tr key={p.idPinjaman} className="hover:bg-[#F8FBFF]">
+                          <tr key={p.idPinjaman} className="hover:bg-[#F4FAF5]">
                             <td className="py-3 pr-3 font-mono text-xs text-slate-600">
                               {p.idPinjaman}
                             </td>
@@ -2777,7 +2759,7 @@ export default function App() {
                             <td className="py-3 pr-3 text-right font-mono tabular-nums text-emerald-700">
                               {rupiah(p.totalDibayar)}
                             </td>
-                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-[#004A8F]">
+                            <td className="py-3 pr-3 text-right font-mono font-semibold tabular-nums text-[#1E5B2A]">
                               {rupiah(p.sisa)}
                             </td>
                             <td className="py-3 text-xs font-semibold text-slate-800">
@@ -2832,9 +2814,9 @@ export default function App() {
                 </div>
 
                 {Number(ajuJumlah) > 0 && Number(ajuTenor) > 0 && (
-                  <div className="flex items-center justify-between rounded-xl border border-[#00529C]/20 bg-[#EBF3FC] px-3.5 py-2.5 text-xs">
+                  <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-[#EAF4EC] px-3.5 py-2.5 text-xs">
                     <span className="font-medium text-slate-700">Estimasi Angsuran/Bulan</span>
-                    <span className="font-mono font-bold tabular-nums text-[#004A8F]">
+                    <span className="font-mono font-bold tabular-nums text-[#1E5B2A]">
                       {rupiah(Number(ajuJumlah) / Number(ajuTenor))}
                     </span>
                   </div>
@@ -2842,7 +2824,7 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                  className="w-full rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620]"
                 >
                   Kirim Pengajuan Pinjaman
                 </button>
@@ -2899,7 +2881,7 @@ export default function App() {
                   </div>
                   <button
                     type="submit"
-                    className="rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                    className="rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620]"
                   >
                     Simpan Perubahan Akun
                   </button>
@@ -2938,7 +2920,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleRequestSetupDatabase}
-                        className="rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
+                        className="rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
                       >
                         Verifikasi & Setup Tab Sheet
                       </button>
@@ -2957,7 +2939,7 @@ export default function App() {
                 <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-12">
                   <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="flex items-start gap-2.5">
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EBF3FC] text-[#004A8F]">
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF4EC] text-[#1E5B2A]">
                         <ShieldCheck className="h-5 w-5" />
                       </span>
                       <div>
@@ -2983,8 +2965,8 @@ export default function App() {
                   </div>
 
                   <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-blue-200/80 bg-[#EBF3FC]/55 p-4 text-xs leading-relaxed text-slate-700">
-                      <p className="font-bold text-[#004A8F]">
+                    <div className="rounded-xl border border-emerald-200/80 bg-[#EAF4EC]/55 p-4 text-xs leading-relaxed text-slate-700">
+                      <p className="font-bold text-[#1E5B2A]">
                         1. Cara Terbaik: Portal Tanpa Login Google (Disarankan)
                       </p>
                       <p className="mt-1.5">
@@ -3043,7 +3025,7 @@ export default function App() {
                         <strong>Pencairan Pinjaman</strong>, atau <strong>Angsuran</strong>.
                       </p>
                     </div>
-                    <span className="rounded-lg border border-slate-200 bg-[#F2F6FA] px-3 py-1.5 text-xs font-semibold text-[#004A8F]">
+                    <span className="rounded-lg border border-emerald-200 bg-[#EAF4EC] px-3 py-1.5 text-xs font-semibold text-[#1E5B2A]">
                       {waGatewayStatus.configured
                         ? `Gateway Server Aktif (${waGatewayStatus.provider.toUpperCase()})`
                         : 'Mode 1-Klik Bagikan ke Grup WA'}
@@ -3062,7 +3044,7 @@ export default function App() {
                               enabled: e.target.checked,
                             }))
                           }
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#004A8F]"
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#1E5B2A]"
                         />
                         <div>
                           <p className="text-sm font-semibold text-slate-900">
@@ -3106,7 +3088,7 @@ export default function App() {
                               autoSendGateway: e.target.checked,
                             }))
                           }
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#004A8F]"
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#1E5B2A]"
                         />
                         <div>
                           <p className="text-sm font-semibold text-slate-900">
@@ -3144,7 +3126,7 @@ export default function App() {
                               image: sampleImg,
                             });
                           }}
-                          className="inline-flex items-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
+                          className="inline-flex items-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
                         >
                           <MessageCircle className="h-4 w-4" />
                           Uji Coba Pesan Grup
@@ -3152,8 +3134,8 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/65 p-4 text-xs leading-relaxed text-slate-700 lg:col-span-5">
-                      <p className="font-bold text-[#004A8F]">Pilihan Cara Kirim ke Grup (Gratis & Otomatis):</p>
+                    <div className="rounded-xl border border-emerald-200 bg-[#EAF4EC]/65 p-4 text-xs leading-relaxed text-slate-700 lg:col-span-5">
+                      <p className="font-bold text-[#1E5B2A]">Pilihan Cara Kirim ke Grup (Gratis & Otomatis):</p>
                       <ul className="mt-2.5 space-y-2.5">
                         <li>
                           <strong>1. Grup WA 1-Klik (100% Gratis):</strong> Biarkan kolom ID Grup kosong. Setiap selesai input Kas Masuk/Keluar, klik <strong>Bagikan ke Grup WA</strong> lalu pilih grup Anda.
@@ -3211,12 +3193,12 @@ export default function App() {
           aria-modal="true"
         >
           <div className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl sm:rounded-2xl sm:pb-0">
-            <div className="flex shrink-0 items-center justify-between bg-gradient-to-r from-[#003063] via-[#004A8F] to-[#0062BD] px-5 py-4 text-white">
+            <div className="flex shrink-0 items-center justify-between bg-gradient-to-r from-[#103D1B] via-[#1B5727] to-[#287336] px-5 py-4 text-white">
               <div className="flex items-center gap-2.5">
                 <MessageCircle className="h-5 w-5 text-amber-300" />
                 <div>
                   <h3 className="text-sm font-bold">{waShareModal.title}</h3>
-                  <p className="text-[11px] text-blue-100">
+                  <p className="text-[11px] text-emerald-100">
                     Siap diteruskan ke grup WhatsApp beserta gambar rincian saldo
                   </p>
                 </div>
@@ -3224,7 +3206,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setWaShareModal(null)}
-                className="rounded-lg p-1 text-blue-100 hover:bg-white/15 hover:text-white"
+                className="rounded-lg p-1 text-emerald-100 hover:bg-white/15 hover:text-white"
                 aria-label="Tutup"
               >
                 <X className="h-4 w-4" />
@@ -3246,7 +3228,7 @@ export default function App() {
                 <div className="mt-3.5 rounded-xl border border-slate-200 bg-[#F8FAFC] p-3">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                      <ImageIcon className="h-3.5 w-3.5 text-[#004A8F]" />
+                      <ImageIcon className="h-3.5 w-3.5 text-[#1E5B2A]" />
                       Gambar Rincian Saldo & Anggota
                     </span>
                     <span className="text-[11px] text-slate-500">Salin & Tempel di WA</span>
@@ -3291,7 +3273,7 @@ export default function App() {
                       {copiedWaImg ? (
                         <Check className="h-3.5 w-3.5 text-emerald-600" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5 text-[#00529C]" />
+                        <Copy className="h-3.5 w-3.5 text-[#1E5B2A]" />
                       )}
                       {copiedWaImg ? 'Gambar Disalin' : 'Salin Gambar'}
                     </button>
@@ -3310,7 +3292,7 @@ export default function App() {
                       }}
                       className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
-                      <Download className="h-3.5 w-3.5 text-[#00529C]" />
+                      <Download className="h-3.5 w-3.5 text-[#1E5B2A]" />
                       Unduh (.png)
                     </button>
 
@@ -3342,7 +3324,7 @@ export default function App() {
                             }
                           }
                         }}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#004A8F] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#003870]"
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#1E5B2A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#154620]"
                       >
                         <Share2 className="h-3.5 w-3.5" />
                         Bagikan Gambar + Teks
@@ -3377,7 +3359,7 @@ export default function App() {
                   {copiedWaMsg ? (
                     <Check className="h-4 w-4 text-emerald-600" />
                   ) : (
-                    <Copy className="h-4 w-4 text-[#00529C]" />
+                    <Copy className="h-4 w-4 text-[#1E5B2A]" />
                   )}
                   {copiedWaMsg ? 'Tersalin' : 'Salin Teks'}
                 </button>
@@ -3410,7 +3392,7 @@ export default function App() {
                           setIsSendingWaGroup(false);
                         }
                       }}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003870] disabled:opacity-60"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#154620] disabled:opacity-60"
                     >
                       <Send className="h-3.5 w-3.5" />
                       {isSendingWaGroup ? 'Mengirim ke Grup...' : 'Kirim Otomatis via Gateway Server'}
@@ -3446,12 +3428,12 @@ export default function App() {
                   type="button"
                   onClick={() => setActivePage(tab.id)}
                   className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
-                    active ? 'text-[#004A8F]' : 'text-slate-500 active:text-slate-900'
+                    active ? 'text-[#1E5B2A]' : 'text-slate-500 active:text-slate-900'
                   }`}
                 >
                   <span
                     className={`flex h-7 w-10 items-center justify-center rounded-full transition-colors ${
-                      active ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                      active ? 'bg-[#EAF4EC] text-[#1E5B2A]' : 'bg-transparent'
                     }`}
                   >
                     {tab.icon}
@@ -3465,10 +3447,10 @@ export default function App() {
             <button
               type="button"
               onClick={() => setQuickRecordOpen(true)}
-              className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-0.5 text-[11px] font-bold text-[#004A8F]"
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-0.5 text-[11px] font-bold text-[#1E5B2A]"
               aria-label="Catat Transaksi Cepat"
             >
-              <span className="-mt-4 flex h-11 w-11 items-center justify-center rounded-2xl border-2 border-white bg-gradient-to-br from-[#00356B] via-[#004A8F] to-[#0066CC] text-white shadow-md shadow-[#004A8F]/25 transition-transform active:scale-95">
+              <span className="-mt-4 flex h-11 w-11 items-center justify-center rounded-2xl border-2 border-white bg-gradient-to-br from-[#103D1B] via-[#1E5B2A] to-[#287336] text-white shadow-md shadow-[#1E5B2A]/25 transition-transform active:scale-95">
                 <Plus className="h-5 w-5" />
               </span>
               <span>Catat</span>
@@ -3479,13 +3461,13 @@ export default function App() {
               onClick={() => setActivePage('laporan')}
               className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
                 activePage === 'laporan'
-                  ? 'text-[#004A8F]'
+                  ? 'text-[#1E5B2A]'
                   : 'text-slate-500 active:text-slate-900'
               }`}
             >
               <span
                 className={`flex h-7 w-10 items-center justify-center rounded-full transition-colors ${
-                  activePage === 'laporan' ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                  activePage === 'laporan' ? 'bg-[#EAF4EC] text-[#1E5B2A]' : 'bg-transparent'
                 }`}
               >
                 <BarChart3 className="h-5 w-5" />
@@ -3500,7 +3482,7 @@ export default function App() {
                 mobileMenuOpen ||
                 ['pinjaman', 'angsuran', 'anggota', 'pengaturan'].includes(activePage) ||
                 (sessionUser.role === 'Administrator' && activePage === 'kasKeluar')
-                  ? 'text-[#004A8F]'
+                  ? 'text-[#1E5B2A]'
                   : 'text-slate-500 active:text-slate-900'
               }`}
             >
@@ -3525,12 +3507,12 @@ export default function App() {
                   type="button"
                   onClick={() => setActivePage(tab.id)}
                   className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
-                    active ? 'text-[#004A8F]' : 'text-slate-500 active:text-slate-900'
+                    active ? 'text-[#1E5B2A]' : 'text-slate-500 active:text-slate-900'
                   }`}
                 >
                   <span
                     className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${
-                      active ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                      active ? 'bg-[#EAF4EC] text-[#1E5B2A]' : 'bg-transparent'
                     }`}
                   >
                     {tab.icon}

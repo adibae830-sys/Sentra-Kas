@@ -52,11 +52,19 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number):
   return clipped + '...';
 }
 
+const KSP_LOGO_SRC = '/assets/aistudio/image_1d167c98.png';
+let cachedKspLogo: HTMLImageElement | null = null;
+
+if (typeof window !== 'undefined') {
+  cachedKspLogo = new Image();
+  cachedKspLogo.src = KSP_LOGO_SRC;
+}
+
 function formatCleanGroupTitle(rawTitle?: string): string {
   const trimmed = String(rawTitle || '').trim();
-  if (!trimmed) return 'Laporan Keuangan Kelompok';
+  if (!trimmed) return 'KSP SENTRA · Keuangan Anggota';
   if (/template/i.test(trimmed) || /^buku_besar/i.test(trimmed)) {
-    return 'Rekapitulasi Keuangan Kelompok';
+    return 'Rekapitulasi KSP SENTRA';
   }
   return trimmed.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -71,42 +79,43 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function drawBankEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
-  // Golden rounded square container
-  drawRoundedRect(ctx, cx, cy, 44, 44, 12);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+function drawKspLogoBadge(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+  const size = 56;
+  ctx.save();
+  drawRoundedRect(ctx, cx, cy, size, size, 14);
+  ctx.fillStyle = '#F7F5EE';
   ctx.fill();
-  ctx.lineWidth = 1.25;
-  ctx.strokeStyle = 'rgba(252, 211, 77, 0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(252, 211, 77, 0.7)';
   ctx.stroke();
 
-  // Minimalist bank pediment + pillars icon
-  ctx.strokeStyle = '#FCD34D';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  drawRoundedRect(ctx, cx + 2, cy + 2, size - 4, size - 4, 12);
+  ctx.clip();
 
-  // Roof triangle
-  ctx.beginPath();
-  ctx.moveTo(cx + 10, cy + 18);
-  ctx.lineTo(cx + 22, cy + 10);
-  ctx.lineTo(cx + 34, cy + 18);
-  ctx.closePath();
-  ctx.stroke();
-
-  // Pillars
-  [14, 22, 30].forEach((px) => {
+  if (cachedKspLogo && cachedKspLogo.complete && cachedKspLogo.naturalWidth > 0) {
+    ctx.drawImage(cachedKspLogo, cx + 2, cy + 2, size - 4, size - 4);
+  } else {
+    // Fallback vector emblem matching KSP SENTRA figures + cradling hands
+    ctx.fillStyle = '#689F38';
     ctx.beginPath();
-    ctx.moveTo(cx + px, cy + 18);
-    ctx.lineTo(cx + px, cy + 31);
-    ctx.stroke();
-  });
+    ctx.arc(cx + 28, cy + 16, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1E5B2A';
+    ctx.beginPath();
+    ctx.arc(cx + 18, cy + 19, 3.2, 0, Math.PI * 2);
+    ctx.arc(cx + 38, cy + 19, 3.2, 0, Math.PI * 2);
+    ctx.fill();
 
-  // Base line
-  ctx.beginPath();
-  ctx.moveTo(cx + 10, cy + 32);
-  ctx.lineTo(cx + 34, cy + 32);
-  ctx.stroke();
+    ctx.strokeStyle = '#D98218';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx + 13, cy + 30);
+    ctx.quadraticCurveTo(cx + 18, cy + 44, cx + 28, cy + 44);
+    ctx.quadraticCurveTo(cx + 38, cy + 44, cx + 43, cy + 30);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 export function dataUrlToBlob(dataUrl: string): Blob {
@@ -175,7 +184,7 @@ export function generateRingkasanSaldoImage(
   if (!ctx) {
     return {
       dataUrl: '',
-      filename: 'ringkasan-saldo-sentra-kas.png',
+      filename: 'ringkasan-saldo-ksp-sentra.png',
       width,
       height,
     };
@@ -183,16 +192,16 @@ export function generateRingkasanSaldoImage(
 
   ctx.scale(scale, scale);
 
-  // Outer soft banking canvas backdrop
+  // Outer soft sage-cream backdrop
   const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
-  bgGrad.addColorStop(0, '#E6EEF8');
-  bgGrad.addColorStop(1, '#F1F5FA');
+  bgGrad.addColorStop(0, '#E9F2EB');
+  bgGrad.addColorStop(1, '#F4F6F3');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, width, height);
 
   // Main elevated white statement sheet
   ctx.save();
-  ctx.shadowColor = 'rgba(10, 36, 99, 0.11)';
+  ctx.shadowColor = 'rgba(16, 61, 27, 0.12)';
   ctx.shadowBlur = 32;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 12;
@@ -204,7 +213,7 @@ export function generateRingkasanSaldoImage(
   // Hairline border around statement sheet
   drawRoundedRect(ctx, cardX, outerPad, cardW, cardH, 26);
   ctx.lineWidth = 1;
-  ctx.strokeStyle = '#DCE5F2';
+  ctx.strokeStyle = '#D7E5DA';
   ctx.stroke();
 
   // Clip hero top inside sheet rounded corners
@@ -212,15 +221,15 @@ export function generateRingkasanSaldoImage(
   drawRoundedRect(ctx, cardX, outerPad, cardW, cardH, 26);
   ctx.clip();
 
-  // Hero Cobalt-Navy Header
+  // Hero KSP SENTRA Forest Green Header
   const heroGrad = ctx.createLinearGradient(cardX, outerPad, cardX + cardW, outerPad + heroH);
-  heroGrad.addColorStop(0, '#071E4A');
-  heroGrad.addColorStop(0.5, '#003B7A');
-  heroGrad.addColorStop(1, '#005EB8');
+  heroGrad.addColorStop(0, '#103D1B');
+  heroGrad.addColorStop(0.5, '#1B5727');
+  heroGrad.addColorStop(1, '#287336');
   ctx.fillStyle = heroGrad;
   ctx.fillRect(cardX, outerPad, cardW, heroH);
 
-  // Subtle decorative banking arcs in header
+  // Subtle decorative arcs in header
   ctx.beginPath();
   ctx.arc(cardX + cardW - 60, outerPad + 20, 175, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
@@ -231,29 +240,29 @@ export function generateRingkasanSaldoImage(
   ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
   ctx.fill();
 
-  // Subtle golden bottom accent stripe under hero
+  // Golden-amber & leaf bottom accent stripe under hero
   const goldLine = ctx.createLinearGradient(cardX, 0, cardX + cardW, 0);
-  goldLine.addColorStop(0, '#F59E0B');
+  goldLine.addColorStop(0, '#D98218');
   goldLine.addColorStop(0.5, '#FCD34D');
-  goldLine.addColorStop(1, '#38BDF8');
+  goldLine.addColorStop(1, '#689F38');
   ctx.fillStyle = goldLine;
   ctx.fillRect(cardX, outerPad + heroH - 4, cardW, 4);
 
   ctx.restore();
 
-  // Hero Brand Emblem & Title
-  drawBankEmblem(ctx, contentX, outerPad + 30);
+  // Hero Authentic KSP SENTRA Logo Badge & Title
+  drawKspLogoBadge(ctx, contentX, outerPad + 24);
 
   ctx.fillStyle = '#FCD34D';
   ctx.font = `700 12.5px ${FONT_SANS}`;
-  ctx.fillText('SENTRA KAS  ·  E-STATEMENT KELOMPOK', contentX + 58, outerPad + 47);
+  ctx.fillText('KSP SENTRA  ·  BERSAMA MEMBANGUN UMAT', contentX + 70, outerPad + 45);
 
   const cleanTitle = formatCleanGroupTitle(dataset.spreadsheetTitle);
   ctx.fillStyle = '#FFFFFF';
   ctx.font = `800 26px ${FONT_SANS}`;
-  ctx.fillText(fitText(ctx, cleanTitle, 520), contentX + 58, outerPad + 76);
+  ctx.fillText(fitText(ctx, cleanTitle, 510), contentX + 70, outerPad + 75);
 
-  ctx.fillStyle = 'rgba(219, 234, 254, 0.9)';
+  ctx.fillStyle = 'rgba(220, 252, 231, 0.9)';
   ctx.font = `500 14.5px ${FONT_SANS}`;
   ctx.fillText(
     options?.subtitle || 'Rincian Saldo Terkini & Posisi Keuangan Anggota',
@@ -281,7 +290,7 @@ export function generateRingkasanSaldoImage(
   ctx.stroke();
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#BFDBFE';
+  ctx.fillStyle = '#A7F3D0';
   ctx.font = `600 11px ${FONT_SANS}`;
   ctx.fillText('POSISI PER TANGGAL', pillX + pillW - 16, pillY + 21);
 
@@ -303,10 +312,10 @@ export function generateRingkasanSaldoImage(
 
   // Balance Overview Panel (Hero Saldo + 3 Metric Columns)
   drawRoundedRect(ctx, contentX, cursorY, contentW, balanceSectionH, 18);
-  ctx.fillStyle = '#F8FAFD';
+  ctx.fillStyle = '#F8FAF8';
   ctx.fill();
   ctx.lineWidth = 1.25;
-  ctx.strokeStyle = '#E2E8F0';
+  ctx.strokeStyle = '#E2E8E2';
   ctx.stroke();
 
   // Left Primary Cash Balance
@@ -318,8 +327,8 @@ export function generateRingkasanSaldoImage(
     contentX + primaryW,
     cursorY + balanceSectionH - 10
   );
-  focalGrad.addColorStop(0, '#072456');
-  focalGrad.addColorStop(1, '#004A8F');
+  focalGrad.addColorStop(0, '#103D1B');
+  focalGrad.addColorStop(1, '#1E5B2A');
   ctx.fillStyle = focalGrad;
   ctx.fill();
 
@@ -331,13 +340,13 @@ export function generateRingkasanSaldoImage(
   ctx.font = `800 32px ${FONT_SANS}`;
   ctx.fillText(fitText(ctx, rupiah(admin.saldo), primaryW - 50), contentX + 30, cursorY + 82);
 
-  // Subtle green status dot
+  // Subtle bright leaf status dot
   ctx.beginPath();
   ctx.arc(contentX + 35, cursorY + 111, 4, 0, Math.PI * 2);
-  ctx.fillStyle = '#34D399';
+  ctx.fillStyle = '#6EE7B7';
   ctx.fill();
 
-  ctx.fillStyle = '#DBEAFE';
+  ctx.fillStyle = '#D1FAE5';
   ctx.font = `500 12.5px ${FONT_SANS}`;
   ctx.fillText('Saldo bersih tersedia di kas', contentX + 46, cursorY + 115);
 
@@ -365,8 +374,8 @@ export function generateRingkasanSaldoImage(
       label: 'PIUTANG PINJAMAN',
       value: rupiah(admin.piutang),
       sub: `${admin.pinjamanStatusCounts.Berjalan} pinjaman berjalan`,
-      color: '#004A8F',
-      dot: '#2563EB',
+      color: '#1E5B2A',
+      dot: '#689F38',
     },
   ];
 
@@ -439,14 +448,14 @@ export function generateRingkasanSaldoImage(
   ctx.font = `600 11.5px ${FONT_SANS}`;
   const fWidth = ctx.measureText(formulaLabel).width + 24;
   drawRoundedRect(ctx, contentX + contentW - fWidth, cursorY + 8, fWidth, 28, 14);
-  ctx.fillStyle = '#EFF6FF';
+  ctx.fillStyle = '#EAF4EC';
   ctx.fill();
-  ctx.strokeStyle = '#BFDBFE';
+  ctx.strokeStyle = '#A7F3D0';
   ctx.lineWidth = 1;
   ctx.stroke();
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#004A8F';
+  ctx.fillStyle = '#1E5B2A';
   ctx.fillText(formulaLabel, contentX + contentW - fWidth / 2, cursorY + 26);
   ctx.textAlign = 'left';
 
@@ -475,11 +484,11 @@ export function generateRingkasanSaldoImage(
   cursorY += tableHeaderH;
 
   const avatarPalette = [
-    { bg: '#DBEAFE', fg: '#1E40AF' },
-    { bg: '#D1FAE5', fg: '#065F46' },
-    { bg: '#E0E7FF', fg: '#3730A3' },
+    { bg: '#DCFCE7', fg: '#166534' },
     { bg: '#FEF3C7', fg: '#92400E' },
-    { bg: '#E0F2FE', fg: '#075985' },
+    { bg: '#D1FAE5', fg: '#065F46' },
+    { bg: '#ECFCCB', fg: '#3F6212' },
+    { bg: '#F3F4F6', fg: '#374151' },
   ];
 
   if (members.length === 0) {
@@ -568,9 +577,9 @@ export function generateRingkasanSaldoImage(
         ctx.fill();
         ctx.fillStyle = '#DC2626';
       } else if (m.saldoAnggotaSaatIni > 0) {
-        ctx.fillStyle = '#EFF6FF';
+        ctx.fillStyle = '#EAF4EC';
         ctx.fill();
-        ctx.fillStyle = '#004A8F';
+        ctx.fillStyle = '#1E5B2A';
       } else {
         ctx.fillStyle = '#F8FAFC';
         ctx.fill();
@@ -593,8 +602,8 @@ export function generateRingkasanSaldoImage(
 
   drawRoundedRect(ctx, contentX, cursorY, contentW, totalBarH, 14);
   const totalGrad = ctx.createLinearGradient(contentX, cursorY, contentX + contentW, cursorY);
-  totalGrad.addColorStop(0, '#071E4A');
-  totalGrad.addColorStop(1, '#003B7A');
+  totalGrad.addColorStop(0, '#103D1B');
+  totalGrad.addColorStop(1, '#1B5727');
   ctx.fillStyle = totalGrad;
   ctx.fill();
 
@@ -623,13 +632,13 @@ export function generateRingkasanSaldoImage(
 
   ctx.beginPath();
   ctx.arc(contentX + 5, cursorY + 42, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#10B981';
+  ctx.fillStyle = '#1E5B2A';
   ctx.fill();
 
   ctx.fillStyle = '#64748B';
   ctx.font = `600 12px ${FONT_SANS}`;
   ctx.fillText(
-    'Sentra Kas  ·  Transparansi Keuangan Kelompok Terintegrasi',
+    'KSP SENTRA  ·  Bersama Membangun Umat · Transparansi Keuangan',
     contentX + 16,
     cursorY + 46
   );
@@ -647,7 +656,7 @@ export function generateRingkasanSaldoImage(
   const dateTag = new Date().toISOString().slice(0, 10);
   return {
     dataUrl: canvas.toDataURL('image/png'),
-    filename: `ringkasan-saldo-sentra-kas-${dateTag}.png`,
+    filename: `ringkasan-saldo-ksp-sentra-${dateTag}.png`,
     width,
     height,
   };

@@ -92,7 +92,7 @@ export const PWAInstallButton: React.FC = () => {
       <button
         type="button"
         onClick={install}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-xl bg-[#004A8F] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-xl bg-[#1E5B2A] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
       >
         <Download className="h-3.5 w-3.5" />
         Install Aplikasi
@@ -107,7 +107,7 @@ export const PWAInstallButton: React.FC = () => {
         onClick={() => setShowGuide(true)}
         className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
       >
-        <Smartphone className="h-3.5 w-3.5 text-[#00529C]" />
+        <Smartphone className="h-3.5 w-3.5 text-[#1E5B2A]" />
         Pasang di HP / Desktop
       </button>
 
@@ -120,7 +120,7 @@ export const PWAInstallButton: React.FC = () => {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-base font-bold text-slate-900">
-                Pasang Sentra Kas sebagai Aplikasi
+                Pasang KSP SENTRA sebagai Aplikasi
               </h3>
               <button
                 type="button"
@@ -143,7 +143,7 @@ export const PWAInstallButton: React.FC = () => {
                     <strong className="text-slate-900">Tambahkan ke Layar Utama (Add to Home Screen)</strong>.
                   </li>
                   <li>
-                    Ketuk <strong className="text-slate-900">Tambah</strong> — aplikasi Sentra Kas siap dibuka langsung dari layar utama.
+                    Ketuk <strong className="text-slate-900">Tambah</strong> — aplikasi KSP SENTRA siap dibuka langsung dari layar utama.
                   </li>
                 </ol>
               </div>
@@ -168,7 +168,7 @@ export const PWAInstallButton: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowGuide(false)}
-                className="rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#003870]"
+                className="rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
               >
                 Mengerti
               </button>

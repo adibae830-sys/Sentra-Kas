@@ -32,7 +32,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
               className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
                 isDanger
                   ? 'border-red-200 bg-red-50 text-red-700'
-                  : 'border-blue-200 bg-[#EBF3FC] text-[#004A8F]'
+                  : 'border-emerald-200 bg-[#EAF4EC] text-[#1E5B2A]'
               }`}
             >
               {isDanger ? (
@@ -69,7 +69,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             <ul className="space-y-1.5 text-xs text-slate-700">
               {state.details.map((line, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#00529C]" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#1E5B2A]" />
                   <span>{line}</span>
                 </li>
               ))}
@@ -93,7 +93,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             className={`flex-1 sm:flex-initial whitespace-nowrap shrink-0 rounded-xl px-4 py-2.5 sm:py-2 text-sm font-semibold text-white transition-colors disabled:opacity-60 ${
               isDanger
                 ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-[#004A8F] hover:bg-[#003870]'
+                : 'bg-[#1E5B2A] hover:bg-[#154620]'
             }`}
           >
             {isSubmitting ? 'Memproses...' : state.confirmLabel}

@@ -14,7 +14,7 @@
   body {
     font-family: var(--font-sans);
     color: #0f172a;
-    background-color: #f2f6fa;
+    background-color: #f4f6f3;
     overscroll-behavior-y: contain;
   }
   @media (max-width: 639px) {
@@ -40,8 +40,8 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  border-color: #00529c;
-  box-shadow: 0 0 0 3px rgba(0, 82, 156, 0.14);
+  border-color: #1e5b2a;
+  box-shadow: 0 0 0 3px rgba(30, 91, 42, 0.14);
 }
 
 /* Official Google Sign-In button styling */
@@ -75,12 +75,12 @@ textarea:focus-visible {
 
 .gsi-material-button:hover:not(:disabled) {
   background-color: #f8fafc;
-  border-color: #00529c;
-  box-shadow: 0 2px 6px rgba(0, 61, 130, 0.1);
+  border-color: #1e5b2a;
+  box-shadow: 0 2px 6px rgba(30, 91, 42, 0.1);
 }
 
 .gsi-material-button:focus-visible {
-  outline: 2px solid #00529c;
+  outline: 2px solid #1e5b2a;
   outline-offset: 2px;
 }
 

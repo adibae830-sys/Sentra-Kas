@@ -14,12 +14,12 @@ export default defineConfig(() => {
         includeAssets: ['icon.svg', 'apple-touch-icon.png'],
         manifest: {
           id: '/',
-          name: 'Sentra Kas — Keuangan Anggota',
-          short_name: 'Sentra Kas',
+          name: 'KSP SENTRA — Bersama Membangun Umat',
+          short_name: 'KSP SENTRA',
           description:
-            'Aplikasi manajemen kas kelompok, simpanan, pinjaman, laporan bulanan otomatis, dan notifikasi WhatsApp akhir bulan.',
-          theme_color: '#047857',
-          background_color: '#f8fafc',
+            'Portal keuangan KSP SENTRA — Bersama Membangun Umat. Manajemen simpanan, pinjaman, laporan bulanan otomatis, dan notifikasi WhatsApp.',
+          theme_color: '#1E5B2A',
+          background_color: '#F7F5EE',
           display: 'standalone',
           start_url: '/',
           scope: '/',

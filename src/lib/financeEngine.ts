@@ -362,7 +362,7 @@ export function buildWhatsAppMonthlyMessage(
     `*Total Piutang Pinjaman Berjalan:* ${rupiah(report.totalPiutangBerjalan)}`,
     personalSection,
     '',
-    `_Laporan ini dibuat otomatis oleh Sistem Keuangan Sentra Kas._`,
+    `_Laporan ini dibuat otomatis oleh Sistem Keuangan KSP SENTRA._`,
   ]
     .filter((line) => line !== undefined)
     .join('\n');
@@ -386,7 +386,7 @@ export function buildWhatsAppMutasiGroupMessage(params: MutasiGroupAlertParams):
 
   const lines = [
     `*NOTIFIKASI ${label}*`,
-    params.namaKelompok ? `_${params.namaKelompok}_` : '_Sentra Kas · Info Mutasi Rekening_',
+    params.namaKelompok ? `_${params.namaKelompok}_` : '_KSP SENTRA · Bersama Membangun Umat_',
     `--------------------------------`,
     `• *Tanggal:* ${formatTanggalId(params.tanggal)}`,
     `• *Kategori:* ${params.jenis}`,
@@ -397,7 +397,7 @@ export function buildWhatsAppMutasiGroupMessage(params: MutasiGroupAlertParams):
     `*Saldo Kas Terkini:* *${rupiah(params.saldoSetelahMutasi)}*`,
     ...(params.petugas ? [`_Dicatat oleh: ${params.petugas}_`] : []),
     '',
-    `_Notifikasi mutasi otomatis Sentra Kas._`,
+    `_Notifikasi mutasi otomatis KSP SENTRA._`,
   ];
 
   return lines.join('\n');

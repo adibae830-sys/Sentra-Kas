@@ -116,9 +116,9 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
               </div>
 
               {estimasiAngsuran > 0 && (
-                <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs">
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-[#EAF4EC]/70 px-3.5 py-2.5 text-xs">
                   <span className="text-slate-600">Estimasi Angsuran/Bulan</span>
-                  <span className="font-mono font-bold tabular-nums text-[#004A8F]">
+                  <span className="font-mono font-bold tabular-nums text-[#1E5B2A]">
                     {rupiah(estimasiAngsuran)}
                   </span>
                 </div>
@@ -126,7 +126,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                className="w-full rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620]"
               >
                 Simpan & Cairkan Pinjaman
               </button>
@@ -166,7 +166,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                           {formatTanggalId(p.tanggal)} · Tenor {p.tenor} bln
                         </p>
                       </div>
-                      <p className="font-mono text-sm font-bold tabular-nums text-[#004A8F]">
+                      <p className="font-mono text-sm font-bold tabular-nums text-[#1E5B2A]">
                         {rupiah(p.jumlah)}
                       </p>
                     </div>
@@ -175,7 +175,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                         <button
                           type="button"
                           onClick={() => onAccPinjaman(p)}
-                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#004A8F] px-3 py-2 text-xs font-semibold text-white active:bg-[#003870]"
+                          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#1E5B2A] px-3 py-2 text-xs font-semibold text-white active:bg-[#154620]"
                         >
                           <CheckCircle className="h-3.5 w-3.5" />
                           ACC Pinjaman
@@ -242,7 +242,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onAccPinjaman(p)}
-                                className="inline-flex items-center gap-1 rounded-xl bg-[#004A8F] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#003870]"
+                                className="inline-flex items-center gap-1 rounded-xl bg-[#1E5B2A] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[#154620]"
                               >
                                 <CheckCircle className="h-3.5 w-3.5" />
                                 ACC
@@ -301,7 +301,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                       p.status === 'Lunas'
                         ? 'bg-emerald-50 text-emerald-700'
                         : p.status === 'Berjalan'
-                        ? 'bg-blue-50 text-[#00529C]'
+                        ? 'bg-[#EAF4EC] text-[#1E5B2A]'
                         : p.status === 'Ditolak'
                         ? 'bg-red-50 text-red-600'
                         : 'bg-amber-50 text-amber-700'
@@ -328,7 +328,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                     onClick={() => setEditingLoan(p)}
                     className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 active:bg-slate-100"
                   >
-                    <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                    <Pencil className="h-3.5 w-3.5 text-[#1E5B2A]" />
                     Edit
                   </button>
                   <button
@@ -396,7 +396,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                           p.status === 'Lunas'
                             ? 'text-emerald-700'
                             : p.status === 'Berjalan'
-                            ? 'text-[#00529C]'
+                            ? 'text-[#1E5B2A]'
                             : p.status === 'Ditolak'
                             ? 'text-red-600'
                             : 'text-amber-600'
@@ -412,7 +412,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                           onClick={() => setEditingLoan(p)}
                           className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                          <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                          <Pencil className="h-3.5 w-3.5 text-[#1E5B2A]" />
                           Edit
                         </button>
                         <button
@@ -534,10 +534,10 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                   />
                 </div>
               </div>
-              <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs">
+              <div className="rounded-xl border border-emerald-200 bg-[#EAF4EC]/70 px-3.5 py-2.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-600">Angsuran/Bulan</span>
-                  <span className="font-mono font-bold text-[#004A8F]">
+                  <span className="font-mono font-bold text-[#1E5B2A]">
                     {rupiah(editingLoan.angsuranPerBulan)}
                   </span>
                 </div>
@@ -565,7 +565,7 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
                   setEditingLoan(null);
                   onUpdatePinjaman(target);
                 }}
-                className="rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-50"
+                className="rounded-xl bg-[#1E5B2A] px-4 py-2 text-sm font-semibold text-white hover:bg-[#154620] disabled:opacity-50"
               >
                 Simpan Perubahan
               </button>
@@ -677,7 +677,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
               </div>
 
               {selectedLoan && (
-                <div className="grid grid-cols-2 gap-3 rounded-xl border border-blue-200 bg-[#EBF3FC]/70 p-3 text-xs">
+                <div className="grid grid-cols-2 gap-3 rounded-xl border border-emerald-200 bg-[#EAF4EC]/70 p-3 text-xs">
                   <div>
                     <span className="text-slate-500">Anggota</span>
                     <p className="font-bold text-slate-900">
@@ -723,7 +723,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                className="w-full rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620]"
               >
                 Proses Pembayaran Angsuran
               </button>
@@ -780,7 +780,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-2 text-xs font-semibold text-[#004A8F] active:bg-blue-100"
+                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-[#EAF4EC] px-3 py-2 text-xs font-semibold text-[#1E5B2A] active:bg-emerald-100"
                           >
                             <MessageCircle className="h-3.5 w-3.5" />
                             Tagih via WhatsApp
@@ -841,7 +841,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                                 href={waUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-blue-200 bg-[#EBF3FC] px-3 py-1.5 text-xs font-semibold text-[#004A8F] hover:bg-blue-100"
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-emerald-200 bg-[#EAF4EC] px-3 py-1.5 text-xs font-semibold text-[#1E5B2A] hover:bg-emerald-100"
                               >
                                 <MessageCircle className="h-3.5 w-3.5" />
                                 Tagih WA
@@ -901,7 +901,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                     <button
                       type="button"
                       onClick={() => onShowKwitansi(ang)}
-                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-[#004A8F] active:bg-[#EBF3FC]"
+                      className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-[#1E5B2A] active:bg-[#EAF4EC]"
                     >
                       <Receipt className="h-3.5 w-3.5" />
                       e-Resi
@@ -911,7 +911,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                       onClick={() => setEditingAngsuran(ang)}
                       className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 active:bg-slate-100"
                     >
-                      <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                      <Pencil className="h-3.5 w-3.5 text-[#1E5B2A]" />
                       Edit
                     </button>
                     <button
@@ -977,7 +977,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                           <button
                             type="button"
                             onClick={() => onShowKwitansi(ang)}
-                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-[#004A8F] hover:bg-[#EBF3FC]"
+                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1 text-xs font-semibold text-[#1E5B2A] hover:bg-[#EAF4EC]"
                           >
                             <Receipt className="h-3.5 w-3.5" />
                             e-Resi
@@ -988,7 +988,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                             className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                             title="Edit nominal angsuran"
                           >
-                            <Pencil className="h-3.5 w-3.5 text-[#00529C]" />
+                            <Pencil className="h-3.5 w-3.5 text-[#1E5B2A]" />
                             Edit
                           </button>
                           <button
@@ -1030,7 +1030,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
               </button>
             </div>
             <div className="space-y-3">
-              <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs text-slate-700">
+              <div className="rounded-xl border border-emerald-200 bg-[#EAF4EC]/70 px-3.5 py-2.5 text-xs text-slate-700">
                 Pinjaman: <span className="font-mono font-bold">{editingAngsuran.idPinjaman}</span> ·
                 Sisa pinjaman di sheet Pinjaman akan otomatis dihitung ulang setelah disimpan.
               </div>
@@ -1099,7 +1099,7 @@ export const AngsuranAndTunggakanView: React.FC<AngsuranAndTunggakanViewProps> =
                   setEditingAngsuran(null);
                   onUpdateAngsuran(target);
                 }}
-                className="rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870] disabled:opacity-50"
+                className="rounded-xl bg-[#1E5B2A] px-4 py-2 text-sm font-semibold text-white hover:bg-[#154620] disabled:opacity-50"
               >
                 Simpan Perubahan
               </button>

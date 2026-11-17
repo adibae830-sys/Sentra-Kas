@@ -202,13 +202,13 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
       id: 'angsuran',
       label: 'Angsuran',
       icon: <FileSpreadsheet className="h-3.5 w-3.5" />,
-      activeClass: 'bg-[#004A8F] text-white shadow-xs',
+      activeClass: 'bg-[#1E5B2A] text-white shadow-xs',
     },
     {
       id: 'pinjaman',
       label: 'Pinjaman',
       icon: <CreditCard className="h-3.5 w-3.5" />,
-      activeClass: 'bg-[#004A8F] text-white shadow-xs',
+      activeClass: 'bg-[#1E5B2A] text-white shadow-xs',
     },
   ];
 
@@ -221,22 +221,22 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
     >
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
       <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl sm:rounded-2xl sm:pb-0">
-        {/* Header Cobalt Banking */}
-        <div className="shrink-0 bg-gradient-to-r from-[#002855] via-[#003E80] to-[#00529C] px-5 pt-3 pb-4 text-white">
+        {/* Header KSP SENTRA Forest Green */}
+        <div className="shrink-0 bg-gradient-to-r from-[#103D1B] via-[#1B5727] to-[#287336] px-5 pt-3 pb-4 text-white">
           <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-white/30 sm:hidden" />
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 id="quick-record-title" className="text-base font-bold text-white">
                 Catat Transaksi Cepat
               </h3>
-              <p className="text-[11px] text-blue-100/85">
+              <p className="text-[11px] text-emerald-100/90">
                 Langsung simpan pemasukan, pengeluaran, angsuran, atau pinjaman
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-blue-100 hover:bg-white/20 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-emerald-100 hover:bg-white/20 hover:text-white"
               aria-label="Tutup form catat cepat"
             >
               <X className="h-4 w-4" />
@@ -447,7 +447,7 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
                   </div>
 
                   {selectedLoan && (
-                    <div className="grid grid-cols-2 gap-3 rounded-xl border border-blue-200 bg-[#EBF3FC]/70 p-3 text-xs">
+                    <div className="grid grid-cols-2 gap-3 rounded-xl border border-emerald-200 bg-[#EAF4EC]/70 p-3 text-xs">
                       <div>
                         <span className="text-slate-500">Anggota</span>
                         <p className="font-bold text-slate-900">
@@ -505,7 +505,7 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
                 <button
                   type="submit"
                   disabled={!selectedLoan || Number(angJumlah) <= 0}
-                  className="min-h-[44px] flex-1 whitespace-nowrap rounded-xl bg-[#004A8F] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870] disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="min-h-[44px] flex-1 whitespace-nowrap rounded-xl bg-[#1E5B2A] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620] disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   Proses Angsuran
                 </button>
@@ -564,9 +564,9 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
               </div>
 
               {estimasiAngsuran > 0 && (
-                <div className="flex items-center justify-between rounded-xl border border-blue-200 bg-[#EBF3FC]/70 px-3.5 py-2.5 text-xs">
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-[#EAF4EC]/70 px-3.5 py-2.5 text-xs">
                   <span className="text-slate-600">Estimasi Angsuran/Bulan</span>
-                  <span className="font-mono font-bold tabular-nums text-[#004A8F]">
+                  <span className="font-mono font-bold tabular-nums text-[#1E5B2A]">
                     {rupiah(estimasiAngsuran)}
                   </span>
                 </div>
@@ -582,7 +582,7 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="min-h-[44px] flex-1 whitespace-nowrap rounded-xl bg-[#004A8F] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                  className="min-h-[44px] flex-1 whitespace-nowrap rounded-xl bg-[#1E5B2A] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620]"
                 >
                   Simpan & Cairkan
                 </button>

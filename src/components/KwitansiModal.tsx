@@ -41,12 +41,19 @@ export const KwitansiModal: React.FC<KwitansiModalProps> = ({
 
         {/* Authentic e-Banking Receipt Card */}
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="bg-gradient-to-r from-[#00356B] via-[#004E98] to-[#0066CC] px-5 py-4 text-white">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold tracking-wider uppercase text-blue-100">
-                Sentra Kas · e-Resi
-              </span>
-              <span className="font-mono text-[11px] text-blue-100">
+          <div className="bg-gradient-to-r from-[#103D1B] via-[#1B5727] to-[#287336] px-5 py-4 text-white">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <img
+                  src="/assets/aistudio/image_1d167c98.png"
+                  alt="Logo KSP SENTRA"
+                  className="h-7 w-7 rounded-lg bg-[#F7F5EE] p-0.5 object-contain"
+                />
+                <span className="text-xs font-bold tracking-wider uppercase text-amber-300">
+                  KSP SENTRA · e-Resi
+                </span>
+              </div>
+              <span className="font-mono text-[11px] text-emerald-100">
                 {angsuran.idAngsuran}
               </span>
             </div>
@@ -54,7 +61,7 @@ export const KwitansiModal: React.FC<KwitansiModalProps> = ({
               <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-300" />
               <div>
                 <p className="text-sm font-bold text-white">Pembayaran Berhasil</p>
-                <p className="text-[11px] text-blue-100">
+                <p className="text-[11px] text-emerald-100">
                   {formatTanggalId(angsuran.tanggal)}
                 </p>
               </div>
@@ -62,11 +69,11 @@ export const KwitansiModal: React.FC<KwitansiModalProps> = ({
           </div>
 
           <div className="space-y-4 p-5">
-            <div className="rounded-xl bg-[#F2F6FA] px-4 py-3 text-center">
+            <div className="rounded-xl bg-[#F4F6F3] px-4 py-3 text-center">
               <p className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                 Nominal Dibayar
               </p>
-              <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-[#004A8F]">
+              <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-[#1E5B2A]">
                 {rupiah(angsuran.jumlah)}
               </p>
             </div>
@@ -119,7 +126,7 @@ export const KwitansiModal: React.FC<KwitansiModalProps> = ({
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-2 whitespace-nowrap shrink-0 rounded-xl bg-[#004A8F] px-4 py-2 text-xs font-semibold text-white hover:bg-[#003870]"
+            className="inline-flex items-center gap-2 whitespace-nowrap shrink-0 rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white hover:bg-[#154620]"
           >
             <Printer className="h-3.5 w-3.5" />
             Cetak / Simpan Resi PDF

@@ -58,7 +58,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
 
         <div className="flex items-center gap-5 text-xs font-semibold text-slate-600">
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-xs bg-[#00529C]" />
+            <span className="h-2.5 w-2.5 rounded-xs bg-[#1E5B2A]" />
             <span>Dana Masuk</span>
           </div>
           <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                   width={barWidth}
                   height={Math.max(masukHeight, point.masuk > 0 ? 3 : 0)}
                   rx="3"
-                  fill={isHovered ? '#003B73' : '#00529C'}
+                  fill={isHovered ? '#154620' : '#1E5B2A'}
                 />
 
                 <rect
@@ -163,7 +163,7 @@ export const CashflowChart: React.FC<CashflowChartProps> = ({ series }) => {
                 Periode {activePoint.label}
               </span>
               <div className="flex items-center gap-5 font-mono tabular-nums">
-                <span className="font-semibold text-[#00529C]">
+                <span className="font-semibold text-[#1E5B2A]">
                   Masuk: {rupiah(activePoint.masuk)}
                 </span>
                 <span className="font-semibold text-amber-600">
