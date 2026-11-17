@@ -2094,9 +2094,20 @@ export default function App() {
               onClick={() => refreshDataset()}
               disabled={isLoadingSheet}
               aria-label="Sinkronkan Sheet"
+              title="Sinkronkan Sheet"
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white active:bg-white/20"
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingSheet ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              type="button"
+              onClick={clearSavedAppSession}
+              aria-label="Keluar Akun"
+              title="Keluar Akun"
+              className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/20 active:bg-white/25"
+            >
+              <LogOut className="h-4 w-4 text-amber-300" />
+              <span className="hidden sm:inline">Keluar</span>
             </button>
           </div>
         </header>
@@ -2834,6 +2845,31 @@ export default function App() {
 
           {activePage === 'pengaturan' && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6 lg:col-span-12">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold tracking-wider text-[#1E5B2A] uppercase">
+                    Sesi Login Aktif
+                  </p>
+                  <p className="mt-0.5 truncate text-base font-bold text-slate-900">
+                    {sessionUser.nama}{' '}
+                    <span className="ml-1.5 inline-flex rounded-full bg-[#EAF4EC] px-2.5 py-0.5 text-xs font-semibold text-[#1E5B2A]">
+                      {sessionUser.role}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Username: <span className="font-mono text-slate-700">{sessionUser.username}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearSavedAppSession}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 active:bg-red-200"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Keluar Akun (Logout)
+                </button>
+              </div>
+
               <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
                 <h3 className="font-editorial text-lg font-bold text-slate-900">
                   Ubah Username & Password Akun
