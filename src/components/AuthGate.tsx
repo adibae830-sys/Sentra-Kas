@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import {
   ArrowRight,
   CheckCircle2,
-  Database,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   Lock,
   LogOut,
   RefreshCw,
-  ShieldCheck,
   UserPlus,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
@@ -68,6 +68,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   loginError,
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [showSheetSettings, setShowSheetSettings] = useState(false);
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -103,504 +105,406 @@ export const AuthGate: React.FC<AuthGateProps> = ({
   const quickUsers: AppUser[] = dataset?.users.filter((u) => u.status === 'Aktif') || [];
 
   return (
-    <div className="min-h-screen bg-[#F2F6FA] lg:grid lg:grid-cols-12">
-      {/* Left Banking Cobalt Trust Panel (Compact App Header on Mobile) */}
-      <aside className="relative flex flex-col justify-between overflow-hidden rounded-b-3xl bg-gradient-to-br from-[#002855] via-[#003F88] to-[#0059B3] px-5 py-6 text-blue-50 shadow-md lg:col-span-5 lg:rounded-none lg:px-12 lg:py-12 lg:shadow-none">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-28 -right-28 h-96 w-96 rounded-full border border-white/10 bg-white/[0.03]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none hidden lg:block absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-white/10 bg-white/[0.03]"
-        />
-
-        <div className="relative">
-          {/* Brand Emblem */}
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F2F6FA] px-4 py-6 sm:px-6">
+      <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-xl shadow-slate-900/5">
+        {/* Compact Cobalt Banking Header */}
+        <div className="relative bg-gradient-to-br from-[#002855] via-[#003F88] to-[#0059B3] px-6 py-5 text-white">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10 backdrop-blur-xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-white/10">
                 <svg
                   viewBox="0 0 24 24"
                   className="h-5 w-5 text-amber-300"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="1.8"
+                  aria-hidden="true"
                 >
                   <path d="M3 20h18M5 20V10m14 10V10M3 10l9-6 9 6M9 20v-6h6v6" />
                 </svg>
               </div>
               <div>
-                <span className="text-lg font-extrabold tracking-tight text-white lg:text-xl">
+                <h1 className="text-lg font-extrabold tracking-tight text-white">
                   Sentra Kas
-                </span>
-                <p className="text-[10.5px] font-medium tracking-wider text-blue-200 uppercase lg:text-[11px]">
-                  e-Treasury & Simpan Pinjam
+                </h1>
+                <p className="text-[11px] font-medium text-blue-100/85">
+                  Keuangan & Simpan Pinjam Anggota
                 </p>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-semibold text-amber-300 lg:hidden">
-              <Lock className="h-3 w-3" />
-              Terverifikasi
-            </span>
-          </div>
 
-          <h1 className="mt-4 text-xl leading-snug font-extrabold tracking-tight text-balance text-white lg:mt-10 lg:max-w-md lg:text-4xl">
-            Layanan Kas Kelompok Modern, Aman, dan Real-Time.
-          </h1>
-          <p className="mt-2 hidden max-w-md text-sm leading-relaxed text-blue-100/85 lg:mt-4 lg:block">
-            Pantau saldo rekening kas, mutasi masuk dan keluar, pengajuan pinjaman, angsuran digital, serta laporan bulanan via WhatsApp dalam satu sistem terpadu.
-          </p>
-
-          <div className="mt-10 hidden divide-y divide-white/15 border-y border-white/15 lg:block">
-            <div className="py-4">
-              <p className="text-xs font-bold tracking-wide text-amber-300">
-                01. Mutasi & Rekening Terpusat
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-blue-100/80">
-                Setiap setoran simpanan, pengeluaran, pencairan pinjaman, dan angsuran tercatat otomatis layaknya mutasi rekening perbankan.
-              </p>
-            </div>
-            <div className="py-4">
-              <p className="text-xs font-bold tracking-wide text-amber-300">
-                02. Laporan & e-Resi Digital
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-blue-100/80">
-                Rekapitulasi keuangan akhir bulan tersusun otomatis lengkap dengan bukti transaksi digital yang siap cetak atau simpan PDF.
-              </p>
-            </div>
-            <div className="py-4">
-              <p className="text-xs font-bold tracking-wide text-amber-300">
-                03. Notifikasi WhatsApp Anggota
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-blue-100/80">
-                Pengurus dapat mengirimkan ringkasan saldo, rincian pengeluaran, dan pengingat angsuran langsung ke WhatsApp anggota.
-              </p>
-            </div>
+            <PWAInstallButton />
           </div>
         </div>
 
-        <div className="relative mt-10 hidden items-center gap-2.5 text-xs text-blue-100/80 lg:flex">
-          <Lock className="h-3.5 w-3.5 shrink-0 text-amber-300" />
-          <span>
-            Dilindungi otorisasi resmi Google & verifikasi akses berlapis per peran.
-          </span>
-        </div>
-      </aside>
+        {/* Single-Card Body */}
+        <div className="p-6">
+          {needsGoogleAuth ? (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h2 className="text-base font-bold text-slate-900">
+                  {savedSession
+                    ? `Selamat datang kembali, ${savedSession.nama}`
+                    : 'Masuk ke Sentra Kas'}
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  {savedSession
+                    ? `Sesi ${savedSession.role} siap dilanjutkan. Klik tombol di bawah untuk verifikasi Google.`
+                    : 'Hubungkan akun Google Anda untuk mengakses buku kas kelompok.'}
+                </p>
+              </div>
 
-      {/* Right Interactive Workspace */}
-      <main className="flex flex-col justify-between px-4 py-5 sm:px-8 lg:col-span-7 lg:px-14 lg:py-10">
-        <div className="mx-auto w-full max-w-xl">
-          {/* Top Utility Row */}
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-200 pb-3.5 lg:mb-8 lg:pb-4">
-            <span className="text-xs font-bold tracking-wide text-[#004A8F] uppercase">
-              Portal Akses e-Banking Kas
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              <PWAInstallButton />
-              <a
-                href={`https://docs.google.com/spreadsheets/d/${resolvedId}/edit`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-[#00529C]" />
-                Buka Spreadsheet
-              </a>
-            </div>
-          </div>
+              <GoogleSignInButton
+                onClick={() => onGoogleLogin(false)}
+                disabled={isGoogleSigningIn}
+                label={
+                  isGoogleSigningIn
+                    ? 'Menyambungkan...'
+                    : savedSession
+                      ? `Lanjutkan sebagai ${savedSession.role}`
+                      : googleUser?.email
+                        ? `Masuk sebagai ${googleUser.email}`
+                        : 'Masuk dengan Google'
+                }
+              />
 
-          <div className="space-y-6">
-            {/* Step 1: Google Sheets Authorization */}
-            <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-              <div className="flex items-start gap-3.5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-[#EBF3FC] text-[#004A8F]">
-                  <Database className="h-5 w-5" />
+              {(googleUser || savedSession) && (
+                <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
+                  {googleUser && (
+                    <button
+                      type="button"
+                      onClick={() => onGoogleLogin(true)}
+                      className="font-semibold text-[#004A8F] hover:underline"
+                    >
+                      Ganti akun Google
+                    </button>
+                  )}
+                  {savedSession && (
+                    <button
+                      type="button"
+                      onClick={onClearSavedSession}
+                      className="font-medium text-slate-500 hover:text-slate-800 hover:underline"
+                    >
+                      Keluar sesi ({savedSession.username})
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">
-                    Langkah 1 · Hubungkan Buku Rekening (Spreadsheet)
-                  </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Masuk menggunakan akun Google yang memiliki izin akses ke spreadsheet keuangan kelompok Anda.
-                  </p>
+              )}
+
+              {sheetError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
+                  {sheetError}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Compact Connected Google Bar */}
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-[#F8FAFC] px-3.5 py-2.5 text-xs">
+                <div className="flex min-w-0 items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900">
+                      {dataset?.spreadsheetTitle || 'Buku Kas Terhubung'}
+                    </p>
+                    <p className="truncate text-[11px] text-slate-500">
+                      {googleUser?.email}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={onReloadSheet}
+                    disabled={isLoadingSheet}
+                    title="Muat ulang data"
+                    className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200/70 hover:text-[#004A8F]"
+                    aria-label="Sinkronkan ulang"
+                  >
+                    <RefreshCw
+                      className={`h-3.5 w-3.5 ${isLoadingSheet ? 'animate-spin' : ''}`}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onGoogleLogout}
+                    title="Ganti akun Google"
+                    className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-200/70 hover:text-red-600"
+                    aria-label="Ganti akun Google"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-5 space-y-4">
-                <div>
-                  <label
-                    htmlFor="sheet-url-input"
-                    className="mb-1.5 block text-xs font-semibold text-slate-700"
-                  >
-                    Tautan atau ID Google Spreadsheet
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="sheet-url-input"
-                      type="text"
-                      value={spreadsheetInput}
-                      onChange={(e) => onSpreadsheetInputChange(e.target.value)}
-                      placeholder="https://docs.google.com/spreadsheets/d/..."
-                      className="w-full rounded-xl border border-slate-300 bg-slate-50/70 px-3 py-2 font-mono text-xs text-slate-800"
-                    />
-                    {!needsGoogleAuth && (
-                      <button
-                        type="button"
-                        onClick={onReloadSheet}
-                        disabled={isLoadingSheet}
-                        className="inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        <RefreshCw
-                          className={`h-3.5 w-3.5 text-[#00529C] ${isLoadingSheet ? 'animate-spin' : ''}`}
-                        />
-                        Sinkronkan
-                      </button>
-                    )}
-                  </div>
-                  <p className="mt-1.5 font-mono text-[11px] text-slate-400">
-                    ID aktif: {resolvedId}
-                  </p>
+              {isLoadingSheet && (
+                <div className="rounded-xl border border-blue-100 bg-[#EBF3FC]/60 py-6 text-center text-xs font-medium text-[#004A8F]">
+                  Memuat data buku kas...
                 </div>
+              )}
 
-                {needsGoogleAuth ? (
-                  <div className="space-y-3 pt-1">
-                    {(googleUser || savedSession) && (
-                      <div className="rounded-xl border border-blue-200 bg-[#EBF3FC]/70 p-4 text-xs">
-                        <p className="font-bold text-[#00356B]">
-                          Sesi Sebelumnya Dikenali
-                          {savedSession ? ` · ${savedSession.nama} (${savedSession.role})` : ''}
-                        </p>
-                        <p className="mt-1 leading-relaxed text-slate-600">
-                          {googleUser?.email
-                            ? `Akun Google ${googleUser.email} tetap aktif. `
-                            : ''}
-                          Demi keamanan perbankan browser, token akses Google Sheets dibersihkan setiap halaman di-refresh. Klik tombol di bawah untuk langsung masuk kembali tanpa mengetik ulang password.
-                        </p>
-                        <div className="mt-2.5 flex flex-wrap gap-3">
-                          {googleUser && (
-                            <button
-                              type="button"
-                              onClick={() => onGoogleLogin(true)}
-                              className="font-semibold text-[#004A8F] underline underline-offset-2 hover:text-[#002D5E]"
-                            >
-                              Ganti akun Google lain
-                            </button>
-                          )}
-                          {savedSession && (
-                            <button
-                              type="button"
-                              onClick={onClearSavedSession}
-                              className="font-semibold text-slate-600 underline underline-offset-2 hover:text-slate-900"
-                            >
-                              Keluar dari sesi {savedSession.username}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    <GoogleSignInButton
-                      onClick={() => onGoogleLogin(false)}
-                      disabled={isGoogleSigningIn}
-                      label={
-                        isGoogleSigningIn
-                          ? 'Menyambungkan kembali...'
-                          : savedSession
-                            ? `Lanjutkan sebagai ${savedSession.role} via Google`
-                            : googleUser?.email
-                              ? `Lanjutkan dengan ${googleUser.email}`
-                              : 'Sign in with Google'
-                      }
-                    />
-                    {sheetError && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-700">
-                        {sheetError}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3 rounded-xl border border-blue-200 bg-[#EBF3FC]/60 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                        <div className="text-xs">
-                          <p className="font-bold text-slate-900">
-                            Terhubung · {googleUser?.displayName || googleUser?.email}
-                          </p>
-                          <p className="text-slate-600">{googleUser?.email}</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={onGoogleLogout}
-                        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        <LogOut className="h-3.5 w-3.5" />
-                        Ganti Akun
-                      </button>
-                    </div>
+              {sheetError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                  {sheetError}
+                </div>
+              )}
 
-                    {isLoadingSheet && (
-                      <p className="text-xs font-medium text-slate-600">
-                        Memverifikasi struktur tabel dan memuat transaksi...
-                      </p>
-                    )}
-
-                    {sheetError && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-                        {sheetError}
-                      </div>
-                    )}
-
-                    {dataset && !isLoadingSheet && !sheetError && (
-                      <div className="space-y-2 border-t border-blue-200/70 pt-3 text-xs text-slate-700">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-slate-500">Dokumen Terhubung:</span>
-                          <span className="truncate font-bold text-slate-900">
-                            {dataset.spreadsheetTitle}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-slate-500">Rekap Data:</span>
-                          <span className="font-mono tabular-nums text-slate-900">
-                            {dataset.anggota.length} anggota · {dataset.kasMasuk.length} kas masuk ·{' '}
-                            {dataset.kasKeluar.length} kas keluar
-                          </span>
-                        </div>
-
-                        {(missingCoreTabs.length > 0 ||
-                          !dataset.availableTabs.includes('LaporanBulanan') ||
-                          dataset.users.length === 0) && (
-                          <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                            <p className="font-semibold text-amber-900">
-                              Struktur tab sheet belum lengkap atau akun admin belum tersedia.
-                            </p>
-                            <button
-                              type="button"
-                              onClick={onRequestSetupDatabase}
-                              className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
-                            >
-                              Setup Struktur Sheet & Admin Otomatis
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+              {dataset &&
+                !isLoadingSheet &&
+                !sheetError &&
+                (missingCoreTabs.length > 0 ||
+                  !dataset.availableTabs.includes('LaporanBulanan') ||
+                  dataset.users.length === 0) && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs">
+                    <p className="font-semibold text-amber-900">
+                      Struktur tab sheet belum lengkap atau akun admin belum ada.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onRequestSetupDatabase}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+                    >
+                      Setup Sheet & Admin Otomatis
+                    </button>
                   </div>
                 )}
-              </div>
-            </section>
 
-            {/* Step 2: Role Sign-In / Member Registration */}
-            <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-              <div className="mb-5 flex items-center gap-3.5 border-b border-slate-100 pb-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-[#F2F6FA] text-[#004A8F]">
+              {/* Role Sign-In or Member Registration */}
+              {dataset && !isLoadingSheet && (
+                <>
                   {mode === 'login' ? (
-                    <ShieldCheck className="h-5 w-5" />
+                    <form onSubmit={handleLoginSubmit} className="space-y-3.5">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Username
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          placeholder="Masukkan username"
+                          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Password / PIN
+                        </label>
+                        <input
+                          type="password"
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Masukkan password"
+                          className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
+                        />
+                      </div>
+
+                      {quickUsers.length > 0 && (
+                        <div>
+                          <p className="mb-1.5 text-[11px] font-medium text-slate-400">
+                            Pilih cepat akun:
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {quickUsers.slice(0, 6).map((u) => (
+                              <button
+                                key={u.username}
+                                type="button"
+                                onClick={() => setUsername(u.username)}
+                                className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                                  username === u.username
+                                    ? 'border-[#004A8F] bg-[#EBF3FC] text-[#004A8F]'
+                                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                }`}
+                              >
+                                {u.nama}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {loginError && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                          {loginError}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
+                      >
+                        Masuk
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+
+                      <div className="pt-1 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setMode('register')}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#004A8F] hover:underline"
+                        >
+                          <UserPlus className="h-3.5 w-3.5" />
+                          Daftar Anggota Baru
+                        </button>
+                      </div>
+                    </form>
                   ) : (
-                    <UserPlus className="h-5 w-5" />
+                    <form onSubmit={handleRegisterSubmit} className="space-y-3">
+                      <p className="text-sm font-bold text-slate-900">
+                        Daftar Anggota Baru
+                      </p>
+
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold text-slate-700">
+                          Nama Lengkap
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={regNama}
+                          onChange={(e) => setRegNama(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold text-slate-700">
+                            No HP / WhatsApp
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            value={regNohp}
+                            onChange={(e) => setRegNohp(e.target.value)}
+                            placeholder="0812..."
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold text-slate-700">
+                            Alamat
+                          </label>
+                          <input
+                            type="text"
+                            value={regAlamat}
+                            onChange={(e) => setRegAlamat(e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold text-slate-700">
+                            Username
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={regUsername}
+                            onChange={(e) => setRegUsername(e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold text-slate-700">
+                            Password
+                          </label>
+                          <input
+                            type="password"
+                            required
+                            value={regPassword}
+                            onChange={(e) => setRegPassword(e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      {loginError && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                          {loginError}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setMode('login')}
+                          className="min-h-[44px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                          Kembali
+                        </button>
+                        <button
+                          type="submit"
+                          className="min-h-[44px] flex-1 rounded-xl bg-[#004A8F] px-4 py-2 text-sm font-semibold text-white hover:bg-[#003870]"
+                        >
+                          Daftar
+                        </button>
+                      </div>
+                    </form>
                   )}
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-slate-900">
-                    {mode === 'login'
-                      ? 'Langkah 2 · Masuk ke Akun Pengguna'
-                      : 'Langkah 2 · Pendaftaran Anggota Baru'}
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    {mode === 'login'
-                      ? 'Masuk sebagai Administrator, Bendahara, atau Anggota sesuai sheet Users.'
-                      : 'Data dan nomor anggota akan langsung tersimpan di buku besar.'}
-                  </p>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Collapsible Spreadsheet Settings (keeps main login ultra-clean) */}
+          <div className="mt-5 border-t border-slate-100 pt-3.5">
+            <button
+              type="button"
+              onClick={() => setShowSheetSettings((prev) => !prev)}
+              className="flex w-full items-center justify-between text-xs font-medium text-slate-500 hover:text-slate-800"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <Lock className="h-3 w-3 text-[#004A8F]" />
+                Pengaturan Buku Kas (Spreadsheet)
+              </span>
+              {showSheetSettings ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
+            </button>
+
+            {showSheetSettings && (
+              <div className="mt-3 space-y-2.5 rounded-xl border border-slate-200 bg-[#F8FAFC] p-3">
+                <label
+                  htmlFor="sheet-url-input"
+                  className="block text-[11px] font-semibold text-slate-600"
+                >
+                  Tautan atau ID Google Spreadsheet
+                </label>
+                <input
+                  id="sheet-url-input"
+                  type="text"
+                  value={spreadsheetInput}
+                  onChange={(e) => onSpreadsheetInputChange(e.target.value)}
+                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-mono text-xs text-slate-800"
+                />
+                <div className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className="truncate font-mono text-slate-400">
+                    ID: {resolvedId}
+                  </span>
+                  <a
+                    href={`https://docs.google.com/spreadsheets/d/${resolvedId}/edit`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#004A8F] hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Buka Sheet
+                  </a>
                 </div>
               </div>
-
-              {needsGoogleAuth || !dataset ? (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-[#F8FAFC] p-7 text-center">
-                  <p className="text-sm font-semibold text-slate-700">
-                    {savedSession
-                      ? `Akun ${savedSession.nama} (${savedSession.role}) siap dipulihkan otomatis.`
-                      : 'Menunggu otorisasi Google Spreadsheet pada Langkah 1.'}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {savedSession
-                      ? 'Klik tombol Google pada Langkah 1 untuk langsung masuk ke dashboard tanpa mengisi ulang password.'
-                      : 'Setelah terhubung, formulir login peran akan aktif secara otomatis.'}
-                  </p>
-                </div>
-              ) : mode === 'login' ? (
-                <form onSubmit={handleLoginSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                        User ID / Username
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Contoh: admin"
-                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                        PIN / Password
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Masukkan password"
-                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
-                  </div>
-
-                  {loginError && (
-                    <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700">
-                      {loginError}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#003870]"
-                  >
-                    Masuk ke Dashboard
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-
-                  {quickUsers.length > 0 && (
-                    <div className="border-t border-slate-100 pt-4">
-                      <p className="mb-2 text-xs font-medium text-slate-500">
-                        Akun aktif terdeteksi (klik untuk mengisi username):
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {quickUsers.slice(0, 6).map((u) => (
-                          <button
-                            key={u.username}
-                            type="button"
-                            onClick={() => setUsername(u.username)}
-                            className="rounded-xl border border-slate-200 bg-[#F8FAFC] px-2.5 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-[#00529C]/40 hover:bg-[#EBF3FC]"
-                          >
-                            {u.nama} · <span className="text-slate-500">{u.role}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="border-t border-slate-100 pt-4 text-center">
-                    <button
-                      type="button"
-                      onClick={() => setMode('register')}
-                      className="text-xs font-semibold text-[#004A8F] hover:underline"
-                    >
-                      Belum memiliki akun anggota? Daftar Anggota Mandiri
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
-                      Nama Lengkap
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={regNama}
-                      onChange={(e) => setRegNama(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
-                        No HP / WhatsApp
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={regNohp}
-                        onChange={(e) => setRegNohp(e.target.value)}
-                        placeholder="0812..."
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
-                        Alamat
-                      </label>
-                      <input
-                        type="text"
-                        value={regAlamat}
-                        onChange={(e) => setRegAlamat(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
-                        Username
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={regUsername}
-                        onChange={(e) => setRegUsername(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        value={regPassword}
-                        onChange={(e) => setRegPassword(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {loginError && (
-                    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                      {loginError}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setMode('login')}
-                      className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      Kembali
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 rounded-xl bg-[#004A8F] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#003870]"
-                    >
-                      Daftar Sekarang
-                    </button>
-                  </div>
-                </form>
-              )}
-            </section>
+            )}
           </div>
         </div>
-
-        <footer className="mx-auto mt-8 w-full max-w-xl text-center text-[11px] text-slate-400">
-          Sentra Kas · Sistem Manajemen Keuangan & Layanan Kas Kelompok Digital
-        </footer>
-      </main>
+      </div>
     </div>
   );
 };
