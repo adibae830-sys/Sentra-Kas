@@ -20,6 +20,7 @@ import {
   LogOut,
   Menu,
   MessageCircle,
+  Plus,
   RefreshCw,
   Search,
   Send,
@@ -34,6 +35,7 @@ import { CashflowChart } from './components/CashflowChart';
 import { ConfirmActionModal } from './components/ConfirmActionModal';
 import { CurrencyInput } from './components/CurrencyInput';
 import { KwitansiModal } from './components/KwitansiModal';
+import { QuickRecordModal, QuickRecordTab } from './components/QuickRecordModal';
 import {
   AngsuranAndTunggakanView,
   PinjamanAndAccView,
@@ -194,6 +196,7 @@ export default function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activePage, setActivePage] = useState<PageId>(() => readSavedActivePage() || 'dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [quickRecordOpen, setQuickRecordOpen] = useState(false);
   const [hideBalance, setHideBalance] = useState(false);
 
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -1609,6 +1612,18 @@ export default function App() {
   const currentNavLabel =
     navItems.find((i) => i.id === activePage)?.label || 'Sistem Keuangan';
 
+  const canQuickRecord =
+    sessionUser?.role === 'Administrator' || sessionUser?.role === 'Bendahara';
+
+  const defaultQuickTab: QuickRecordTab =
+    activePage === 'kasKeluar'
+      ? 'pengeluaran'
+      : activePage === 'angsuran'
+        ? 'angsuran'
+        : activePage === 'pinjaman'
+          ? 'pinjaman'
+          : 'pemasukan';
+
   // Render AuthGate when not authenticated in both Google & App role
   if (needsGoogleAuth || !dataset || !sessionUser) {
     return (
@@ -1901,6 +1916,16 @@ export default function App() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2.5">
+            {canQuickRecord && (
+              <button
+                type="button"
+                onClick={() => setQuickRecordOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-[#004A8F] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#003870]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Catat
+              </button>
+            )}
             <PWAInstallButton />
             <button
               type="button"
@@ -2855,6 +2880,19 @@ export default function App() {
       </div>
 
       {/* Modals & Toast */}
+      {canQuickRecord && (
+        <QuickRecordModal
+          isOpen={quickRecordOpen}
+          initialTab={defaultQuickTab}
+          dataset={dataset}
+          onClose={() => setQuickRecordOpen(false)}
+          onSaveKasMasuk={handleSaveKasMasuk}
+          onSaveKasKeluar={handleSaveKasKeluar}
+          onSaveAngsuran={handleSaveAngsuran}
+          onSavePinjaman={handleSavePinjaman}
+        />
+      )}
+
       <ConfirmActionModal
         state={confirmState}
         isSubmitting={isMutating}
@@ -3094,68 +3132,120 @@ export default function App() {
         aria-label="Navigasi Cepat Mobile"
         className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 px-2 pt-1.5 pb-[calc(0.45rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(15,23,42,0.06)] backdrop-blur-md lg:hidden"
       >
-        <div className="mx-auto flex max-w-lg items-center justify-around gap-1">
-          {(sessionUser.role === 'Administrator'
-            ? [
-                { id: 'dashboard' as PageId, label: 'Beranda', icon: <LayoutDashboard className="h-5 w-5" /> },
-                { id: 'kasMasuk' as PageId, label: 'Masuk', icon: <ArrowDownLeft className="h-5 w-5" /> },
-                { id: 'kasKeluar' as PageId, label: 'Keluar', icon: <ArrowUpRight className="h-5 w-5" /> },
-                { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
-              ]
-            : sessionUser.role === 'Bendahara'
+        {canQuickRecord ? (
+          <div className="mx-auto flex max-w-lg items-end justify-around gap-1">
+            {(sessionUser.role === 'Administrator'
               ? [
+                  { id: 'dashboard' as PageId, label: 'Beranda', icon: <LayoutDashboard className="h-5 w-5" /> },
                   { id: 'kasMasuk' as PageId, label: 'Masuk', icon: <ArrowDownLeft className="h-5 w-5" /> },
-                  { id: 'kasKeluar' as PageId, label: 'Keluar', icon: <ArrowUpRight className="h-5 w-5" /> },
-                  { id: 'pinjaman' as PageId, label: 'Pinjaman', icon: <CreditCard className="h-5 w-5" /> },
-                  { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
                 ]
               : [
-                  { id: 'anggotaSaya' as PageId, label: 'Saldo', icon: <Wallet className="h-5 w-5" /> },
-                  { id: 'ajukanPinjaman' as PageId, label: 'Pinjam', icon: <CreditCard className="h-5 w-5" /> },
-                  { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
-                  { id: 'pengaturan' as PageId, label: 'Akun', icon: <Settings className="h-5 w-5" /> },
+                  { id: 'kasMasuk' as PageId, label: 'Masuk', icon: <ArrowDownLeft className="h-5 w-5" /> },
+                  { id: 'kasKeluar' as PageId, label: 'Keluar', icon: <ArrowUpRight className="h-5 w-5" /> },
                 ]
-          ).map((tab) => {
-            const active = activePage === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActivePage(tab.id)}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
-                  active ? 'text-[#004A8F]' : 'text-slate-500 active:text-slate-900'
-                }`}
-              >
-                <span
-                  className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${
-                    active ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+            ).map((tab) => {
+              const active = activePage === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActivePage(tab.id)}
+                  className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
+                    active ? 'text-[#004A8F]' : 'text-slate-500 active:text-slate-900'
                   }`}
                 >
-                  {tab.icon}
-                </span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+                  <span
+                    className={`flex h-7 w-10 items-center justify-center rounded-full transition-colors ${
+                      active ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                    }`}
+                  >
+                    {tab.icon}
+                  </span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
 
-          {sessionUser.role !== 'Anggota' && (
+            {/* Center Raised +Catat Action Button */}
+            <button
+              type="button"
+              onClick={() => setQuickRecordOpen(true)}
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 pb-0.5 text-[11px] font-bold text-[#004A8F]"
+              aria-label="Catat Transaksi Cepat"
+            >
+              <span className="-mt-4 flex h-11 w-11 items-center justify-center rounded-2xl border-2 border-white bg-gradient-to-br from-[#00356B] via-[#004A8F] to-[#0066CC] text-white shadow-md shadow-[#004A8F]/25 transition-transform active:scale-95">
+                <Plus className="h-5 w-5" />
+              </span>
+              <span>Catat</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActivePage('laporan')}
+              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
+                activePage === 'laporan'
+                  ? 'text-[#004A8F]'
+                  : 'text-slate-500 active:text-slate-900'
+              }`}
+            >
+              <span
+                className={`flex h-7 w-10 items-center justify-center rounded-full transition-colors ${
+                  activePage === 'laporan' ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                }`}
+              >
+                <BarChart3 className="h-5 w-5" />
+              </span>
+              <span>Laporan</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
               className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
                 mobileMenuOpen ||
-                ['pinjaman', 'angsuran', 'anggota', 'pengaturan'].includes(activePage)
+                ['pinjaman', 'angsuran', 'anggota', 'pengaturan'].includes(activePage) ||
+                (sessionUser.role === 'Administrator' && activePage === 'kasKeluar')
                   ? 'text-[#004A8F]'
                   : 'text-slate-500 active:text-slate-900'
               }`}
             >
-              <span className="flex h-7 w-11 items-center justify-center rounded-full">
+              <span className="flex h-7 w-10 items-center justify-center rounded-full">
                 <Menu className="h-5 w-5" />
               </span>
               <span>Menu</span>
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="mx-auto flex max-w-lg items-center justify-around gap-1">
+            {[
+              { id: 'anggotaSaya' as PageId, label: 'Saldo', icon: <Wallet className="h-5 w-5" /> },
+              { id: 'ajukanPinjaman' as PageId, label: 'Pinjam', icon: <CreditCard className="h-5 w-5" /> },
+              { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
+              { id: 'pengaturan' as PageId, label: 'Akun', icon: <Settings className="h-5 w-5" /> },
+            ].map((tab) => {
+              const active = activePage === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActivePage(tab.id)}
+                  className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
+                    active ? 'text-[#004A8F]' : 'text-slate-500 active:text-slate-900'
+                  }`}
+                >
+                  <span
+                    className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${
+                      active ? 'bg-[#EBF3FC] text-[#004A8F]' : 'bg-transparent'
+                    }`}
+                  >
+                    {tab.icon}
+                  </span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       <OfflineIndicator />
