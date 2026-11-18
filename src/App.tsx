@@ -1614,9 +1614,11 @@ export default function App() {
 
   // Pengajuan Konfirmasi Setoran Iuran / Angsuran oleh Anggota (Menunggu Admin/Bendahara)
   const handleAjukanSetoranAnggota = (payload: {
-    jenisSetoran: 'Simpanan' | 'Angsuran';
+    jenisSetoran: 'Simpanan' | 'Angsuran' | 'Gabungan';
     idPinjaman: string;
     jumlah: number;
+    jumlahSimpanan: number;
+    jumlahAngsuran: number;
     metodeBayar: string;
     keterangan: string;
   }) => {
@@ -1628,7 +1630,7 @@ export default function App() {
       showToast('error', 'Nominal setoran harus lebih dari 0.');
       return;
     }
-    if (payload.jenisSetoran === 'Angsuran') {
+    if (payload.jenisSetoran === 'Angsuran' || payload.jenisSetoran === 'Gabungan') {
       const targetLoan = dataset?.pinjaman.find(
         (p) =>
           p.idPinjaman === payload.idPinjaman &&
@@ -1640,6 +1642,19 @@ export default function App() {
         showToast('error', 'Pinjaman aktif yang dipilih tidak valid atau sudah lunas.');
         return;
       }
+      if (payload.jenisSetoran === 'Gabungan') {
+        if (payload.jumlahSimpanan <= 0 || payload.jumlahAngsuran <= 0) {
+          showToast('error', 'Pembagian porsi iuran dan angsuran harus lebih dari 0.');
+          return;
+        }
+        if (payload.jumlahAngsuran > targetLoan.sisa) {
+          showToast(
+            'error',
+            `Porsi angsuran (${rupiah(payload.jumlahAngsuran)}) melebihi sisa pinjaman (${rupiah(targetLoan.sisa)}).`
+          );
+          return;
+        }
+      }
     }
 
     const idSetoran = 'STR-' + Date.now();
@@ -1647,13 +1662,26 @@ export default function App() {
       title:
         payload.jenisSetoran === 'Simpanan'
           ? 'Kirim Konfirmasi Setor Iuran?'
-          : 'Kirim Konfirmasi Bayar Angsuran?',
+          : payload.jenisSetoran === 'Gabungan'
+            ? 'Kirim Konfirmasi Setoran Gabungan?'
+            : 'Kirim Konfirmasi Bayar Angsuran?',
       description:
         'Pengajuan akan masuk ke antrean konfirmasi Admin/Bendahara dan belum dicatat ke saldo kas sampai disetujui.',
       details: [
         `ID Pengajuan: ${idSetoran}`,
-        `Jenis: ${payload.jenisSetoran === 'Simpanan' ? 'Iuran / Simpanan' : `Angsuran (${payload.idPinjaman})`}`,
-        `Nominal: ${rupiah(payload.jumlah)} · Metode: ${payload.metodeBayar}`,
+        `Jenis: ${
+          payload.jenisSetoran === 'Simpanan'
+            ? 'Iuran / Simpanan'
+            : payload.jenisSetoran === 'Gabungan'
+              ? `Gabungan (${payload.idPinjaman})`
+              : `Angsuran (${payload.idPinjaman})`
+        }`,
+        `Total Transfer: ${rupiah(payload.jumlah)} · Metode: ${payload.metodeBayar}`,
+        ...(payload.jenisSetoran === 'Gabungan'
+          ? [
+              `Rincian: Simpanan ${rupiah(payload.jumlahSimpanan)} + Angsuran ${rupiah(payload.jumlahAngsuran)}`,
+            ]
+          : []),
         ...(payload.keterangan ? [`Keterangan: ${payload.keterangan}`] : []),
       ],
       confirmLabel: 'Ya, Kirim Konfirmasi',
@@ -1686,6 +1714,8 @@ export default function App() {
             payload.keterangan,
             'Menunggu',
             '',
+            payload.jumlahSimpanan,
+            payload.jumlahAngsuran,
           ]);
         }, 'Konfirmasi setoran berhasil dikirim dan menunggu persetujuan Admin/Bendahara.'),
     });
@@ -1734,6 +1764,8 @@ export default function App() {
                   item.keterangan,
                   'Dikonfirmasi',
                   petugas,
+                  item.jumlahSimpanan || item.jumlah,
+                  item.jumlahAngsuran || 0,
                 ]
               );
               await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
@@ -1764,7 +1796,7 @@ export default function App() {
       return;
     }
 
-    // Jenis Setoran: Angsuran
+    // Jenis Setoran: Angsuran atau Gabungan (Simpanan + Angsuran)
     const linkedLoan = dataset?.pinjaman.find((p) => p.idPinjaman === item.idPinjaman);
     if (!linkedLoan) {
       showToast('error', `Data pinjaman ${item.idPinjaman} tidak ditemukan.`);
@@ -1778,15 +1810,25 @@ export default function App() {
       return;
     }
 
+    const isGabungan = item.jenisSetoran === 'Gabungan';
+    const nominalSimpanan = isGabungan ? item.jumlahSimpanan : 0;
+    const nominalAngsuran = isGabungan ? item.jumlahAngsuran : item.jumlah;
+
+    if (nominalAngsuran <= 0 || (isGabungan && nominalSimpanan <= 0)) {
+      showToast('error', 'Rincian nominal simpanan/angsuran tidak valid.');
+      return;
+    }
+
     const existingCount = (dataset?.angsuran || []).filter(
       (a) => a.idPinjaman === linkedLoan.idPinjaman
     ).length;
     const angsuranKe = existingCount + 1;
-    const totalBaru = linkedLoan.totalDibayar + item.jumlah;
-    const sisaBaru = Math.max(linkedLoan.sisa - item.jumlah, 0);
+    const totalBaru = linkedLoan.totalDibayar + nominalAngsuran;
+    const sisaBaru = Math.max(linkedLoan.sisa - nominalAngsuran, 0);
     const statusBaru = sisaBaru <= 0 ? 'Lunas' : 'Berjalan';
     const idAngsuran = 'ANG-' + Date.now();
-    const idKasMasuk = 'KM-' + (Date.now() + 1);
+    const idKasMasukSimpanan = 'KM-' + Date.now();
+    const idKasMasukAngsuran = 'KM-' + (Date.now() + 1);
     const keteranganGabungan = [
       `Pembayaran pinjaman ${linkedLoan.idPinjaman}`,
       item.metodeBayar,
@@ -1796,15 +1838,24 @@ export default function App() {
       .join(' · ');
 
     openConfirm({
-      title: 'Konfirmasi & Catat Pembayaran Angsuran?',
-      description:
-        'Menyetujui setoran ini akan memperbarui Pinjaman, mencatat Angsuran baru, dan menambah KasMasuk.',
+      title: isGabungan
+        ? 'Konfirmasi & Catat Setoran Gabungan (1x Transfer)?'
+        : 'Konfirmasi & Catat Pembayaran Angsuran?',
+      description: isGabungan
+        ? 'Menyetujui setoran ini akan mencatat Simpanan ke KasMasuk, memperbarui Pinjaman, serta mencatat Angsuran dan KasMasuk secara otomatis.'
+        : 'Menyetujui setoran ini akan memperbarui Pinjaman, mencatat Angsuran baru, dan menambah KasMasuk.',
       details: [
         `Anggota: ${namaAnggota} (${linkedLoan.idPinjaman})`,
-        `Nominal Bayar: ${rupiah(item.jumlah)} (Angsuran ke-${angsuranKe})`,
+        ...(isGabungan
+          ? [
+              `Total Transfer: ${rupiah(item.jumlah)}`,
+              `Masuk Simpanan: ${rupiah(nominalSimpanan)}`,
+            ]
+          : []),
+        `Masuk Angsuran: ${rupiah(nominalAngsuran)} (Angsuran ke-${angsuranKe})`,
         `Sisa Setelah Konfirmasi: ${rupiah(sisaBaru)} (${statusBaru})`,
       ],
-      confirmLabel: 'Ya, Konfirmasi Angsuran',
+      confirmLabel: isGabungan ? 'Ya, Konfirmasi Gabungan' : 'Ya, Konfirmasi Angsuran',
       onConfirm: () => {
         const now = nowIsoShort();
         return runConfirmedMutation(
@@ -1826,8 +1877,23 @@ export default function App() {
                 item.keterangan,
                 'Dikonfirmasi',
                 petugas,
+                nominalSimpanan,
+                nominalAngsuran,
               ]
             );
+            if (isGabungan && nominalSimpanan > 0) {
+              await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
+                idKasMasukSimpanan,
+                now,
+                item.idAnggota,
+                'Simpanan',
+                nominalSimpanan,
+                [item.metodeBayar, item.keterangan || `Iuran gabungan (${item.idSetoran})`]
+                  .filter(Boolean)
+                  .join(' · '),
+                petugas,
+              ]);
+            }
             await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', linkedLoan.rowIndex, [
               linkedLoan.idPinjaman,
               linkedLoan.tanggal,
@@ -1845,16 +1911,16 @@ export default function App() {
               linkedLoan.idPinjaman,
               linkedLoan.idAnggota,
               angsuranKe,
-              item.jumlah,
+              nominalAngsuran,
               sisaBaru,
               petugas,
             ]);
             await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
-              idKasMasuk,
+              idKasMasukAngsuran,
               now,
               linkedLoan.idAnggota,
               'Angsuran',
-              item.jumlah,
+              nominalAngsuran,
               keteranganGabungan,
               petugas,
             ]);
@@ -1865,21 +1931,27 @@ export default function App() {
               idPinjaman: linkedLoan.idPinjaman,
               idAnggota: linkedLoan.idAnggota,
               angsuranKe,
-              jumlah: item.jumlah,
+              jumlah: nominalAngsuran,
               sisa: sisaBaru,
               user: petugas,
               rowIndex: 0,
             });
           },
-          `Pembayaran angsuran ${namaAnggota} (${rupiah(item.jumlah)}) berhasil dikonfirmasi & kwitansi siap.`,
+          isGabungan
+            ? `Setoran gabungan ${namaAnggota} (${rupiah(item.jumlah)}) berhasil dikonfirmasi & dipisah ke Simpanan + Angsuran.`
+            : `Pembayaran angsuran ${namaAnggota} (${rupiah(nominalAngsuran)}) berhasil dikonfirmasi & kwitansi siap.`,
           async (fresh) => {
             await notifyWhatsAppGroupForMutasi({
               arah: 'MASUK',
-              jenis: `Angsuran Ke-${angsuranKe}`,
+              jenis: isGabungan
+                ? `Iuran + Angsuran Ke-${angsuranKe}`
+                : `Angsuran Ke-${angsuranKe}`,
               jumlah: item.jumlah,
               tanggal: now,
               idAnggota: linkedLoan.idAnggota,
-              keterangan: `${keteranganGabungan} (Sisa: ${rupiah(sisaBaru)})`,
+              keterangan: isGabungan
+                ? `Simpanan ${rupiah(nominalSimpanan)} + Angsuran ${rupiah(nominalAngsuran)} · ${linkedLoan.idPinjaman} (Sisa: ${rupiah(sisaBaru)})`
+                : `${keteranganGabungan} (Sisa: ${rupiah(sisaBaru)})`,
               latestDataset: fresh,
             });
           }
@@ -1924,6 +1996,8 @@ export default function App() {
               item.keterangan,
               'Ditolak',
               petugas,
+              item.jumlahSimpanan,
+              item.jumlahAngsuran,
             ]
           );
         }, `Setoran ${item.idSetoran} dari ${namaAnggota} telah ditolak.`),

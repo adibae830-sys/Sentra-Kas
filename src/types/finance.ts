@@ -97,13 +97,15 @@ export interface KonfirmasiSetoran {
   idSetoran: string;
   tanggal: string;
   idAnggota: string;
-  jenisSetoran: 'Simpanan' | 'Angsuran';
+  jenisSetoran: 'Simpanan' | 'Angsuran' | 'Gabungan';
   idPinjaman: string;
   jumlah: number;
   metodeBayar: string;
   keterangan: string;
   status: string;
   diprosesOleh: string;
+  jumlahSimpanan: number;
+  jumlahAngsuran: number;
   rowIndex: number;
 }
 

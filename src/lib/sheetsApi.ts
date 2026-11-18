@@ -74,6 +74,8 @@ export const STRUKTUR_SHEET: Record<string, string[]> = {
     'Keterangan',
     'Status',
     'DiprosesOleh',
+    'JumlahSimpanan',
+    'JumlahAngsuran',
   ],
 };
 
@@ -215,7 +217,7 @@ export async function ensureDatabaseStructure(
   }
 
   const rangesQuery = targetTabs
-    .map((name) => `ranges=${encodeURIComponent(`${name}!A1:J1`)}`)
+    .map((name) => `ranges=${encodeURIComponent(`${name}!A1:L1`)}`)
     .join('&');
   const headerCheck = await sheetsFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
@@ -343,7 +345,7 @@ export async function loadAllFinanceData(
   }
 
   const rangesQuery = knownTabs
-    .map((tab) => `ranges=${encodeURIComponent(`${tab}!A1:J`)}`)
+    .map((tab) => `ranges=${encodeURIComponent(`${tab}!A1:L`)}`)
     .join('&');
 
   const batchData = await sheetsFetch(
@@ -477,22 +479,43 @@ export async function loadAllFinanceData(
 
   const konfirmasiSetoran: KonfirmasiSetoran[] = (tabRows['KonfirmasiSetoran'] || [])
     .slice(1)
-    .map((r, idx) => ({
-      idSetoran: String(r[0] || '').trim(),
-      tanggal: String(r[1] || '').trim(),
-      idAnggota: String(r[2] || '').trim(),
-      jenisSetoran:
-        String(r[3] || '').trim() === 'Angsuran'
-          ? ('Angsuran' as const)
-          : ('Simpanan' as const),
-      idPinjaman: String(r[4] || '').trim(),
-      jumlah: toNumber(r[5]),
-      metodeBayar: String(r[6] || '').trim() || 'Transfer Bank',
-      keterangan: String(r[7] || '').trim(),
-      status: String(r[8] || 'Menunggu').trim(),
-      diprosesOleh: String(r[9] || '').trim(),
-      rowIndex: idx + 2,
-    }))
+    .map((r, idx) => {
+      const rawJenis = String(r[3] || '').trim();
+      const jenisSetoran: KonfirmasiSetoran['jenisSetoran'] =
+        rawJenis === 'Angsuran'
+          ? 'Angsuran'
+          : rawJenis === 'Gabungan'
+            ? 'Gabungan'
+            : 'Simpanan';
+      const jumlah = toNumber(r[5]);
+      const rawSimpanan = toNumber(r[10]);
+      const rawAngsuran = toNumber(r[11]);
+      return {
+        idSetoran: String(r[0] || '').trim(),
+        tanggal: String(r[1] || '').trim(),
+        idAnggota: String(r[2] || '').trim(),
+        jenisSetoran,
+        idPinjaman: String(r[4] || '').trim(),
+        jumlah,
+        metodeBayar: String(r[6] || '').trim() || 'Transfer Bank',
+        keterangan: String(r[7] || '').trim(),
+        status: String(r[8] || 'Menunggu').trim(),
+        diprosesOleh: String(r[9] || '').trim(),
+        jumlahSimpanan:
+          jenisSetoran === 'Simpanan'
+            ? rawSimpanan || jumlah
+            : jenisSetoran === 'Gabungan'
+              ? rawSimpanan
+              : 0,
+        jumlahAngsuran:
+          jenisSetoran === 'Angsuran'
+            ? rawAngsuran || jumlah
+            : jenisSetoran === 'Gabungan'
+              ? rawAngsuran
+              : 0,
+        rowIndex: idx + 2,
+      };
+    })
     .filter((item) => item.idSetoran !== '');
 
   return {

@@ -7,6 +7,7 @@ import {
   CreditCard,
   Download,
   Info,
+  Layers,
   Maximize2,
   QrCode,
   Search,
@@ -33,9 +34,11 @@ interface SetorAnggotaViewProps {
   dataset: FinanceDataset;
   idAnggota: string;
   onAjukanSetoran: (payload: {
-    jenisSetoran: 'Simpanan' | 'Angsuran';
+    jenisSetoran: 'Simpanan' | 'Angsuran' | 'Gabungan';
     idPinjaman: string;
     jumlah: number;
+    jumlahSimpanan: number;
+    jumlahAngsuran: number;
     metodeBayar: string;
     keterangan: string;
   }) => void;
@@ -54,30 +57,39 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
     [dataset.pinjaman, idAnggota]
   );
 
-  const [jenisSetoran, setJenisSetoran] = useState<'Simpanan' | 'Angsuran'>('Simpanan');
+  const [jenisSetoran, setJenisSetoran] = useState<'Simpanan' | 'Angsuran' | 'Gabungan'>(() =>
+    activeLoans.length > 0 ? 'Gabungan' : 'Simpanan'
+  );
   const [selectedLoanId, setSelectedLoanId] = useState<string>('');
-  const [jumlah, setJumlah] = useState<string>(String(IURAN_WAJIB_PER_BULAN));
+  const [jumlah, setJumlah] = useState<string>(() =>
+    activeLoans.length > 0 ? '500000' : String(IURAN_WAJIB_PER_BULAN)
+  );
+  const [porsiSimpanan, setPorsiSimpanan] = useState<string>(String(IURAN_WAJIB_PER_BULAN));
   const [metodeBayar, setMetodeBayar] = useState<'Transfer Bank' | 'QRIS'>('Transfer Bank');
   const [keterangan, setKeterangan] = useState<string>('');
   const [copiedRek, setCopiedRek] = useState(false);
   const [qrisZoomOpen, setQrisZoomOpen] = useState(false);
 
   useEffect(() => {
-    if (jenisSetoran === 'Angsuran') {
+    if (jenisSetoran === 'Angsuran' || jenisSetoran === 'Gabungan') {
       const targetLoan =
         activeLoans.find((l) => l.idPinjaman === selectedLoanId) || activeLoans[0];
       if (targetLoan) {
         if (targetLoan.idPinjaman !== selectedLoanId) {
           setSelectedLoanId(targetLoan.idPinjaman);
         }
-        const defaultPay = Math.min(
-          targetLoan.angsuranPerBulan || targetLoan.sisa,
-          targetLoan.sisa
-        );
-        setJumlah(String(defaultPay));
+        if (jenisSetoran === 'Angsuran') {
+          const defaultPay = Math.min(
+            targetLoan.angsuranPerBulan || targetLoan.sisa,
+            targetLoan.sisa
+          );
+          setJumlah(String(defaultPay));
+        }
       } else {
         setSelectedLoanId('');
-        setJumlah('');
+        if (jenisSetoran === 'Angsuran') {
+          setJumlah('');
+        }
       }
     } else {
       setJumlah((curr) => (curr && Number(curr) > 0 ? curr : String(IURAN_WAJIB_PER_BULAN)));
@@ -88,6 +100,25 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
     () => activeLoans.find((l) => l.idPinjaman === selectedLoanId) || null,
     [activeLoans, selectedLoanId]
   );
+
+  const numericTotal = Number(jumlah) || 0;
+  const numericPorsiSimpanan = Number(porsiSimpanan) || 0;
+  const numericPorsiAngsuran =
+    jenisSetoran === 'Gabungan' ? Math.max(numericTotal - numericPorsiSimpanan, 0) : 0;
+
+  const gabunganError = useMemo(() => {
+    if (jenisSetoran !== 'Gabungan') return null;
+    if (!selectedLoan) return 'Tidak ada pinjaman aktif berstatus Berjalan.';
+    if (numericTotal <= 0) return 'Total transfer harus lebih dari Rp 0.';
+    if (numericPorsiSimpanan <= 0) return 'Porsi iuran / simpanan harus lebih dari Rp 0.';
+    if (numericPorsiAngsuran <= 0) {
+      return 'Total transfer harus lebih besar dari porsi iuran wajib agar ada sisa untuk angsuran.';
+    }
+    if (numericPorsiAngsuran > selectedLoan.sisa) {
+      return `Porsi angsuran (${rupiah(numericPorsiAngsuran)}) melebihi sisa pinjaman (${rupiah(selectedLoan.sisa)}).`;
+    }
+    return null;
+  }, [jenisSetoran, selectedLoan, numericTotal, numericPorsiSimpanan, numericPorsiAngsuran]);
 
   const myHistory = useMemo(
     () =>
@@ -129,12 +160,40 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
     const numericJumlah = Number(jumlah);
     if (!Number.isFinite(numericJumlah) || numericJumlah <= 0) return;
 
-    if (jenisSetoran === 'Angsuran' && !selectedLoan) return;
+    if (jenisSetoran === 'Angsuran') {
+      if (!selectedLoan) return;
+      onAjukanSetoran({
+        jenisSetoran: 'Angsuran',
+        idPinjaman: selectedLoan.idPinjaman,
+        jumlah: numericJumlah,
+        jumlahSimpanan: 0,
+        jumlahAngsuran: numericJumlah,
+        metodeBayar,
+        keterangan: keterangan.trim(),
+      });
+      return;
+    }
+
+    if (jenisSetoran === 'Gabungan') {
+      if (!selectedLoan || gabunganError) return;
+      onAjukanSetoran({
+        jenisSetoran: 'Gabungan',
+        idPinjaman: selectedLoan.idPinjaman,
+        jumlah: numericJumlah,
+        jumlahSimpanan: numericPorsiSimpanan,
+        jumlahAngsuran: numericPorsiAngsuran,
+        metodeBayar,
+        keterangan: keterangan.trim(),
+      });
+      return;
+    }
 
     onAjukanSetoran({
-      jenisSetoran,
-      idPinjaman: jenisSetoran === 'Angsuran' && selectedLoan ? selectedLoan.idPinjaman : '',
+      jenisSetoran: 'Simpanan',
+      idPinjaman: '',
       jumlah: numericJumlah,
+      jumlahSimpanan: numericJumlah,
+      jumlahAngsuran: 0,
       metodeBayar,
       keterangan: keterangan.trim(),
     });
@@ -164,45 +223,70 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
             Lakukan pembayaran melalui Transfer SeaBank atau QRIS, lalu kirim konfirmasi Anda.
           </p>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+          <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setJenisSetoran('Gabungan');
+                setPorsiSimpanan(String(IURAN_WAJIB_PER_BULAN));
+                if (activeLoans.length > 0) {
+                  const first = activeLoans[0];
+                  const recommended =
+                    first.sisa >= 400000
+                      ? 500000
+                      : IURAN_WAJIB_PER_BULAN +
+                        Math.min(first.angsuranPerBulan || first.sisa, first.sisa);
+                  setJumlah(String(recommended));
+                }
+              }}
+              className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-[11px] font-semibold transition-colors sm:text-xs ${
+                jenisSetoran === 'Gabungan'
+                  ? 'bg-white text-[#1E5B2A] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Layers className="h-3.5 w-3.5 shrink-0" />
+              <span>Gabungan</span>
+            </button>
             <button
               type="button"
               onClick={() => {
                 setJenisSetoran('Simpanan');
                 setJumlah(String(IURAN_WAJIB_PER_BULAN));
               }}
-              className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+              className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-[11px] font-semibold transition-colors sm:text-xs ${
                 jenisSetoran === 'Simpanan'
                   ? 'bg-white text-[#1E5B2A] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Wallet className="h-3.5 w-3.5" />
-              Setor Iuran / Simpanan
+              <Wallet className="h-3.5 w-3.5 shrink-0" />
+              <span>Iuran Saja</span>
             </button>
             <button
               type="button"
               onClick={() => setJenisSetoran('Angsuran')}
-              className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+              className={`flex items-center justify-center gap-1 rounded-lg px-2 py-2 text-[11px] font-semibold transition-colors sm:text-xs ${
                 jenisSetoran === 'Angsuran'
                   ? 'bg-white text-[#1E5B2A] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <CreditCard className="h-3.5 w-3.5" />
-              Bayar Angsuran
+              <CreditCard className="h-3.5 w-3.5 shrink-0" />
+              <span>Angsuran</span>
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            {jenisSetoran === 'Angsuran' && (
+            {(jenisSetoran === 'Angsuran' || jenisSetoran === 'Gabungan') && (
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-700">
                   Pilih Pinjaman Berjalan
                 </label>
                 {activeLoans.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3.5 py-4 text-center text-xs text-slate-500">
-                    Anda tidak memiliki fasilitas pinjaman berstatus Berjalan saat ini.
+                    Anda tidak memiliki fasilitas pinjaman berstatus Berjalan saat ini. Gunakan tab{' '}
+                    <strong>Iuran Saja</strong> untuk setor simpanan bulanan.
                   </div>
                 ) : (
                   <select
@@ -210,11 +294,13 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
                     onChange={(e) => {
                       const nextId = e.target.value;
                       setSelectedLoanId(nextId);
-                      const loan = activeLoans.find((l) => l.idPinjaman === nextId);
-                      if (loan) {
-                        setJumlah(
-                          String(Math.min(loan.angsuranPerBulan || loan.sisa, loan.sisa))
-                        );
+                      if (jenisSetoran === 'Angsuran') {
+                        const loan = activeLoans.find((l) => l.idPinjaman === nextId);
+                        if (loan) {
+                          setJumlah(
+                            String(Math.min(loan.angsuranPerBulan || loan.sisa, loan.sisa))
+                          );
+                        }
                       }
                     }}
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-medium text-slate-900"
@@ -227,7 +313,7 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
                   </select>
                 )}
 
-                {selectedLoan && (
+                {selectedLoan && jenisSetoran === 'Angsuran' && (
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-[#EAF4EC]/60 px-3 py-2 text-xs">
                     <span className="text-slate-600">
                       Sisa Tagihan: <strong className="font-mono text-[#1E5B2A]">{rupiah(selectedLoan.sisa)}</strong>
@@ -264,14 +350,19 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-700">
-                Nominal Setoran (Rp)
+                {jenisSetoran === 'Gabungan'
+                  ? 'Total Uang Ditransfer Sekaligus (Rp)'
+                  : 'Nominal Setoran (Rp)'}
               </label>
               <CurrencyInput
                 required
                 value={jumlah}
                 onValueChange={(digits) => setJumlah(digits)}
-                placeholder="100.000"
-                disabled={jenisSetoran === 'Angsuran' && activeLoans.length === 0}
+                placeholder={jenisSetoran === 'Gabungan' ? '500.000' : '100.000'}
+                disabled={
+                  (jenisSetoran === 'Angsuran' || jenisSetoran === 'Gabungan') &&
+                  activeLoans.length === 0
+                }
                 className="w-full rounded-xl border border-slate-300 px-3 py-2.5 font-mono text-sm text-slate-900 disabled:bg-slate-100"
               />
               {jenisSetoran === 'Simpanan' && (
@@ -292,7 +383,98 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
                   ))}
                 </div>
               )}
+              {jenisSetoran === 'Gabungan' && activeLoans.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {[300000, 500000, 750000, 1000000].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setJumlah(String(preset))}
+                      className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-semibold transition-colors ${
+                        Number(jumlah) === preset
+                          ? 'border-[#1E5B2A] bg-[#EAF4EC] text-[#1E5B2A]'
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {rupiah(preset)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {jenisSetoran === 'Gabungan' && selectedLoan && (
+              <div className="space-y-3 rounded-2xl border border-emerald-200 bg-[#EAF4EC]/50 p-3.5">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-700">
+                    Porsi Iuran Wajib / Simpanan (Rp)
+                  </label>
+                  <CurrencyInput
+                    required
+                    value={porsiSimpanan}
+                    onValueChange={(digits) => setPorsiSimpanan(digits)}
+                    placeholder="100.000"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900"
+                  />
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {[100000, 200000, 300000].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setPorsiSimpanan(String(preset))}
+                        className={`rounded-lg border px-2 py-0.5 font-mono text-[11px] font-semibold transition-colors ${
+                          Number(porsiSimpanan) === preset
+                            ? 'border-[#1E5B2A] bg-white text-[#1E5B2A]'
+                            : 'border-slate-200 bg-white/70 text-slate-600 hover:bg-white'
+                        }`}
+                      >
+                        {rupiah(preset)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 rounded-xl border border-emerald-200/80 bg-white p-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">Masuk Iuran / Simpanan</span>
+                    <span className="font-mono font-bold text-emerald-700">
+                      {rupiah(numericPorsiSimpanan)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-600">
+                      Otomatis Masuk Angsuran ({selectedLoan.idPinjaman})
+                    </span>
+                    <span className="font-mono font-bold text-[#1E5B2A]">
+                      {rupiah(numericPorsiAngsuran)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-1.5 text-[11px] text-slate-500">
+                    <span>Sisa Pinjaman Setelah Dikonfirmasi</span>
+                    <span className="font-mono font-semibold text-slate-800">
+                      {rupiah(Math.max(selectedLoan.sisa - numericPorsiAngsuran, 0))}
+                    </span>
+                  </div>
+                </div>
+
+                {gabunganError && (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900">
+                    <p>{gabunganError}</p>
+                    {numericPorsiAngsuran > selectedLoan.sisa && numericTotal > selectedLoan.sisa && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPorsiSimpanan(String(numericTotal - selectedLoan.sisa))
+                        }
+                        className="mt-1.5 rounded-lg bg-[#1E5B2A] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#154620]"
+                      >
+                        Lunasi Pinjaman ({rupiah(selectedLoan.sisa)}) &amp; Sisa ke Simpanan ({rupiah(numericTotal - selectedLoan.sisa)})
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-slate-700">
@@ -449,13 +631,16 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
               type="submit"
               disabled={
                 Number(jumlah) <= 0 ||
-                (jenisSetoran === 'Angsuran' && !selectedLoan)
+                (jenisSetoran === 'Angsuran' && !selectedLoan) ||
+                (jenisSetoran === 'Gabungan' && Boolean(gabunganError))
               }
               className="w-full rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#154620] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {jenisSetoran === 'Simpanan'
                 ? 'Kirim Konfirmasi Setor Iuran'
-                : 'Kirim Konfirmasi Bayar Angsuran'}
+                : jenisSetoran === 'Angsuran'
+                  ? 'Kirim Konfirmasi Bayar Angsuran'
+                  : 'Kirim Konfirmasi Gabungan (1x Transfer)'}
             </button>
           </form>
         </div>
@@ -546,11 +731,20 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-bold text-slate-900">
-                        {item.jenisSetoran === 'Simpanan' ? 'Iuran / Simpanan' : 'Angsuran Pinjaman'}
+                        {item.jenisSetoran === 'Simpanan'
+                          ? 'Iuran / Simpanan'
+                          : item.jenisSetoran === 'Gabungan'
+                            ? 'Gabungan (Iuran + Angsuran)'
+                            : 'Angsuran Pinjaman'}
                       </p>
                       <p className="text-[11px] text-slate-500">
                         {formatTanggalId(item.tanggal)} · {item.metodeBayar}
                       </p>
+                      {item.jenisSetoran === 'Gabungan' && (
+                        <p className="mt-0.5 text-[11px] font-medium text-[#1E5B2A]">
+                          Simpanan {rupiah(item.jumlahSimpanan)} + Angsuran {rupiah(item.jumlahAngsuran)}
+                        </p>
+                      )}
                     </div>
                     <span
                       className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
@@ -610,8 +804,17 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
                       </td>
                       <td className="py-3 pr-3">
                         <p className="font-semibold text-slate-900">
-                          {item.jenisSetoran === 'Simpanan' ? 'Iuran / Simpanan' : 'Angsuran'}
+                          {item.jenisSetoran === 'Simpanan'
+                            ? 'Iuran / Simpanan'
+                            : item.jenisSetoran === 'Gabungan'
+                              ? 'Gabungan (Iuran + Angsuran)'
+                              : 'Angsuran'}
                         </p>
+                        {item.jenisSetoran === 'Gabungan' && (
+                          <p className="text-[11px] font-medium text-[#1E5B2A]">
+                            Simpanan {rupiah(item.jumlahSimpanan)} + Angsuran {rupiah(item.jumlahAngsuran)}
+                          </p>
+                        )}
                         {item.idPinjaman && (
                           <p className="font-mono text-[11px] text-slate-500">
                             {item.idPinjaman}
@@ -797,8 +1000,17 @@ export const KonfirmasiSetoranView: React.FC<KonfirmasiSetoranViewProps> = ({
                       <p className="truncate font-bold text-slate-900">{nama}</p>
                       <p className="text-[11px] text-slate-500">
                         {formatTanggalId(item.tanggal)} ·{' '}
-                        {item.jenisSetoran === 'Simpanan' ? 'Iuran / Simpanan' : `Angsuran (${item.idPinjaman})`}
+                        {item.jenisSetoran === 'Simpanan'
+                          ? 'Iuran / Simpanan'
+                          : item.jenisSetoran === 'Gabungan'
+                            ? `Gabungan (${item.idPinjaman})`
+                            : `Angsuran (${item.idPinjaman})`}
                       </p>
+                      {item.jenisSetoran === 'Gabungan' && (
+                        <p className="mt-0.5 text-[11px] font-semibold text-[#1E5B2A]">
+                          Simpanan {rupiah(item.jumlahSimpanan)} + Angsuran {rupiah(item.jumlahAngsuran)}
+                        </p>
+                      )}
                     </div>
                     <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-[#1E5B2A]">
                       {rupiah(item.jumlah)}
@@ -894,11 +1106,22 @@ export const KonfirmasiSetoranView: React.FC<KonfirmasiSetoranViewProps> = ({
                           className={`inline-flex rounded-lg px-2 py-0.5 text-xs font-semibold ${
                             item.jenisSetoran === 'Simpanan'
                               ? 'bg-[#EAF4EC] text-[#1E5B2A]'
-                              : 'bg-amber-50 text-amber-800'
+                              : item.jenisSetoran === 'Gabungan'
+                                ? 'bg-emerald-100 text-[#103D1B]'
+                                : 'bg-amber-50 text-amber-800'
                           }`}
                         >
-                          {item.jenisSetoran === 'Simpanan' ? 'Iuran / Simpanan' : 'Angsuran'}
+                          {item.jenisSetoran === 'Simpanan'
+                            ? 'Iuran / Simpanan'
+                            : item.jenisSetoran === 'Gabungan'
+                              ? 'Gabungan (1x Transfer)'
+                              : 'Angsuran'}
                         </span>
+                        {item.jenisSetoran === 'Gabungan' && (
+                          <p className="mt-0.5 text-[11px] font-medium text-[#1E5B2A]">
+                            Simpanan {rupiah(item.jumlahSimpanan)} + Angsuran {rupiah(item.jumlahAngsuran)}
+                          </p>
+                        )}
                         {item.idPinjaman && (
                           <p className="mt-0.5 font-mono text-[11px] text-slate-500">
                             {item.idPinjaman}

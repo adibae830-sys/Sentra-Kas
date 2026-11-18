@@ -62,6 +62,8 @@ export const STRUKTUR_SHEET: Record<string, string[]> = {
     'Keterangan',
     'Status',
     'DiprosesOleh',
+    'JumlahSimpanan',
+    'JumlahAngsuran',
   ],
 };
 
@@ -325,7 +327,7 @@ export async function loadAllFinanceDataServer(spreadsheetIdInput?: string) {
   }
 
   const rangesQuery = knownTabs
-    .map((tab) => `ranges=${encodeURIComponent(`${tab}!A1:J`)}`)
+    .map((tab) => `ranges=${encodeURIComponent(`${tab}!A1:L`)}`)
     .join('&');
 
   const batchData = (await sheetsFetch(
@@ -456,19 +458,43 @@ export async function loadAllFinanceDataServer(spreadsheetIdInput?: string) {
 
   const konfirmasiSetoran = (tabRows['KonfirmasiSetoran'] || [])
     .slice(1)
-    .map((r, idx) => ({
-      idSetoran: String(r[0] || '').trim(),
-      tanggal: String(r[1] || '').trim(),
-      idAnggota: String(r[2] || '').trim(),
-      jenisSetoran: String(r[3] || '').trim() === 'Angsuran' ? ('Angsuran' as const) : ('Simpanan' as const),
-      idPinjaman: String(r[4] || '').trim(),
-      jumlah: toNumber(r[5]),
-      metodeBayar: String(r[6] || '').trim() || 'Transfer Bank',
-      keterangan: String(r[7] || '').trim(),
-      status: String(r[8] || 'Menunggu').trim(),
-      diprosesOleh: String(r[9] || '').trim(),
-      rowIndex: idx + 2,
-    }))
+    .map((r, idx) => {
+      const rawJenis = String(r[3] || '').trim();
+      const jenisSetoran: 'Simpanan' | 'Angsuran' | 'Gabungan' =
+        rawJenis === 'Angsuran'
+          ? 'Angsuran'
+          : rawJenis === 'Gabungan'
+            ? 'Gabungan'
+            : 'Simpanan';
+      const jumlah = toNumber(r[5]);
+      const rawSimpanan = toNumber(r[10]);
+      const rawAngsuran = toNumber(r[11]);
+      return {
+        idSetoran: String(r[0] || '').trim(),
+        tanggal: String(r[1] || '').trim(),
+        idAnggota: String(r[2] || '').trim(),
+        jenisSetoran,
+        idPinjaman: String(r[4] || '').trim(),
+        jumlah,
+        metodeBayar: String(r[6] || '').trim() || 'Transfer Bank',
+        keterangan: String(r[7] || '').trim(),
+        status: String(r[8] || 'Menunggu').trim(),
+        diprosesOleh: String(r[9] || '').trim(),
+        jumlahSimpanan:
+          jenisSetoran === 'Simpanan'
+            ? rawSimpanan || jumlah
+            : jenisSetoran === 'Gabungan'
+              ? rawSimpanan
+              : 0,
+        jumlahAngsuran:
+          jenisSetoran === 'Angsuran'
+            ? rawAngsuran || jumlah
+            : jenisSetoran === 'Gabungan'
+              ? rawAngsuran
+              : 0,
+        rowIndex: idx + 2,
+      };
+    })
     .filter((item) => item.idSetoran !== '');
 
   return {
@@ -590,7 +616,7 @@ async function ensureDatabaseStructureServer(spreadsheetId: string, token: strin
   }
 
   const rangesQuery = targetTabs
-    .map((name) => `ranges=${encodeURIComponent(`${name}!A1:J1`)}`)
+    .map((name) => `ranges=${encodeURIComponent(`${name}!A1:L1`)}`)
     .join('&');
   const headerCheck = (await sheetsFetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(
@@ -836,13 +862,24 @@ export async function executePortalMutate(params: {
         Number(values[3] || 0) > 0 &&
         Number(values[4] || 0) > 0;
       const jenisSetoran = String(values[3] || '').trim();
+      const totalJumlah = Number(values[5] || 0);
+      const porsiSimpanan = Number(values[10] || 0);
+      const porsiAngsuran = Number(values[11] || 0);
+      const isGabunganValid =
+        jenisSetoran === 'Gabungan' &&
+        String(values[4] || '').trim() !== '' &&
+        porsiSimpanan > 0 &&
+        porsiAngsuran > 0 &&
+        Math.abs(porsiSimpanan + porsiAngsuran - totalJumlah) < 1;
+
       const isDepositRequest =
         sheetName === 'KonfirmasiSetoran' &&
         String(values[2] || '') === ownId &&
-        (jenisSetoran === 'Simpanan' || jenisSetoran === 'Angsuran') &&
-        Number(values[5] || 0) > 0 &&
+        totalJumlah > 0 &&
         String(values[8] || '') === 'Menunggu' &&
-        (jenisSetoran === 'Simpanan' || String(values[4] || '').trim() !== '');
+        (jenisSetoran === 'Simpanan' ||
+          (jenisSetoran === 'Angsuran' && String(values[4] || '').trim() !== '') ||
+          isGabunganValid);
 
       if (!isLoanRequest && !isDepositRequest) {
         return {
