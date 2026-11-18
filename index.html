@@ -19,6 +19,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      window.__kspDeferredPrompt = null;
+      window.__kspPwaInstalled = false;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__kspDeferredPrompt = e;
+        window.dispatchEvent(new Event('ksp-pwa-prompt-ready'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__kspDeferredPrompt = null;
+        window.__kspPwaInstalled = true;
+        window.dispatchEvent(new Event('ksp-pwa-installed'));
+      });
+    </script>
   </head>
   <body class="bg-[#F4F6F3] text-slate-900 antialiased">
     <div id="root"></div>

@@ -1,60 +1,148 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-interface BeforeInstallPromptEvent extends Event {
+export interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+declare global {
+  interface Window {
+    __kspDeferredPrompt?: BeforeInstallPromptEvent | null;
+    __kspPwaInstalled?: boolean;
+  }
+}
+
+let sharedDeferredPrompt: BeforeInstallPromptEvent | null = null;
+let sharedIsInstalled = false;
+let listenersInitialized = false;
+const subscribers = new Set<() => void>();
+
+function notifySubscribers() {
+  subscribers.forEach((cb) => cb());
+}
+
+function checkStandalone(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
+    Boolean(window.__kspPwaInstalled)
+  );
+}
+
+function ensureGlobalPwaListeners() {
+  if (typeof window === 'undefined' || listenersInitialized) return;
+  listenersInitialized = true;
+
+  if (window.__kspDeferredPrompt) {
+    sharedDeferredPrompt = window.__kspDeferredPrompt;
+  }
+  if (checkStandalone()) {
+    sharedIsInstalled = true;
+  }
+
+  const handleBeforeInstallPrompt = (e: Event) => {
+    e.preventDefault();
+    const promptEvent = e as BeforeInstallPromptEvent;
+    window.__kspDeferredPrompt = promptEvent;
+    sharedDeferredPrompt = promptEvent;
+    notifySubscribers();
+  };
+
+  const handlePromptReady = () => {
+    if (window.__kspDeferredPrompt) {
+      sharedDeferredPrompt = window.__kspDeferredPrompt;
+      notifySubscribers();
+    }
+  };
+
+  const handleAppInstalled = () => {
+    window.__kspDeferredPrompt = null;
+    window.__kspPwaInstalled = true;
+    sharedDeferredPrompt = null;
+    sharedIsInstalled = true;
+    notifySubscribers();
+  };
+
+  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  window.addEventListener('ksp-pwa-prompt-ready', handlePromptReady);
+  window.addEventListener('appinstalled', handleAppInstalled);
+  window.addEventListener('ksp-pwa-installed', handleAppInstalled);
+}
+
 export function usePWAInstall() {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+  ensureGlobalPwaListeners();
+
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(
+    () => sharedDeferredPrompt || (typeof window !== 'undefined' ? window.__kspDeferredPrompt || null : null)
+  );
+  const [isInstalled, setIsInstalled] = useState<boolean>(
+    () => sharedIsInstalled || checkStandalone()
+  );
+  const [isIOS] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+  });
+  const [isInAppBrowser] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const ua = window.navigator.userAgent;
+    const inIframe = (() => {
+      try {
+        return window.self !== window.top;
+      } catch {
+        return true;
+      }
+    })();
+    return inIframe || /FBAN|FBAV|Instagram|Line\/|WhatsApp|\bwv\b/i.test(ua);
+  });
 
   useEffect(() => {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    setIsInstalled(isStandalone);
+    ensureGlobalPwaListeners();
 
-    const ua = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(ua));
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    const sync = () => {
+      const currentPrompt =
+        sharedDeferredPrompt ||
+        (typeof window !== 'undefined' ? window.__kspDeferredPrompt || null : null);
+      setDeferredPrompt(currentPrompt);
+      setIsInstalled(sharedIsInstalled || checkStandalone());
     };
 
-    const handleAppInstalled = () => {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
+    sync();
+    subscribers.add(sync);
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      subscribers.delete(sync);
     };
   }, []);
 
-  const install = async () => {
-    if (!deferredPrompt) return false;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-      return true;
+  const install = useCallback(async () => {
+    const activePrompt =
+      sharedDeferredPrompt ||
+      (typeof window !== 'undefined' ? window.__kspDeferredPrompt || null : null);
+    if (!activePrompt) return false;
+
+    try {
+      await activePrompt.prompt();
+      const { outcome } = await activePrompt.userChoice;
+      // Chrome only allows calling prompt() once per BeforeInstallPromptEvent
+      sharedDeferredPrompt = null;
+      if (typeof window !== 'undefined') {
+        window.__kspDeferredPrompt = null;
+      }
+      if (outcome === 'accepted') {
+        sharedIsInstalled = true;
+      }
+      notifySubscribers();
+      return outcome === 'accepted';
+    } catch {
+      return false;
     }
-    return false;
-  };
+  }, []);
 
   return {
     isInstallable: Boolean(deferredPrompt),
     isInstalled,
     isIOS,
+    isInAppBrowser,
     install,
   };
 }
