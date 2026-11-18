@@ -16,6 +16,7 @@ import {
   Eye,
   EyeOff,
   FileSpreadsheet,
+  Film,
   Image as ImageIcon,
   LayoutDashboard,
   Lock,
@@ -54,6 +55,7 @@ import {
   KonfirmasiSetoranView,
   SetorAnggotaView,
 } from './components/SetorDanKonfirmasiViews';
+import { VideoPanduanModal } from './components/VideoPanduanModal';
 import {
   buildWhatsAppMutasiGroupMessage,
   computeAdminDashboard,
@@ -234,6 +236,7 @@ export default function App() {
   const [activePage, setActivePage] = useState<PageId>(() => readSavedActivePage() || 'dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickRecordOpen, setQuickRecordOpen] = useState(false);
+  const [videoPanduanOpen, setVideoPanduanOpen] = useState(false);
   const [hideBalance, setHideBalance] = useState(false);
 
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -3081,6 +3084,7 @@ export default function App() {
               dataset={dataset}
               onKonfirmasiSetoran={handleKonfirmasiSetoran}
               onTolakSetoran={handleTolakSetoran}
+              onOpenVideoPanduan={() => setVideoPanduanOpen(true)}
             />
           )}
 
@@ -3089,6 +3093,7 @@ export default function App() {
               dataset={dataset}
               idAnggota={sessionUser.idAnggota}
               onAjukanSetoran={handleAjukanSetoranAnggota}
+              onOpenVideoPanduan={() => setVideoPanduanOpen(true)}
             />
           )}
 
@@ -3401,6 +3406,30 @@ export default function App() {
                 >
                   <LogOut className="h-4 w-4" />
                   Keluar Akun (Logout)
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200/90 bg-[#EAF4EC]/65 p-5 shadow-xs sm:p-6 lg:col-span-12">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1E5B2A] text-white">
+                    <Film className="h-5 w-5 text-amber-300" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      Studio Video Presentasi · Cara Setor Anggota
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-600">
+                      Tonton pratinjau animasi 30 detik, unduh file video (MP4/WebM), dan bagikan ke Grup WhatsApp anggota.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVideoPanduanOpen(true)}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
+                >
+                  <Film className="h-4 w-4 text-amber-300" />
+                  Buka Video Presentasi
                 </button>
               </div>
 
@@ -3754,6 +3783,12 @@ export default function App() {
             : ''
         }
         onClose={() => setKwitansiModalData(null)}
+      />
+
+      <VideoPanduanModal
+        isOpen={videoPanduanOpen}
+        onClose={() => setVideoPanduanOpen(false)}
+        onNotify={showToast}
       />
 
       {waShareModal && !kwitansiModalData && (
