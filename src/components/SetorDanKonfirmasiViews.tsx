@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Building2,
   Check,
   Clock,
+  Copy,
   CreditCard,
+  Download,
   Info,
+  Maximize2,
+  QrCode,
   Search,
   Wallet,
   X,
@@ -15,6 +20,14 @@ import {
 } from '../lib/financeEngine';
 import { FinanceDataset, KonfirmasiSetoran } from '../types/finance';
 import { CurrencyInput } from './CurrencyInput';
+
+const BANK_TRANSFER_INFO = {
+  bank: 'SeaBank',
+  rekening: '901551447687',
+  atasNama: 'Adi Supriyanto',
+} as const;
+
+const QRIS_IMAGE_PATH = '/assets/aistudio/image_e0eba57e.png';
 
 interface SetorAnggotaViewProps {
   dataset: FinanceDataset;
@@ -44,8 +57,10 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
   const [jenisSetoran, setJenisSetoran] = useState<'Simpanan' | 'Angsuran'>('Simpanan');
   const [selectedLoanId, setSelectedLoanId] = useState<string>('');
   const [jumlah, setJumlah] = useState<string>(String(IURAN_WAJIB_PER_BULAN));
-  const [metodeBayar, setMetodeBayar] = useState<string>('Transfer Bank');
+  const [metodeBayar, setMetodeBayar] = useState<'Transfer Bank' | 'QRIS'>('Transfer Bank');
   const [keterangan, setKeterangan] = useState<string>('');
+  const [copiedRek, setCopiedRek] = useState(false);
+  const [qrisZoomOpen, setQrisZoomOpen] = useState(false);
 
   useEffect(() => {
     if (jenisSetoran === 'Angsuran') {
@@ -88,6 +103,27 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
     [myHistory]
   );
 
+  const handleCopyRekening = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(BANK_TRANSFER_INFO.rekening);
+      } else {
+        const temp = document.createElement('textarea');
+        temp.value = BANK_TRANSFER_INFO.rekening;
+        temp.style.position = 'fixed';
+        temp.style.opacity = '0';
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      }
+      setCopiedRek(true);
+      setTimeout(() => setCopiedRek(false), 2500);
+    } catch {
+      setCopiedRek(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numericJumlah = Number(jumlah);
@@ -125,7 +161,7 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
             Form Konfirmasi Setoran Anggota
           </h3>
           <p className="mt-1 text-xs text-slate-500">
-            Laporkan transfer iuran wajib/simpanan atau pembayaran cicilan pinjaman Anda.
+            Lakukan pembayaran melalui Transfer SeaBank atau QRIS, lalu kirim konfirmasi Anda.
           </p>
 
           <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
@@ -259,32 +295,151 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-700">
+              <label className="mb-1.5 block text-xs font-semibold text-slate-700">
                 Metode Pembayaran
               </label>
-              <select
-                value={metodeBayar}
-                onChange={(e) => setMetodeBayar(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900"
-              >
-                <option value="Transfer Bank">Transfer Bank</option>
-                <option value="QRIS">QRIS / E-Wallet</option>
-                <option value="Tunai">Tunai ke Pengurus</option>
-              </select>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setMetodeBayar('Transfer Bank')}
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all ${
+                    metodeBayar === 'Transfer Bank'
+                      ? 'border-[#1E5B2A] bg-[#EAF4EC] text-[#1E5B2A] shadow-2xs'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <Building2 className="h-4 w-4 shrink-0" />
+                  Transfer Bank
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMetodeBayar('QRIS')}
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-all ${
+                    metodeBayar === 'QRIS'
+                      ? 'border-[#1E5B2A] bg-[#EAF4EC] text-[#1E5B2A] shadow-2xs'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <QrCode className="h-4 w-4 shrink-0" />
+                  QRIS
+                </button>
+              </div>
+
+              {metodeBayar === 'Transfer Bank' ? (
+                <div className="mt-3 rounded-2xl border border-emerald-200 bg-[#F4FAF5] p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold tracking-wider text-[#1E5B2A] uppercase">
+                      Rekening Tujuan Transfer
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-bold text-[#1E5B2A] shadow-2xs">
+                      {BANK_TRANSFER_INFO.bank}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-white px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-slate-500">Nomor Rekening</p>
+                      <p className="font-mono text-lg font-bold tracking-wide text-slate-900 select-all">
+                        {BANK_TRANSFER_INFO.rekening}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyRekening}
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+                        copiedRek
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-[#1E5B2A] text-white hover:bg-[#154620]'
+                      }`}
+                    >
+                      {copiedRek ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          Tersalin
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          Salin No. Rek
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="text-slate-600">
+                      a.n. <strong className="text-slate-900">{BANK_TRANSFER_INFO.atasNama}</strong>
+                    </span>
+                    {Number(jumlah) > 0 && (
+                      <span className="font-mono font-bold text-[#1E5B2A]">
+                        Nominal: {rupiah(Number(jumlah))}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 rounded-2xl border border-emerald-200 bg-[#F4FAF5] p-4">
+                  <div className="mb-2.5 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold tracking-wider text-[#1E5B2A] uppercase">
+                      Scan QRIS KSP SENTRA
+                    </span>
+                    {Number(jumlah) > 0 && (
+                      <span className="font-mono text-xs font-bold text-[#1E5B2A]">
+                        {rupiah(Number(jumlah))}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setQrisZoomOpen(true)}
+                    className="group relative block w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-2 transition-shadow hover:shadow-md"
+                    aria-label="Perbesar gambar QRIS"
+                  >
+                    <img
+                      src={QRIS_IMAGE_PATH}
+                      alt="QRIS KSP SENTRA - KINANO GROCERY"
+                      className="mx-auto max-h-72 w-auto rounded-lg object-contain"
+                    />
+                  </button>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setQrisZoomOpen(true)}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5 text-[#1E5B2A]" />
+                      Perbesar QRIS
+                    </button>
+                    <a
+                      href={QRIS_IMAGE_PATH}
+                      download="QRIS-KSP-SENTRA.png"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1E5B2A] px-3 py-2 text-xs font-semibold text-white hover:bg-[#154620]"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Unduh QRIS
+                    </a>
+                  </div>
+                  <p className="mt-2 text-center text-[11px] text-slate-500">
+                    Scan langsung atau unduh QRIS untuk dibayar melalui aplikasi m-Banking / e-Wallet Anda.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-700">
-                Keterangan / No. Referensi Transfer
+                Keterangan / No. Referensi {metodeBayar === 'QRIS' ? 'QRIS' : 'Transfer'}
               </label>
               <input
                 type="text"
                 value={keterangan}
                 onChange={(e) => setKeterangan(e.target.value)}
                 placeholder={
-                  jenisSetoran === 'Simpanan'
-                    ? 'Contoh: Iuran bulan ini via Transfer BRI'
-                    : 'Contoh: Cicilan pinjaman via BCA a.n ...'
+                  metodeBayar === 'Transfer Bank'
+                    ? 'Contoh: Transfer dari BRI/SeaBank a.n ...'
+                    : 'Contoh: Sudah bayar QRIS via GoPay/DANA/m-Banking'
                 }
                 className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900"
               />
@@ -304,6 +459,59 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
             </button>
           </form>
         </div>
+
+        {qrisZoomOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-xs"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setQrisZoomOpen(false)}
+          >
+            <div
+              className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between bg-[#103D1B] px-4 py-3 text-white">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4 text-amber-300" />
+                  <span className="text-sm font-bold">QRIS Pembayaran KSP SENTRA</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setQrisZoomOpen(false)}
+                  className="rounded-lg p-1 text-emerald-100 hover:bg-white/15"
+                  aria-label="Tutup pratinjau QRIS"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="bg-slate-50 p-4">
+                <img
+                  src={QRIS_IMAGE_PATH}
+                  alt="QRIS KSP SENTRA - KINANO GROCERY"
+                  className="mx-auto max-h-[70vh] w-full rounded-xl border border-slate-200 bg-white object-contain"
+                />
+                <div className="mt-3 flex gap-2">
+                  <a
+                    href={QRIS_IMAGE_PATH}
+                    download="QRIS-KSP-SENTRA.png"
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#154620]"
+                  >
+                    <Download className="h-4 w-4" />
+                    Unduh Gambar QRIS
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setQrisZoomOpen(false)}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6 lg:col-span-7">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
