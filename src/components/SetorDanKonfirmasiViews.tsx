@@ -63,7 +63,6 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
   const [jumlah, setJumlah] = useState<string>(() =>
     activeLoans.length > 0 ? '500000' : String(IURAN_WAJIB_PER_BULAN)
   );
-  const [porsiSimpanan, setPorsiSimpanan] = useState<string>(String(IURAN_WAJIB_PER_BULAN));
   const [metodeBayar, setMetodeBayar] = useState<'Transfer Bank' | 'QRIS'>('Transfer Bank');
   const [keterangan, setKeterangan] = useState<string>('');
   const [copiedRek, setCopiedRek] = useState(false);
@@ -101,7 +100,7 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
   );
 
   const numericTotal = Number(jumlah) || 0;
-  const numericPorsiSimpanan = Number(porsiSimpanan) || 0;
+  const numericPorsiSimpanan = IURAN_WAJIB_PER_BULAN;
   const numericPorsiAngsuran =
     jenisSetoran === 'Gabungan' ? Math.max(numericTotal - numericPorsiSimpanan, 0) : 0;
 
@@ -109,15 +108,14 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
     if (jenisSetoran !== 'Gabungan') return null;
     if (!selectedLoan) return 'Tidak ada pinjaman aktif berstatus Berjalan.';
     if (numericTotal <= 0) return 'Total transfer harus lebih dari Rp 0.';
-    if (numericPorsiSimpanan <= 0) return 'Porsi iuran / simpanan harus lebih dari Rp 0.';
     if (numericPorsiAngsuran <= 0) {
-      return 'Total transfer harus lebih besar dari porsi iuran wajib agar ada sisa untuk angsuran.';
+      return `Total transfer harus lebih besar dari iuran wajib (${rupiah(IURAN_WAJIB_PER_BULAN)}) agar ada sisa untuk angsuran.`;
     }
     if (numericPorsiAngsuran > selectedLoan.sisa) {
       return `Porsi angsuran (${rupiah(numericPorsiAngsuran)}) melebihi sisa pinjaman (${rupiah(selectedLoan.sisa)}).`;
     }
     return null;
-  }, [jenisSetoran, selectedLoan, numericTotal, numericPorsiSimpanan, numericPorsiAngsuran]);
+  }, [jenisSetoran, selectedLoan, numericTotal, numericPorsiAngsuran]);
 
   const myHistory = useMemo(
     () =>
@@ -214,7 +212,6 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
               type="button"
               onClick={() => {
                 setJenisSetoran('Gabungan');
-                setPorsiSimpanan(String(IURAN_WAJIB_PER_BULAN));
                 if (activeLoans.length > 0) {
                   const first = activeLoans[0];
                   const recommended =
@@ -391,38 +388,9 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
 
             {jenisSetoran === 'Gabungan' && selectedLoan && (
               <div className="space-y-3 rounded-2xl border border-emerald-200 bg-[#EAF4EC]/50 p-3.5">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-700">
-                    Porsi Iuran Wajib / Simpanan (Rp)
-                  </label>
-                  <CurrencyInput
-                    required
-                    value={porsiSimpanan}
-                    onValueChange={(digits) => setPorsiSimpanan(digits)}
-                    placeholder="100.000"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900"
-                  />
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {[100000, 200000, 300000].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setPorsiSimpanan(String(preset))}
-                        className={`rounded-lg border px-2 py-0.5 font-mono text-[11px] font-semibold transition-colors ${
-                          Number(porsiSimpanan) === preset
-                            ? 'border-[#1E5B2A] bg-white text-[#1E5B2A]'
-                            : 'border-slate-200 bg-white/70 text-slate-600 hover:bg-white'
-                        }`}
-                      >
-                        {rupiah(preset)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="space-y-1.5 rounded-xl border border-emerald-200/80 bg-white p-3 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Masuk Iuran / Simpanan</span>
+                    <span className="text-slate-600">Masuk Iuran Wajib (Tetap)</span>
                     <span className="font-mono font-bold text-emerald-700">
                       {rupiah(numericPorsiSimpanan)}
                     </span>
@@ -446,15 +414,15 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
                 {gabunganError && (
                   <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900">
                     <p>{gabunganError}</p>
-                    {numericPorsiAngsuran > selectedLoan.sisa && numericTotal > selectedLoan.sisa && (
+                    {numericPorsiAngsuran > selectedLoan.sisa && (
                       <button
                         type="button"
                         onClick={() =>
-                          setPorsiSimpanan(String(numericTotal - selectedLoan.sisa))
+                          setJumlah(String(IURAN_WAJIB_PER_BULAN + selectedLoan.sisa))
                         }
                         className="mt-1.5 rounded-lg bg-[#1E5B2A] px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[#154620]"
                       >
-                        Lunasi Pinjaman ({rupiah(selectedLoan.sisa)}) &amp; Sisa ke Simpanan ({rupiah(numericTotal - selectedLoan.sisa)})
+                        Sesuaikan Total ke {rupiah(IURAN_WAJIB_PER_BULAN + selectedLoan.sisa)} (Iuran {rupiah(IURAN_WAJIB_PER_BULAN)} + Lunasi {rupiah(selectedLoan.sisa)})
                       </button>
                     )}
                   </div>
