@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { CheckCircle, MessageCircle, Pencil, Receipt, Trash2, X, XCircle } from 'lucide-react';
-import { formatNoWA, formatTanggalId, rupiah } from '../lib/financeEngine';
+import { formatNoWA, formatTanggalId, isMemberAccountActive, rupiah } from '../lib/financeEngine';
 import { Angsuran, FinanceDataset, Pinjaman, RoleType } from '../types/finance';
 import { CurrencyInput } from './CurrencyInput';
 
@@ -29,8 +29,8 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
   const [editingLoan, setEditingLoan] = useState<Pinjaman | null>(null);
 
   const activeMembers = useMemo(
-    () => dataset.anggota.filter((a) => a.status === 'Aktif'),
-    [dataset.anggota]
+    () => dataset.anggota.filter((a) => isMemberAccountActive(a, dataset.users)),
+    [dataset.anggota, dataset.users]
   );
 
   const memberMap = useMemo(() => {

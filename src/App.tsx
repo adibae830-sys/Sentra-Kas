@@ -936,6 +936,19 @@ export default function App() {
             updated.tanggal,
             updated.status,
           ]);
+          const linkedUsers = (dataset?.users || []).filter((u) => u.idAnggota === updated.id);
+          for (const u of linkedUsers) {
+            if (u.status !== updated.status) {
+              await updateRowValues(activeSpreadsheetId, token, 'Users', u.rowIndex, [
+                u.username,
+                u.password,
+                updated.nama,
+                u.role,
+                updated.status,
+                u.idAnggota,
+              ]);
+            }
+          }
         }, `Data anggota ${updated.nama} berhasil diperbarui.`),
     });
   };

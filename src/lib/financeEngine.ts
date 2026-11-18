@@ -1,10 +1,26 @@
 import {
+  Anggota,
+  AppUser,
   FinanceDataset,
   MemberSummary,
   MonthlyExpenseCategory,
   MonthlyMemberBreakdown,
   MonthlyReportData,
 } from '../types/finance';
+
+export function isMemberAccountActive(a: Anggota, users: AppUser[] = []): boolean {
+  const anggotaStatus = String(a.status || 'Aktif').trim().toLowerCase();
+  if (anggotaStatus !== 'aktif') return false;
+
+  const linkedUsers = users.filter((u) => u.idAnggota && u.idAnggota === a.id);
+  if (
+    linkedUsers.length > 0 &&
+    linkedUsers.every((u) => String(u.status || '').trim().toLowerCase() !== 'aktif')
+  ) {
+    return false;
+  }
+  return true;
+}
 
 export const IURAN_WAJIB_PER_BULAN = 100000;
 export const TARGET_IURAN_WAJIB = 2400000;
@@ -93,7 +109,7 @@ export function computeAdminDashboard(data: FinanceDataset) {
 
   return {
     anggotaTotal: data.anggota.length,
-    anggotaAktif: data.anggota.filter((a) => a.status === 'Aktif').length,
+    anggotaAktif: data.anggota.filter((a) => isMemberAccountActive(a, data.users)).length,
     masuk: totalMasuk,
     keluar: totalKeluar,
     saldo: totalMasuk - totalKeluar,
@@ -103,7 +119,9 @@ export function computeAdminDashboard(data: FinanceDataset) {
 }
 
 export function computeRingkasanAnggota(data: FinanceDataset): MemberSummary[] {
-  return data.anggota.map((a) => {
+  return data.anggota
+    .filter((a) => isMemberAccountActive(a, data.users))
+    .map((a) => {
     const totalSimpanan = data.kasMasuk
       .filter((k) => k.idAnggota === a.id && k.jenis === 'Simpanan')
       .reduce((sum, k) => sum + k.jumlah, 0);
@@ -270,7 +288,7 @@ export function computeMonthlyReport(data: FinanceDataset, periode: string): Mon
     }))
     .sort((a, b) => b.total - a.total);
 
-  const activeMembers = data.anggota.filter((a) => a.status === 'Aktif');
+  const activeMembers = data.anggota.filter((a) => isMemberAccountActive(a, data.users));
   const rekapAnggota: MonthlyMemberBreakdown[] = activeMembers.map((a) => {
     const simpananBulanIni = transaksiMasukBulan
       .filter((k) => k.idAnggota === a.id && k.jenis === 'Simpanan')

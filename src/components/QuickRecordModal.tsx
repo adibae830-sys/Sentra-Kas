@@ -6,7 +6,7 @@ import {
   FileSpreadsheet,
   X,
 } from 'lucide-react';
-import { rupiah } from '../lib/financeEngine';
+import { isMemberAccountActive, rupiah } from '../lib/financeEngine';
 import { FinanceDataset, Pinjaman } from '../types/finance';
 import { CurrencyInput } from './CurrencyInput';
 
@@ -80,8 +80,8 @@ export const QuickRecordModal: React.FC<QuickRecordModalProps> = ({
   }, [isOpen, initialTab]);
 
   const activeMembers = useMemo(
-    () => dataset.anggota.filter((a) => a.status === 'Aktif'),
-    [dataset.anggota]
+    () => dataset.anggota.filter((a) => isMemberAccountActive(a, dataset.users)),
+    [dataset.anggota, dataset.users]
   );
 
   const memberMap = useMemo(() => {

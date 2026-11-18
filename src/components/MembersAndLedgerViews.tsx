@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Pencil, Plus, Search, Trash2, X } from 'lucide-react';
-import { formatTanggalId, rupiah } from '../lib/financeEngine';
+import { formatTanggalId, isMemberAccountActive, rupiah } from '../lib/financeEngine';
 import { Anggota, FinanceDataset, KasKeluar, KasMasuk } from '../types/finance';
 import { CurrencyInput } from './CurrencyInput';
 
@@ -21,7 +21,7 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
   const [alamat, setAlamat] = useState('');
   const [nohp, setNohp] = useState('');
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'Semua' | 'Aktif' | 'Nonaktif'>('Semua');
+  const [statusFilter, setStatusFilter] = useState<'Semua' | 'Aktif' | 'Nonaktif'>('Aktif');
   const [editing, setEditing] = useState<Anggota | null>(null);
 
   const filtered = useMemo(() => {
@@ -32,10 +32,12 @@ export const DataAnggotaView: React.FC<DataAnggotaViewProps> = ({
         a.nama.toLowerCase().includes(q) ||
         a.id.toLowerCase().includes(q) ||
         a.nohp.toLowerCase().includes(q);
-      const matchStatus = statusFilter === 'Semua' || a.status === statusFilter;
+      const active = isMemberAccountActive(a, dataset.users);
+      const matchStatus =
+        statusFilter === 'Semua' || (statusFilter === 'Aktif' ? active : !active);
       return matchSearch && matchStatus;
     });
-  }, [dataset.anggota, search, statusFilter]);
+  }, [dataset.anggota, dataset.users, search, statusFilter]);
 
   const handleSubmitNew = (e: React.FormEvent) => {
     e.preventDefault();
@@ -356,8 +358,8 @@ export const KasMasukView: React.FC<KasMasukViewProps> = ({
   const [editing, setEditing] = useState<KasMasuk | null>(null);
 
   const activeMembers = useMemo(
-    () => dataset.anggota.filter((a) => a.status === 'Aktif'),
-    [dataset.anggota]
+    () => dataset.anggota.filter((a) => isMemberAccountActive(a, dataset.users)),
+    [dataset.anggota, dataset.users]
   );
 
   const memberNames = useMemo(() => {
