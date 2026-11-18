@@ -6,6 +6,10 @@ const TTS_MODEL = 'gemini-3.8-flash-lite-tts';
 // Server-side in-memory cache so repeated playback or export of standard guide clips is instant
 const ttsCache = new Map<string, { audioBase64: string; mimeType: string }>();
 
+export function isTtsConfigured(): boolean {
+  return Boolean((process.env.GEMINI_API_KEY || '').trim());
+}
+
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = (process.env.GEMINI_API_KEY || '').trim();
   if (!apiKey) return null;
@@ -86,7 +90,7 @@ export async function executeGenerateTts(input: {
       status: 503,
       body: {
         error:
-          'GEMINI_API_KEY belum tersedia di server. Tambahkan GEMINI_API_KEY di Settings > Secrets untuk suara wanita dalam video.',
+          'GEMINI_API_KEY belum tersedia di server. Tambahkan GEMINI_API_KEY di Vercel Environment Variables (atau Settings > Secrets) lalu redeploy agar suara wanita ikut terekam di file video.',
       },
     };
   }

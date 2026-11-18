@@ -6,7 +6,6 @@ import {
   Copy,
   CreditCard,
   Download,
-  Film,
   Info,
   Layers,
   Maximize2,
@@ -43,14 +42,12 @@ interface SetorAnggotaViewProps {
     metodeBayar: string;
     keterangan: string;
   }) => void;
-  onOpenVideoPanduan?: () => void;
 }
 
 export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
   dataset,
   idAnggota,
   onAjukanSetoran,
-  onOpenVideoPanduan,
 }) => {
   const activeLoans = useMemo(
     () =>
@@ -204,29 +201,17 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/80 p-4 text-xs leading-relaxed text-amber-950">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-          <div>
-            <p className="font-bold text-amber-900">
-              Menunggu Verifikasi Admin / Bendahara
-            </p>
-            <p className="mt-0.5 text-amber-800">
-              Setoran iuran bulanan maupun pembayaran angsuran yang Anda kirim di sini masuk ke antrean konfirmasi terlebih dahulu dan{' '}
-              <strong>tidak langsung mengubah saldo kas atau sisa pinjaman</strong> sebelum dikonfirmasi oleh Administrator atau Bendahara.
-            </p>
-          </div>
+      <div className="flex items-start gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/80 p-4 text-xs leading-relaxed text-amber-950">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+        <div>
+          <p className="font-bold text-amber-900">
+            Menunggu Verifikasi Admin / Bendahara
+          </p>
+          <p className="mt-0.5 text-amber-800">
+            Setoran iuran bulanan maupun pembayaran angsuran yang Anda kirim di sini masuk ke antrean konfirmasi terlebih dahulu dan{' '}
+            <strong>tidak langsung mengubah saldo kas atau sisa pinjaman</strong> sebelum dikonfirmasi oleh Administrator atau Bendahara.
+          </p>
         </div>
-        {onOpenVideoPanduan && (
-          <button
-            type="button"
-            onClick={onOpenVideoPanduan}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1E5B2A] px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
-          >
-            <Film className="h-3.5 w-3.5 text-amber-300" />
-            Lihat Video Panduan
-          </button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -877,14 +862,12 @@ interface KonfirmasiSetoranViewProps {
   dataset: FinanceDataset;
   onKonfirmasiSetoran: (item: KonfirmasiSetoran) => void;
   onTolakSetoran: (item: KonfirmasiSetoran) => void;
-  onOpenVideoPanduan?: () => void;
 }
 
 export const KonfirmasiSetoranView: React.FC<KonfirmasiSetoranViewProps> = ({
   dataset,
   onKonfirmasiSetoran,
   onTolakSetoran,
-  onOpenVideoPanduan,
 }) => {
   const [statusFilter, setStatusFilter] = useState<'Menunggu' | 'Dikonfirmasi' | 'Ditolak' | 'Semua'>('Menunggu');
   const [search, setSearch] = useState('');
@@ -934,31 +917,6 @@ export const KonfirmasiSetoranView: React.FC<KonfirmasiSetoranViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {onOpenVideoPanduan && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/90 bg-[#EAF4EC]/75 px-4 py-3.5 shadow-xs sm:px-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1E5B2A] text-white">
-              <Film className="h-4.5 w-4.5 text-amber-300" />
-            </span>
-            <div>
-              <p className="text-sm font-bold text-slate-900">
-                Video Presentasi Cara Setor Anggota (Untuk Dibagikan ke Grup WA)
-              </p>
-              <p className="text-xs text-slate-600">
-                Putar, unduh file video (MP4/WebM), dan bagikan panduan Transfer SeaBank, QRIS &amp; Gabungan ke anggota.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenVideoPanduan}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
-          >
-            <Film className="h-3.5 w-3.5 text-amber-300" />
-            Buat / Bagikan Video Panduan
-          </button>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-amber-200/90 bg-amber-50/70 p-5 shadow-xs">

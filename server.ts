@@ -10,7 +10,7 @@ import {
   executePortalRegister,
   getServiceAccountConfig,
 } from './api/_sheets.ts';
-import { executeGenerateTts } from './api/_tts.ts';
+import { executeGenerateTts, isTtsConfigured } from './api/_tts.ts';
 
 dotenv.config();
 
@@ -263,6 +263,10 @@ async function startServer() {
   app.get('/api/sheets/status', (_req, res) => {
     const cfg = getServiceAccountConfig();
     res.json({ serviceAccountConfigured: Boolean(cfg) });
+  });
+
+  app.get('/api/tts/status', (_req, res) => {
+    res.json({ configured: isTtsConfigured() });
   });
 
   app.post('/api/tts/narrate', async (req, res) => {

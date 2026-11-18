@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { CheckCircle, Film, MessageCircle, Pencil, Receipt, Trash2, X, XCircle } from 'lucide-react';
+import { CheckCircle, MessageCircle, Pencil, Receipt, Trash2, X, XCircle } from 'lucide-react';
 import { formatNoWA, formatTanggalId, isMemberAccountActive, rupiah } from '../lib/financeEngine';
 import { Angsuran, FinanceDataset, Pinjaman, RoleType } from '../types/finance';
 import { CurrencyInput } from './CurrencyInput';
@@ -12,7 +12,6 @@ interface PinjamanAndAccViewProps {
   onTolakPinjaman: (pinjaman: Pinjaman) => void;
   onUpdatePinjaman: (pinjaman: Pinjaman) => void;
   onDeletePinjaman: (pinjaman: Pinjaman) => void;
-  onOpenVideoPanduanPinjaman?: () => void;
 }
 
 export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
@@ -23,7 +22,6 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
   onTolakPinjaman,
   onUpdatePinjaman,
   onDeletePinjaman,
-  onOpenVideoPanduanPinjaman,
 }) => {
   const [idAnggota, setIdAnggota] = useState('');
   const [jumlah, setJumlah] = useState('');
@@ -62,31 +60,6 @@ export const PinjamanAndAccView: React.FC<PinjamanAndAccViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {onOpenVideoPanduanPinjaman && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/90 bg-[#EAF4EC]/75 px-4 py-3.5 shadow-xs sm:px-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1E5B2A] text-white">
-              <Film className="h-4.5 w-4.5 text-amber-300" />
-            </span>
-            <div>
-              <p className="text-sm font-bold text-slate-900">
-                Video Presentasi Pengajuan Pinjaman (Bersuara Panduan Wanita)
-              </p>
-              <p className="text-xs text-slate-600">
-                Putar, unduh video panduan cara mengajukan pinjaman &amp; bagikan ke Grup WA anggota.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenVideoPanduanPinjaman}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
-          >
-            <Film className="h-3.5 w-3.5 text-amber-300" />
-            Buat / Bagikan Video Pinjaman
-          </button>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-5">

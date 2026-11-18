@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 
-export type VideoTopic = 'setor' | 'pinjaman';
+export type VideoTopic = 'setor' | 'pinjaman' | 'instal';
 
 interface VideoPanduanModalProps {
   isOpen: boolean;
@@ -138,11 +138,62 @@ const PINJAMAN_SCENES: BaseSceneDef[] = [
   },
 ];
 
+const INSTAL_SCENES: BaseSceneDef[] = [
+  {
+    id: 0,
+    title: 'Intro Pasang Aplikasi',
+    defaultDurationSec: 5.8,
+    narrationText:
+      'Halo Bapak dan Ibu anggota KSP SENTRA. Berikut panduan mudah memasang aplikasi KSP SENTRA ke layar utama HP Android, iPhone, atau komputer.',
+  },
+  {
+    id: 1,
+    title: '1. Buka di Chrome / Safari',
+    defaultDurationSec: 6.2,
+    narrationText:
+      'Pertama, buka tautan aplikasi KSP SENTRA melalui browser Chrome di HP Android atau Safari di iPhone.',
+  },
+  {
+    id: 2,
+    title: '2. Klik Pasang / Install',
+    defaultDurationSec: 6.6,
+    narrationText:
+      'Kedua, di bagian atas aplikasi tersedia tombol Install Aplikasi atau Pasang di HP. Ketuk tombol tersebut untuk langsung memasang.',
+  },
+  {
+    id: 3,
+    title: '3. Menu Titik Tiga (Android)',
+    defaultDurationSec: 7.0,
+    narrationText:
+      'Jika tombol belum muncul di HP Android, ketuk ikon titik tiga di pojok kanan atas Chrome, lalu pilih Tambahkan ke layar utama atau Instal aplikasi.',
+  },
+  {
+    id: 4,
+    title: '4. Layar Utama (iPhone)',
+    defaultDurationSec: 7.0,
+    narrationText:
+      'Untuk pengguna iPhone di Safari, ketuk ikon Bagikan di bilah bawah layar, lalu pilih Tambahkan ke Layar Utama dan ketuk Tambah.',
+  },
+  {
+    id: 5,
+    title: '5. Siap Buka Sekali Ketuk',
+    defaultDurationSec: 6.8,
+    narrationText:
+      'Selesai! Ikon KSP SENTRA kini tampil di layar utama HP Anda, ringan tanpa perlu unduh dari Play Store dan siap dibuka sekali ketuk.',
+  },
+];
+
+function getScenesForTopic(topic: VideoTopic): BaseSceneDef[] {
+  if (topic === 'pinjaman') return PINJAMAN_SCENES;
+  if (topic === 'instal') return INSTAL_SCENES;
+  return SETOR_SCENES;
+}
+
 function buildTimeline(
   topic: VideoTopic,
   voiceDurations: Record<number, number>
 ): { scenes: TimelineScene[]; totalDurationSec: number } {
-  const baseList = topic === 'setor' ? SETOR_SCENES : PINJAMAN_SCENES;
+  const baseList = getScenesForTopic(topic);
   let cursor = 0;
   const scenes: TimelineScene[] = baseList.map((b) => {
     const clipDur = voiceDurations[b.id];
@@ -1659,6 +1710,628 @@ function renderPinjamanFrame(
   );
 }
 
+function renderInstalFrame(
+  ctx: CanvasRenderingContext2D,
+  timeSec: number,
+  scenes: TimelineScene[],
+  totalDurationSec: number,
+  logoImg: HTMLImageElement | null
+) {
+  const W = CANVAS_WIDTH;
+  const foundIdx = scenes.findIndex((s) => timeSec >= s.startSec && timeSec < s.endSec);
+  const sceneIdx = foundIdx >= 0 ? foundIdx : scenes.length - 1;
+  const currentScene = scenes[sceneIdx];
+  const localT = Math.max(0, timeSec - currentScene.startSec);
+  const dur = currentScene.durationSec;
+  const enter = easeOutCubic(localT / 0.55);
+
+  if (sceneIdx === 0) {
+    drawBackground(ctx, timeSec, true);
+
+    const logoScale = 0.88 + 0.12 * enter;
+    const logoSize = 200 * logoScale;
+    const lx = W / 2 - logoSize / 2;
+    const ly = 136 + (1 - enter) * 24;
+
+    ctx.save();
+    ctx.globalAlpha = enter;
+    drawRoundedRect(ctx, lx - 12, ly - 12, logoSize + 24, logoSize + 24, 38);
+    ctx.fillStyle = '#F7F5EE';
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#FCD34D';
+    ctx.stroke();
+
+    drawRoundedRect(ctx, lx, ly, logoSize, logoSize, 28);
+    ctx.clip();
+    if (logoImg) {
+      ctx.drawImage(logoImg, lx, ly, logoSize, logoSize);
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = easeOutCubic((localT - 0.3) / 0.55);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FCD34D';
+    ctx.font = `800 21px ${FONT_SANS}`;
+    ctx.fillText('VIDEO PANDUAN ANGGOTA', W / 2, 405);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 44px ${FONT_SANS}`;
+    wrapText(ctx, 'Cara Instal Aplikasi di HP & Desktop', W / 2, 470, W - 96, 56);
+
+    ctx.fillStyle = '#D1FAE5';
+    ctx.font = `500 23px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Pasang KSP SENTRA ke layar utama HP Android, iPhone, atau komputer dengan mudah.',
+      W / 2,
+      608,
+      W - 110,
+      33
+    );
+    ctx.restore();
+
+    const pills = [
+      '✓ Tanpa Perlu Play Store / App Store',
+      '✓ Bisa di Android, iPhone & Komputer',
+      '✓ Ringan & Siap Dibuka Sekali Ketuk',
+    ];
+    pills.forEach((p, idx) => {
+      const pAnim = easeOutCubic((localT - 0.75 - idx * 0.25) / 0.45);
+      ctx.save();
+      ctx.globalAlpha = pAnim;
+      const py = 740 + idx * 78 + (1 - pAnim) * 16;
+      drawRoundedRect(ctx, 90, py, W - 180, 56, 28);
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(252, 211, 77, 0.48)';
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `700 21px ${FONT_SANS}`;
+      ctx.fillText(p, W / 2, py + 36);
+      ctx.restore();
+    });
+
+    drawCaptionOverlay(ctx, currentScene.narrationText, true);
+    drawFooterProgress(
+      ctx,
+      timeSec,
+      totalDurationSec,
+      sceneIdx,
+      scenes.length,
+      'Panduan Instal Aplikasi',
+      true
+    );
+    return;
+  }
+
+  drawBackground(ctx, timeSec, false);
+  const stepTags = ['', 'LANGKAH 1', 'LANGKAH 2', 'LANGKAH 3', 'LANGKAH 4', 'SELESAI'];
+  drawHeaderBrand(ctx, logoImg, stepTags[sceneIdx] || 'PANDUAN');
+
+  if (sceneIdx === 1) {
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `800 35px ${FONT_SANS}`;
+    wrapText(ctx, 'Buka Tautan di Browser Utama', W / 2, 236, W - 90, 44);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = `500 20px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Gunakan Google Chrome (Android/PC) atau Safari (iPhone) lalu buka alamat aplikasi.',
+      W / 2,
+      328,
+      W - 96,
+      28
+    );
+    ctx.restore();
+
+    const cx = 64;
+    const cy = 412 + (1 - enter) * 18;
+    const cw = W - 128;
+    drawRoundedRect(ctx, cx, cy, cw, 610, 30);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#1E293B';
+    ctx.stroke();
+
+    // Browser address bar
+    drawRoundedRect(ctx, cx + 22, cy + 26, cw - 44, 62, 18);
+    ctx.fillStyle = '#F1F5F9';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1E5B2A';
+    ctx.font = `800 18px ${FONT_SANS}`;
+    ctx.fillText('🔒', cx + 40, cy + 63);
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `700 20px ${FONT_MONO}`;
+    ctx.fillText('sentra-kas.vercel.app', cx + 76, cy + 64);
+
+    // App preview inside browser
+    drawRoundedRect(ctx, cx + 22, cy + 108, cw - 44, 150, 20);
+    ctx.fillStyle = '#103D1B';
+    ctx.fill();
+    if (logoImg) {
+      ctx.save();
+      drawRoundedRect(ctx, cx + 44, cy + 140, 84, 84, 18);
+      ctx.clip();
+      ctx.drawImage(logoImg, cx + 44, cy + 140, 84, 84);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#FCD34D';
+    ctx.font = `800 16px ${FONT_SANS}`;
+    ctx.fillText('APLIKASI KEUANGAN KOPERASI', cx + 146, cy + 168);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 28px ${FONT_SANS}`;
+    ctx.fillText('KSP SENTRA', cx + 146, cy + 206);
+    ctx.fillStyle = '#D1FAE5';
+    ctx.font = `500 16px ${FONT_SANS}`;
+    ctx.fillText('Bersama Membangun Umat', cx + 146, cy + 234);
+
+    // Recommended browsers
+    const browsers = [
+      {
+        title: 'HP Android & Laptop/PC',
+        sub: 'Buka dengan Google Chrome / Microsoft Edge',
+        bg: '#EAF4EC',
+        border: '#86EFAC',
+        badge: 'CHROME',
+        color: '#1E5B2A',
+      },
+      {
+        title: 'iPhone & iPad (iOS)',
+        sub: 'Buka dengan browser bawaan Safari',
+        bg: '#EFF6FF',
+        border: '#93C5FD',
+        badge: 'SAFARI',
+        color: '#1D4ED8',
+      },
+    ];
+    browsers.forEach((b, idx) => {
+      const a = easeOutCubic((localT - 0.5 - idx * 0.35) / 0.5);
+      ctx.save();
+      ctx.globalAlpha = a;
+      const by = cy + 286 + idx * 146;
+      drawRoundedRect(ctx, cx + 24, by, cw - 48, 126, 20);
+      ctx.fillStyle = b.bg;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = b.border;
+      ctx.stroke();
+
+      drawRoundedRect(ctx, cx + 44, by + 30, 108, 40, 12);
+      ctx.fillStyle = b.color;
+      ctx.fill();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `800 16px ${FONT_SANS}`;
+      ctx.fillText(b.badge, cx + 98, by + 56);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#0F172A';
+      ctx.font = `800 22px ${FONT_SANS}`;
+      ctx.fillText(b.title, cx + 170, by + 54);
+      ctx.fillStyle = '#475569';
+      ctx.font = `500 17px ${FONT_SANS}`;
+      wrapText(ctx, b.sub, cx + 170, by + 84, cw - 230, 23, 'left');
+      ctx.restore();
+    });
+  } else if (sceneIdx === 2) {
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `800 35px ${FONT_SANS}`;
+    wrapText(ctx, 'Ketuk Tombol Install / Pasang di Atas', W / 2, 236, W - 90, 44);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = `500 20px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Di bagian atas aplikasi sudah tersedia tombol pintasan untuk memasang aplikasi.',
+      W / 2,
+      328,
+      W - 96,
+      28
+    );
+    ctx.restore();
+
+    const cx = 56;
+    const cy = 412 + (1 - enter) * 18;
+    const cw = W - 112;
+    drawRoundedRect(ctx, cx, cy, cw, 620, 28);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.stroke();
+
+    // App top header simulation
+    drawRoundedRect(ctx, cx + 22, cy + 26, cw - 44, 118, 22);
+    ctx.fillStyle = '#103D1B';
+    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 22px ${FONT_SANS}`;
+    ctx.fillText('KSP SENTRA', cx + 44, cy + 72);
+    ctx.fillStyle = '#D1FAE5';
+    ctx.font = `500 16px ${FONT_SANS}`;
+    ctx.fillText('Tampilan Header Aplikasi', cx + 44, cy + 102);
+
+    // Highlighted install button
+    const pulse = 0.5 + 0.5 * Math.sin(localT * 6);
+    const btnX = cx + cw - 290;
+    const btnY = cy + 54;
+    drawRoundedRect(ctx, btnX, btnY, 246, 56, 16);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 3 + pulse * 3;
+    ctx.strokeStyle = '#FCD34D';
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1E5B2A';
+    ctx.font = `800 18px ${FONT_SANS}`;
+    ctx.fillText('📱 Pasang di HP / PC', btnX + 123, btnY + 34);
+
+    // Prompt preview card below
+    const promptPhase = localT > dur * 0.4;
+    const pAnim = easeOutCubic((localT - 0.55) / 0.6);
+    ctx.save();
+    ctx.globalAlpha = pAnim;
+    drawRoundedRect(ctx, cx + 32, cy + 180, cw - 64, 246, 24);
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#86EFAC';
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `800 23px ${FONT_SANS}`;
+    ctx.fillText('Instal aplikasi KSP SENTRA?', cx + 60, cy + 230);
+    ctx.fillStyle = '#475569';
+    ctx.font = `500 18px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Tekan "Install" atau "Pasang" saat dialog konfirmasi browser muncul di layar.',
+      cx + 60,
+      268 + cy,
+      cw - 120,
+      27,
+      'left'
+    );
+
+    drawRoundedRect(ctx, cx + 60, cy + 344, cw - 120, 56, 15);
+    ctx.fillStyle = promptPhase ? '#059669' : '#1E5B2A';
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 20px ${FONT_SANS}`;
+    ctx.fillText(promptPhase ? '✓ Sedang Memasang...' : 'Install Aplikasi', W / 2, cy + 379);
+    ctx.restore();
+
+    drawRoundedRect(ctx, cx + 32, cy + 454, cw - 64, 134, 20);
+    ctx.fillStyle = '#FFFBEB';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FCD34D';
+    ctx.stroke();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#92400E';
+    ctx.font = `800 19px ${FONT_SANS}`;
+    ctx.fillText('Tips Jika Tombol Install Belum Muncul:', cx + 56, cy + 494);
+    ctx.fillStyle = '#78350F';
+    ctx.font = `500 17px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Ikuti langkah menu titik tiga Chrome (Android) atau tombol Bagikan Safari (iPhone) di babak berikutnya.',
+      cx + 56,
+      cy + 526,
+      cw - 112,
+      25,
+      'left'
+    );
+  } else if (sceneIdx === 3) {
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `800 35px ${FONT_SANS}`;
+    wrapText(ctx, 'Cara Manual di Chrome (Android)', W / 2, 236, W - 90, 44);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = `500 20px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Ketuk ikon titik tiga (⋮) di pojok kanan atas browser Google Chrome.',
+      W / 2,
+      328,
+      W - 96,
+      28
+    );
+    ctx.restore();
+
+    const cx = 56;
+    const cy = 412 + (1 - enter) * 18;
+    const cw = W - 112;
+    drawRoundedRect(ctx, cx, cy, cw, 620, 28);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.stroke();
+
+    // Top Chrome bar with ⋮
+    drawRoundedRect(ctx, cx + 22, cy + 22, cw - 44, 72, 18);
+    ctx.fillStyle = '#F1F5F9';
+    ctx.fill();
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#334155';
+    ctx.font = `700 19px ${FONT_MONO}`;
+    ctx.fillText('sentra-kas.vercel.app', cx + 44, cy + 65);
+
+    const pulse = 0.5 + 0.5 * Math.sin(localT * 6);
+    drawRoundedRect(ctx, cx + cw - 86, cy + 32, 50, 52, 14);
+    ctx.fillStyle = '#1E5B2A';
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 28px ${FONT_SANS}`;
+    ctx.fillText('⋮', cx + cw - 61, cy + 68);
+
+    // Dropdown menu mockup
+    drawRoundedRect(ctx, cx + 110, cy + 106, cw - 132, 340, 22);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#94A3B8';
+    ctx.stroke();
+
+    const items = [
+      { label: 'Tab baru', highlight: false },
+      { label: 'Bagikan halaman...', highlight: false },
+      { label: 'Tambahkan ke layar utama / Instal', highlight: true },
+      { label: 'Situs desktop', highlight: false },
+    ];
+    items.forEach((it, idx) => {
+      const iy = cy + 128 + idx * 76;
+      if (it.highlight) {
+        drawRoundedRect(ctx, cx + 126, iy, cw - 164, 62, 16);
+        ctx.fillStyle = '#EAF4EC';
+        ctx.fill();
+        ctx.lineWidth = 2.5 + pulse * 2;
+        ctx.strokeStyle = '#1E5B2A';
+        ctx.stroke();
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = it.highlight ? '#1E5B2A' : '#475569';
+      ctx.font = `${it.highlight ? '800' : '600'} 20px ${FONT_SANS}`;
+      ctx.fillText(it.highlight ? `📲 ${it.label}` : it.label, cx + 148, iy + 39);
+    });
+
+    const confirmAnim = easeOutCubic((localT - 1.1) / 0.5);
+    ctx.save();
+    ctx.globalAlpha = confirmAnim;
+    drawRoundedRect(ctx, cx + 32, cy + 476, cw - 64, 114, 20);
+    ctx.fillStyle = '#EAF4EC';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#86EFAC';
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1E5B2A';
+    ctx.font = `800 22px ${FONT_SANS}`;
+    ctx.fillText('Lalu Ketuk "Instal" atau "Tambahkan"', W / 2, cy + 522);
+    ctx.fillStyle = '#334155';
+    ctx.font = `500 18px ${FONT_SANS}`;
+    ctx.fillText('Ikon KSP SENTRA langsung muncul di beranda Android', W / 2, cy + 558);
+    ctx.restore();
+  } else if (sceneIdx === 4) {
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `800 35px ${FONT_SANS}`;
+    wrapText(ctx, 'Cara Pasang di Safari (iPhone / iPad)', W / 2, 236, W - 90, 44);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = `500 20px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Buka aplikasi di browser Safari, lalu ketuk tombol Bagikan (Share) di bawah layar.',
+      W / 2,
+      328,
+      W - 96,
+      28
+    );
+    ctx.restore();
+
+    const cx = 56;
+    const cy = 412 + (1 - enter) * 18;
+    const cw = W - 112;
+    drawRoundedRect(ctx, cx, cy, cw, 620, 28);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.stroke();
+
+    const stepsIOS = [
+      {
+        num: '1',
+        title: 'Ketuk Ikon Bagikan (Share ↑)',
+        desc: 'Ada di bilah menu bagian tengah bawah browser Safari.',
+        bg: '#EFF6FF',
+        border: '#93C5FD',
+        accent: '#1D4ED8',
+        delay: 0.1,
+      },
+      {
+        num: '2',
+        title: 'Pilih "Tambahkan ke Layar Utama"',
+        desc: 'Gulir menu ke bawah sampai menemukan "Add to Home Screen".',
+        bg: '#EAF4EC',
+        border: '#86EFAC',
+        accent: '#1E5B2A',
+        delay: 0.65,
+      },
+      {
+        num: '3',
+        title: 'Ketuk "Tambah" di Pojok Kanan Atas',
+        desc: 'Nama aplikasi KSP SENTRA otomatis terisi dan langsung terpasang.',
+        bg: '#ECFDF5',
+        border: '#34D399',
+        accent: '#047857',
+        delay: 1.2,
+      },
+    ];
+
+    stepsIOS.forEach((c, idx) => {
+      const a = easeOutCubic((localT - c.delay) / 0.55);
+      ctx.save();
+      ctx.globalAlpha = a;
+      const y = cy + 32 + idx * 184 + (1 - a) * 16;
+      drawRoundedRect(ctx, cx + 28, y, cw - 56, 158, 22);
+      ctx.fillStyle = c.bg;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = c.border;
+      ctx.stroke();
+
+      drawRoundedRect(ctx, cx + 50, y + 46, 64, 64, 18);
+      ctx.fillStyle = c.accent;
+      ctx.fill();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `800 28px ${FONT_SANS}`;
+      ctx.fillText(c.num, cx + 82, y + 89);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#0F172A';
+      ctx.font = `800 22px ${FONT_SANS}`;
+      ctx.fillText(c.title, cx + 134, y + 66);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = `500 18px ${FONT_SANS}`;
+      wrapText(ctx, c.desc, cx + 134, y + 102, cw - 210, 26, 'left');
+      ctx.restore();
+    });
+  } else {
+    ctx.save();
+    ctx.globalAlpha = enter;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#0F172A';
+    ctx.font = `800 35px ${FONT_SANS}`;
+    wrapText(ctx, 'Aplikasi Siap Dibuka Sekali Ketuk!', W / 2, 236, W - 90, 44);
+
+    ctx.fillStyle = '#475569';
+    ctx.font = `500 20px ${FONT_SANS}`;
+    wrapText(
+      ctx,
+      'Ikon KSP SENTRA tampil rapi di layar utama layaknya aplikasi Play Store.',
+      W / 2,
+      328,
+      W - 96,
+      28
+    );
+    ctx.restore();
+
+    // Home screen showcase
+    const hx = 120;
+    const hy = 412 + (1 - enter) * 18;
+    const hw = W - 240;
+    drawRoundedRect(ctx, hx, hy, hw, 480, 38);
+    ctx.fillStyle = '#0F2916';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#1E293B';
+    ctx.stroke();
+
+    // Wallpaper glow
+    ctx.save();
+    ctx.fillStyle = 'rgba(252, 211, 77, 0.12)';
+    ctx.beginPath();
+    ctx.arc(W / 2, hy + 190, 120, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Mock icons row + highlighted KSP SENTRA icon
+    const iconSize = 112;
+    const ix = W / 2 - iconSize / 2;
+    const iy = hy + 116;
+    const pulse = 0.5 + 0.5 * Math.sin(localT * 5);
+
+    ctx.save();
+    drawRoundedRect(ctx, ix - 10, iy - 10, iconSize + 20, iconSize + 20, 30);
+    ctx.fillStyle = '#F7F5EE';
+    ctx.fill();
+    ctx.lineWidth = 3 + pulse * 3;
+    ctx.strokeStyle = '#FCD34D';
+    ctx.stroke();
+
+    drawRoundedRect(ctx, ix, iy, iconSize, iconSize, 22);
+    ctx.clip();
+    if (logoImg) {
+      ctx.drawImage(logoImg, ix, iy, iconSize, iconSize);
+    }
+    ctx.restore();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `800 22px ${FONT_SANS}`;
+    ctx.fillText('KSP SENTRA', W / 2, iy + iconSize + 44);
+
+    // Benefits badges inside phone screen
+    const perks = ['✓ Buka Layar Penuh', '✓ Hemat Kuota & Memori'];
+    perks.forEach((pk, idx) => {
+      const py = hy + 318 + idx * 58;
+      drawRoundedRect(ctx, hx + 48, py, hw - 96, 44, 14);
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fill();
+      ctx.fillStyle = '#D1FAE5';
+      ctx.font = `700 18px ${FONT_SANS}`;
+      ctx.fillText(pk, W / 2, py + 29);
+    });
+
+    const ctaAnim = easeOutCubic((localT - 0.8) / 0.5);
+    ctx.save();
+    ctx.globalAlpha = ctaAnim;
+    drawRoundedRect(ctx, 76, 922, W - 152, 92, 22);
+    ctx.fillStyle = '#103D1B';
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FCD34D';
+    ctx.font = `800 21px ${FONT_SANS}`;
+    ctx.fillText('KSP SENTRA · BERSAMA MEMBANGUN UMAT', W / 2, 962);
+    ctx.fillStyle = '#D1FAE5';
+    ctx.font = `600 18px ${FONT_SANS}`;
+    ctx.fillText('Akses Cepat Saldo, Setoran & Pinjaman dari HP', W / 2, 993);
+    ctx.restore();
+  }
+
+  drawCaptionOverlay(ctx, currentScene.narrationText, false);
+  drawFooterProgress(
+    ctx,
+    timeSec,
+    totalDurationSec,
+    sceneIdx,
+    scenes.length,
+    'Panduan Instal Aplikasi',
+    false
+  );
+}
+
 function renderVideoFrame(
   ctx: CanvasRenderingContext2D,
   topic: VideoTopic,
@@ -1670,8 +2343,10 @@ function renderVideoFrame(
 ) {
   if (topic === 'setor') {
     renderSetorFrame(ctx, timeSec, scenes, totalDurationSec, logoImg, qrisImg);
-  } else {
+  } else if (topic === 'pinjaman') {
     renderPinjamanFrame(ctx, timeSec, scenes, totalDurationSec, logoImg);
+  } else {
+    renderInstalFrame(ctx, timeSec, scenes, totalDurationSec, logoImg);
   }
 }
 
@@ -1793,12 +2468,14 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
   >({
     setor: {},
     pinjaman: {},
+    instal: {},
   });
   const [voiceLoading, setVoiceLoading] = useState<{
     active: boolean;
     done: number;
     total: number;
   }>({ active: false, done: 0, total: 6 });
+  const [serverTtsAvailable, setServerTtsAvailable] = useState<boolean | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const [recordedVideo, setRecordedVideo] = useState<{
@@ -1815,7 +2492,7 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
   );
 
   const voiceReadyForTopic = useMemo(() => {
-    const baseList = topic === 'setor' ? SETOR_SCENES : PINJAMAN_SCENES;
+    const baseList = getScenesForTopic(topic);
     return baseList.every((s) => voiceRawCacheRef.current.has(`${topic}:${s.id}`));
   }, [topic, voiceDurationsByTopic]);
 
@@ -1832,6 +2509,21 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
         '4. Setelah disetujui & dicairkan pengurus, status berubah menjadi *Berjalan* dan cicilan dibayar lewat menu *Setor*.',
         '',
         'Terima kasih atas kerja sama seluruh anggota KSP SENTRA.',
+      ].join('\n');
+    }
+
+    if (topic === 'instal') {
+      return [
+        '*PANDUAN CARA PASANG APLIKASI KSP SENTRA DI HP & LAPTOP*',
+        '',
+        'Assalamu’alaikum / Selamat sejahtera Bapak/Ibu anggota KSP SENTRA.',
+        'Agar lebih mudah mengecek saldo, setor iuran, atau ajukan pinjaman sekali ketuk tanpa Play Store, pasang aplikasinya ke layar utama:',
+        '1. Buka link aplikasi lewat *Google Chrome* (Android/Laptop) atau *Safari* (iPhone).',
+        '2. Ketuk tombol *Install Aplikasi* / *Pasang di HP* di bagian atas layar.',
+        '3. Atau di Android Chrome: ketuk ikon *titik tiga (⋮)* → pilih *Tambahkan ke layar utama / Instal aplikasi*.',
+        '4. Di iPhone Safari: ketuk ikon *Bagikan (Share)* di bawah → pilih *Tambahkan ke Layar Utama*.',
+        '',
+        'Setelah terpasang, ikon KSP SENTRA langsung muncul di layar utama HP Anda.',
       ].join('\n');
     }
 
@@ -1864,8 +2556,8 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
   }, []);
 
   const ensureVoiceClipsForTopic = useCallback(
-    async (targetTopic: VideoTopic): Promise<boolean> => {
-      const baseList = targetTopic === 'setor' ? SETOR_SCENES : PINJAMAN_SCENES;
+    async (targetTopic: VideoTopic, forceServerCheck = false): Promise<boolean> => {
+      const baseList = getScenesForTopic(targetTopic);
       const missing = baseList.filter(
         (s) => !voiceRawCacheRef.current.has(`${targetTopic}:${s.id}`)
       );
@@ -1873,6 +2565,10 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
       if (missing.length === 0) {
         setVoiceError(null);
         return true;
+      }
+
+      if (serverTtsAvailable === false && !forceServerCheck) {
+        return false;
       }
 
       setVoiceError(null);
@@ -1884,6 +2580,20 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
 
       let tempCtx: AudioContext | null = null;
       try {
+        // Check status cleanly first so unconfigured servers never spam 503 in DevTools
+        const statusRes = await fetch('/api/tts/status');
+        if (statusRes.ok) {
+          const statusData = (await statusRes.json().catch(() => ({}))) as {
+            configured?: boolean;
+          };
+          const configured = Boolean(statusData.configured);
+          setServerTtsAvailable(configured);
+          if (!configured) {
+            setVoiceLoading({ active: false, done: 0, total: baseList.length });
+            return false;
+          }
+        }
+
         if (typeof AudioContext !== 'undefined') {
           tempCtx = new AudioContext();
         }
@@ -2102,7 +2812,7 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
           // Ignore autoplay restriction before user gesture
         }
       })();
-    } else if (voiceError) {
+    } else if (serverTtsAvailable === false || voiceError) {
       speakBrowserFemaleFallback(activeScene.narrationText);
     }
   }, [
@@ -2113,6 +2823,7 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
     topic,
     activeSceneIdx,
     scenes,
+    serverTtsAvailable,
     voiceError,
     stopPreviewVoice,
     voiceReadyForTopic,
@@ -2154,7 +2865,7 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
       const ok = await ensureVoiceClipsForTopic(topic);
       if (ok) {
         const durationsMap: Record<number, number> = {};
-        const baseList = topic === 'setor' ? SETOR_SCENES : PINJAMAN_SCENES;
+        const baseList = getScenesForTopic(topic);
         baseList.forEach((s) => {
           const item = voiceRawCacheRef.current.get(`${topic}:${s.id}`);
           if (item) durationsMap[s.id] = item.durationSec;
@@ -2228,7 +2939,9 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
     const targetFilename =
       topic === 'pinjaman'
         ? `Panduan-Pinjaman-KSP-SENTRA.${ext}`
-        : `Panduan-Setor-KSP-SENTRA.${ext}`;
+        : topic === 'instal'
+          ? `Panduan-Instal-Aplikasi-KSP-SENTRA.${ext}`
+          : `Panduan-Setor-KSP-SENTRA.${ext}`;
 
     recorder.ondataavailable = (e) => {
       if (e.data && e.data.size > 0) chunks.push(e.data);
@@ -2370,30 +3083,42 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
 
         {/* Topic Switcher Bar */}
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-[#F8FAF8] px-5 py-2.5">
-          <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
+          <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
             <button
               type="button"
               disabled={isRecording}
               onClick={() => handleSelectTopic('setor')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${
                 topic === 'setor'
                   ? 'bg-[#1E5B2A] text-white shadow-xs'
                   : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              1. Panduan Cara Setor &amp; Angsuran
+              1. Cara Setor &amp; Angsuran
             </button>
             <button
               type="button"
               disabled={isRecording}
               onClick={() => handleSelectTopic('pinjaman')}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${
                 topic === 'pinjaman'
                   ? 'bg-[#1E5B2A] text-white shadow-xs'
                   : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              2. Panduan Pengajuan Pinjaman
+              2. Pengajuan Pinjaman
+            </button>
+            <button
+              type="button"
+              disabled={isRecording}
+              onClick={() => handleSelectTopic('instal')}
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-colors disabled:opacity-60 ${
+                topic === 'instal'
+                  ? 'bg-[#1E5B2A] text-white shadow-xs'
+                  : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              3. Instal Aplikasi
             </button>
           </div>
 
@@ -2517,13 +3242,25 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
                 </p>
               </div>
 
+              {serverTtsAvailable === false && !voiceReadyForTopic && (
+                <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-3 text-xs leading-relaxed text-slate-700">
+                  <p className="font-bold text-slate-900">
+                    Pratinjau memakai Suara Wanita Browser (Vercel belum terpasang GEMINI_API_KEY)
+                  </p>
+                  <p className="mt-1 text-slate-600">
+                    Saat memutar di sini, suara wanita otomatis dibacakan oleh browser. Jika ingin suara wanita ikut terekam ke dalam file unduhan <code className="font-mono">.mp4/.webm</code>, tambahkan <code className="font-mono">GEMINI_API_KEY</code> di{' '}
+                    <strong>Vercel → Settings → Environment Variables</strong> lalu redeploy (atau unduh video sekarang beserta teks panduan lengkap di layar).
+                  </p>
+                </div>
+              )}
+
               {voiceError && (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                   <p className="min-w-0 flex-1">{voiceError}</p>
                   <button
                     type="button"
                     disabled={voiceLoading.active}
-                    onClick={() => ensureVoiceClipsForTopic(topic)}
+                    onClick={() => ensureVoiceClipsForTopic(topic, true)}
                     className="shrink-0 rounded-lg bg-amber-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
                   >
                     Coba Muat Suara
@@ -2591,7 +3328,11 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
                       {voiceLoading.active
                         ? `Menyiapkan Suara Wanita (${voiceLoading.done}/${voiceLoading.total})...`
                         : `Buat & Unduh Video ${
-                            topic === 'pinjaman' ? 'Pinjaman' : 'Setor'
+                            topic === 'pinjaman'
+                              ? 'Pinjaman'
+                              : topic === 'instal'
+                                ? 'Instal Aplikasi'
+                                : 'Setor'
                           } (${totalDurationSec.toFixed(0)} dtk)`}
                     </button>
                   )}
@@ -2628,7 +3369,9 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
                                 title:
                                   recordedVideo.topic === 'pinjaman'
                                     ? 'Panduan Pengajuan Pinjaman KSP SENTRA'
-                                    : 'Panduan Setor KSP SENTRA',
+                                    : recordedVideo.topic === 'instal'
+                                      ? 'Panduan Instal Aplikasi KSP SENTRA'
+                                      : 'Panduan Setor KSP SENTRA',
                                 text: waCaption,
                                 files: [file],
                               });

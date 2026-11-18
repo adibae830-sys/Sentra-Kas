@@ -5,6 +5,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   BarChart3,
+  BookOpen,
   Check,
   CheckCircle2,
   ClipboardCheck,
@@ -16,7 +17,6 @@ import {
   Eye,
   EyeOff,
   FileSpreadsheet,
-  Film,
   Image as ImageIcon,
   LayoutDashboard,
   Lock,
@@ -55,6 +55,7 @@ import {
   KonfirmasiSetoranView,
   SetorAnggotaView,
 } from './components/SetorDanKonfirmasiViews';
+import { KnowledgeView } from './components/KnowledgeView';
 import { VideoPanduanModal, VideoTopic } from './components/VideoPanduanModal';
 import {
   buildWhatsAppMutasiGroupMessage,
@@ -115,6 +116,7 @@ type PageId =
   | 'anggotaSaya'
   | 'setorSaya'
   | 'ajukanPinjaman'
+  | 'knowledge'
   | 'pengaturan';
 
 interface ToastState {
@@ -2268,6 +2270,12 @@ export default function App() {
         roles: ['Anggota'],
       },
       {
+        id: 'knowledge',
+        label: 'Knowledge & Panduan',
+        icon: <BookOpen className="h-4 w-4" />,
+        roles: ['Administrator', 'Bendahara', 'Anggota'],
+      },
+      {
         id: 'pengaturan',
         label: 'Pengaturan & Akun',
         icon: <Settings className="h-4 w-4" />,
@@ -2554,6 +2562,21 @@ export default function App() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            {!canQuickRecord && (
+              <button
+                type="button"
+                onClick={() => setActivePage('knowledge')}
+                aria-label="Knowledge & Panduan"
+                title="Knowledge & Panduan"
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-colors ${
+                  activePage === 'knowledge'
+                    ? 'border-amber-300 bg-white/25 text-amber-200'
+                    : 'border-white/20 bg-white/10 text-amber-300 active:bg-white/20'
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+              </button>
+            )}
             <PWAInstallButton />
             <button
               type="button"
@@ -3071,7 +3094,6 @@ export default function App() {
               onTolakPinjaman={handleTolakPinjaman}
               onUpdatePinjaman={handleUpdatePinjaman}
               onDeletePinjaman={handleDeletePinjaman}
-              onOpenVideoPanduanPinjaman={() => openVideoPanduan('pinjaman')}
             />
           )}
 
@@ -3090,7 +3112,6 @@ export default function App() {
               dataset={dataset}
               onKonfirmasiSetoran={handleKonfirmasiSetoran}
               onTolakSetoran={handleTolakSetoran}
-              onOpenVideoPanduan={() => openVideoPanduan('setor')}
             />
           )}
 
@@ -3099,7 +3120,6 @@ export default function App() {
               dataset={dataset}
               idAnggota={sessionUser.idAnggota}
               onAjukanSetoran={handleAjukanSetoranAnggota}
-              onOpenVideoPanduan={() => openVideoPanduan('setor')}
             />
           )}
 
@@ -3233,6 +3253,29 @@ export default function App() {
                 </button>
               </div>
 
+              <button
+                type="button"
+                onClick={() => setActivePage('knowledge')}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-emerald-200/80 bg-white p-4 text-left shadow-xs transition-all hover:border-[#1E5B2A]/45 hover:bg-[#F4FAF5]"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EAF4EC] text-[#1E5B2A]">
+                    <BookOpen className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">
+                      Knowledge &amp; Video Panduan Aplikasi
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Video cara setor, ajukan pinjaman &amp; cara instal aplikasi di HP/PC
+                    </p>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-xl bg-[#EAF4EC] px-3 py-1.5 text-xs font-bold text-[#1E5B2A]">
+                  Buka →
+                </span>
+              </button>
+
               <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6">
                 <h3 className="font-editorial mb-4 text-lg font-bold text-slate-900">
                   Fasilitas Pinjaman Saya
@@ -3333,23 +3376,13 @@ export default function App() {
 
           {activePage === 'ajukanPinjaman' && (
             <div className="max-w-lg rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-editorial text-lg font-bold text-slate-900">
-                    Form Pengajuan Pinjaman Anggota
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Pengajuan akan masuk ke antrean Administrator untuk disetujui (ACC) atau ditolak.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openVideoPanduan('pinjaman')}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1E5B2A] px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
-                >
-                  <Film className="h-3.5 w-3.5 text-amber-300" />
-                  Video Panduan
-                </button>
+              <div>
+                <h3 className="font-editorial text-lg font-bold text-slate-900">
+                  Form Pengajuan Pinjaman Anggota
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Pengajuan akan masuk ke antrean Administrator untuk disetujui (ACC) atau ditolak.
+                </p>
               </div>
 
               <form onSubmit={handleAjukanPinjamanAnggota} className="mt-5 space-y-4">
@@ -3400,6 +3433,10 @@ export default function App() {
             </div>
           )}
 
+          {activePage === 'knowledge' && (
+            <KnowledgeView onOpenVideo={openVideoPanduan} onNotify={showToast} />
+          )}
+
           {activePage === 'pengaturan' && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6 lg:col-span-12">
@@ -3425,40 +3462,6 @@ export default function App() {
                   <LogOut className="h-4 w-4" />
                   Keluar Akun (Logout)
                 </button>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200/90 bg-[#EAF4EC]/65 p-5 shadow-xs sm:p-6 lg:col-span-12">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1E5B2A] text-white">
-                    <Film className="h-5 w-5 text-amber-300" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">
-                      Studio Video Presentasi · Suara Panduan Wanita
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-600">
-                      Tonton pratinjau animasi bersuara wanita, unduh file video (MP4/WebM), dan bagikan ke Grup WhatsApp anggota.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openVideoPanduan('setor')}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
-                  >
-                    <Film className="h-4 w-4 text-amber-300" />
-                    Video Cara Setor
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openVideoPanduan('pinjaman')}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#1E5B2A] bg-white px-4 py-2.5 text-xs font-semibold text-[#1E5B2A] shadow-xs transition-colors hover:bg-[#EAF4EC]"
-                  >
-                    <Film className="h-4 w-4" />
-                    Video Pengajuan Pinjaman
-                  </button>
-                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
@@ -4114,7 +4117,7 @@ export default function App() {
               onClick={() => setMobileMenuOpen(true)}
               className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
                 mobileMenuOpen ||
-                ['pinjaman', 'angsuran', 'anggota', 'pengaturan', 'konfirmasiSetoran'].includes(
+                ['pinjaman', 'angsuran', 'anggota', 'knowledge', 'pengaturan', 'konfirmasiSetoran'].includes(
                   activePage
                 ) ||
                 (sessionUser.role === 'Administrator' && activePage === 'kasKeluar')
