@@ -51,6 +51,18 @@ export const STRUKTUR_SHEET: Record<string, string[]> = {
     'Status',
     'Ringkasan',
   ],
+  KonfirmasiSetoran: [
+    'IdSetoran',
+    'Tanggal',
+    'IdAnggota',
+    'JenisSetoran',
+    'IdPinjaman',
+    'Jumlah',
+    'MetodeBayar',
+    'Keterangan',
+    'Status',
+    'DiprosesOleh',
+  ],
 };
 
 interface ServiceAccountConfig {
@@ -308,6 +320,7 @@ export async function loadAllFinanceDataServer(spreadsheetIdInput?: string) {
       angsuran: [],
       laporanBulanan: [],
       logWhatsApp: [],
+      konfirmasiSetoran: [],
     };
   }
 
@@ -441,6 +454,23 @@ export async function loadAllFinanceDataServer(spreadsheetIdInput?: string) {
     }))
     .filter((item) => item.idLog !== '');
 
+  const konfirmasiSetoran = (tabRows['KonfirmasiSetoran'] || [])
+    .slice(1)
+    .map((r, idx) => ({
+      idSetoran: String(r[0] || '').trim(),
+      tanggal: String(r[1] || '').trim(),
+      idAnggota: String(r[2] || '').trim(),
+      jenisSetoran: String(r[3] || '').trim() === 'Angsuran' ? ('Angsuran' as const) : ('Simpanan' as const),
+      idPinjaman: String(r[4] || '').trim(),
+      jumlah: toNumber(r[5]),
+      metodeBayar: String(r[6] || '').trim() || 'Transfer Bank',
+      keterangan: String(r[7] || '').trim(),
+      status: String(r[8] || 'Menunggu').trim(),
+      diprosesOleh: String(r[9] || '').trim(),
+      rowIndex: idx + 2,
+    }))
+    .filter((item) => item.idSetoran !== '');
+
   return {
     spreadsheetTitle: meta.properties?.title || 'Spreadsheet Keuangan',
     spreadsheetId,
@@ -454,6 +484,7 @@ export async function loadAllFinanceDataServer(spreadsheetIdInput?: string) {
     angsuran,
     laporanBulanan,
     logWhatsApp,
+    konfirmasiSetoran,
   };
 }
 
@@ -801,13 +832,33 @@ export async function executePortalMutate(params: {
       const isLoanRequest =
         sheetName === 'Pinjaman' &&
         String(values[2] || '') === ownId &&
-        String(values[8] || '') === 'Menunggu';
-      if (!isLoanRequest) {
+        String(values[8] || '') === 'Menunggu' &&
+        Number(values[3] || 0) > 0 &&
+        Number(values[4] || 0) > 0;
+      const jenisSetoran = String(values[3] || '').trim();
+      const isDepositRequest =
+        sheetName === 'KonfirmasiSetoran' &&
+        String(values[2] || '') === ownId &&
+        (jenisSetoran === 'Simpanan' || jenisSetoran === 'Angsuran') &&
+        Number(values[5] || 0) > 0 &&
+        String(values[8] || '') === 'Menunggu' &&
+        (jenisSetoran === 'Simpanan' || String(values[4] || '').trim() !== '');
+
+      if (!isLoanRequest && !isDepositRequest) {
         return {
           status: 403,
-          body: { error: 'Peran Anggota hanya diizinkan mengajukan pinjaman.' },
+          body: {
+            error:
+              'Peran Anggota hanya diizinkan mengajukan pinjaman atau konfirmasi setoran iuran dan angsuran.',
+          },
         };
       }
+    }
+    if (
+      sheetName === 'KonfirmasiSetoran' &&
+      !dataset.availableTabs.includes('KonfirmasiSetoran')
+    ) {
+      await ensureDatabaseStructureServer(spreadsheetId, token);
     }
     await appendRowServer(spreadsheetId, token, sheetName, values);
     return { status: 200, body: { success: true } };

@@ -93,6 +93,20 @@ export interface LogWhatsApp {
   rowIndex: number;
 }
 
+export interface KonfirmasiSetoran {
+  idSetoran: string;
+  tanggal: string;
+  idAnggota: string;
+  jenisSetoran: 'Simpanan' | 'Angsuran';
+  idPinjaman: string;
+  jumlah: number;
+  metodeBayar: string;
+  keterangan: string;
+  status: string;
+  diprosesOleh: string;
+  rowIndex: number;
+}
+
 export interface FinanceDataset {
   spreadsheetTitle: string;
   spreadsheetId: string;
@@ -106,6 +120,7 @@ export interface FinanceDataset {
   angsuran: Angsuran[];
   laporanBulanan: LaporanBulanan[];
   logWhatsApp: LogWhatsApp[];
+  konfirmasiSetoran: KonfirmasiSetoran[];
 }
 
 export interface MemberSummary {

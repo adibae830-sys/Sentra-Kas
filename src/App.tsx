@@ -7,6 +7,8 @@ import {
   BarChart3,
   Check,
   CheckCircle2,
+  ClipboardCheck,
+  Clock,
   Copy,
   CreditCard,
   Download,
@@ -48,6 +50,10 @@ import {
 } from './components/MembersAndLedgerViews';
 import { MonthlyReportView } from './components/MonthlyReportView';
 import { OfflineIndicator, PWAInstallButton } from './components/PWAInstallButton';
+import {
+  KonfirmasiSetoranView,
+  SetorAnggotaView,
+} from './components/SetorDanKonfirmasiViews';
 import {
   buildWhatsAppMutasiGroupMessage,
   computeAdminDashboard,
@@ -91,6 +97,7 @@ import {
   FinanceDataset,
   KasKeluar,
   KasMasuk,
+  KonfirmasiSetoran,
   Pinjaman,
 } from './types/finance';
 
@@ -102,7 +109,9 @@ type PageId =
   | 'kasKeluar'
   | 'pinjaman'
   | 'angsuran'
+  | 'konfirmasiSetoran'
   | 'anggotaSaya'
+  | 'setorSaya'
   | 'ajukanPinjaman'
   | 'pengaturan';
 
@@ -766,7 +775,7 @@ export default function App() {
     openConfirm({
       title: 'Setup Struktur Tab Google Sheets?',
       description:
-        'Tindakan ini akan memeriksa dan membuat tab yang belum tersedia (Users, Anggota, KasMasuk, KasKeluar, Pinjaman, Angsuran, LaporanBulanan, LogWhatsApp) beserta header kolomnya.',
+        'Tindakan ini akan memeriksa dan membuat tab yang belum tersedia (Users, Anggota, KasMasuk, KasKeluar, Pinjaman, Angsuran, LaporanBulanan, LogWhatsApp, KonfirmasiSetoran) beserta header kolomnya.',
       details: [
         `Spreadsheet ID: ${activeSpreadsheetId}`,
         'Membuat akun admin default (username: admin) jika belum ada user Administrator.',
@@ -1603,6 +1612,324 @@ export default function App() {
     });
   };
 
+  // Pengajuan Konfirmasi Setoran Iuran / Angsuran oleh Anggota (Menunggu Admin/Bendahara)
+  const handleAjukanSetoranAnggota = (payload: {
+    jenisSetoran: 'Simpanan' | 'Angsuran';
+    idPinjaman: string;
+    jumlah: number;
+    metodeBayar: string;
+    keterangan: string;
+  }) => {
+    if (!sessionUser?.idAnggota) {
+      showToast('error', 'ID Anggota tidak terhubung ke akun Anda.');
+      return;
+    }
+    if (payload.jumlah <= 0) {
+      showToast('error', 'Nominal setoran harus lebih dari 0.');
+      return;
+    }
+    if (payload.jenisSetoran === 'Angsuran') {
+      const targetLoan = dataset?.pinjaman.find(
+        (p) =>
+          p.idPinjaman === payload.idPinjaman &&
+          p.idAnggota === sessionUser.idAnggota &&
+          p.status === 'Berjalan' &&
+          p.sisa > 0
+      );
+      if (!targetLoan) {
+        showToast('error', 'Pinjaman aktif yang dipilih tidak valid atau sudah lunas.');
+        return;
+      }
+    }
+
+    const idSetoran = 'STR-' + Date.now();
+    openConfirm({
+      title:
+        payload.jenisSetoran === 'Simpanan'
+          ? 'Kirim Konfirmasi Setor Iuran?'
+          : 'Kirim Konfirmasi Bayar Angsuran?',
+      description:
+        'Pengajuan akan masuk ke antrean konfirmasi Admin/Bendahara dan belum dicatat ke saldo kas sampai disetujui.',
+      details: [
+        `ID Pengajuan: ${idSetoran}`,
+        `Jenis: ${payload.jenisSetoran === 'Simpanan' ? 'Iuran / Simpanan' : `Angsuran (${payload.idPinjaman})`}`,
+        `Nominal: ${rupiah(payload.jumlah)} · Metode: ${payload.metodeBayar}`,
+        ...(payload.keterangan ? [`Keterangan: ${payload.keterangan}`] : []),
+      ],
+      confirmLabel: 'Ya, Kirim Konfirmasi',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getActiveSheetToken()!;
+          if (
+            !isPortalToken(token) &&
+            dataset &&
+            !dataset.availableTabs.includes('KonfirmasiSetoran')
+          ) {
+            try {
+              await ensureDatabaseStructure(activeSpreadsheetId, token, {
+                includeReportingTabs: true,
+              });
+            } catch {
+              throw new Error(
+                'Tab KonfirmasiSetoran belum dibuat di Spreadsheet. Minta Admin menjalankan "Verifikasi & Setup Tab Sheet" di menu Pengaturan.'
+              );
+            }
+          }
+          await appendRow(activeSpreadsheetId, token, 'KonfirmasiSetoran', [
+            idSetoran,
+            nowIsoShort(),
+            sessionUser.idAnggota,
+            payload.jenisSetoran,
+            payload.idPinjaman,
+            payload.jumlah,
+            payload.metodeBayar,
+            payload.keterangan,
+            'Menunggu',
+            '',
+          ]);
+        }, 'Konfirmasi setoran berhasil dikirim dan menunggu persetujuan Admin/Bendahara.'),
+    });
+  };
+
+  // Konfirmasi (ACC) Setoran Anggota oleh Administrator / Bendahara
+  const handleKonfirmasiSetoran = (item: KonfirmasiSetoran) => {
+    if (item.status !== 'Menunggu') return;
+    const namaAnggota = memberNameLookup.get(item.idAnggota) || item.idAnggota;
+    const petugas = sessionUser?.nama || 'Admin';
+
+    if (item.jenisSetoran === 'Simpanan') {
+      const idKasMasuk = 'KM-' + Date.now();
+      const keteranganGabungan = [item.metodeBayar, item.keterangan]
+        .filter(Boolean)
+        .join(' · ');
+
+      openConfirm({
+        title: 'Konfirmasi & Catat Setoran Iuran?',
+        description:
+          'Menyetujui setoran ini akan mengubah status menjadi Dikonfirmasi dan langsung mencatat transaksi ke tab KasMasuk.',
+        details: [
+          `Anggota: ${namaAnggota} (${item.idAnggota})`,
+          `Nominal Simpanan: ${rupiah(item.jumlah)}`,
+          `Metode & Ket: ${keteranganGabungan || '-'}`,
+        ],
+        confirmLabel: 'Ya, Konfirmasi & Catat',
+        onConfirm: () => {
+          const now = nowIsoShort();
+          return runConfirmedMutation(
+            async () => {
+              const token = getActiveSheetToken()!;
+              await updateRowValues(
+                activeSpreadsheetId,
+                token,
+                'KonfirmasiSetoran',
+                item.rowIndex,
+                [
+                  item.idSetoran,
+                  item.tanggal,
+                  item.idAnggota,
+                  item.jenisSetoran,
+                  item.idPinjaman,
+                  item.jumlah,
+                  item.metodeBayar,
+                  item.keterangan,
+                  'Dikonfirmasi',
+                  petugas,
+                ]
+              );
+              await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
+                idKasMasuk,
+                now,
+                item.idAnggota,
+                'Simpanan',
+                item.jumlah,
+                keteranganGabungan || `Setoran terkonfirmasi (${item.idSetoran})`,
+                petugas,
+              ]);
+            },
+            `Setoran iuran ${namaAnggota} (${rupiah(item.jumlah)}) berhasil dikonfirmasi & dicatat.`,
+            async (fresh) => {
+              await notifyWhatsAppGroupForMutasi({
+                arah: 'MASUK',
+                jenis: 'Simpanan',
+                jumlah: item.jumlah,
+                tanggal: now,
+                idAnggota: item.idAnggota,
+                keterangan: keteranganGabungan || `Konfirmasi setoran ${item.idSetoran}`,
+                latestDataset: fresh,
+              });
+            }
+          );
+        },
+      });
+      return;
+    }
+
+    // Jenis Setoran: Angsuran
+    const linkedLoan = dataset?.pinjaman.find((p) => p.idPinjaman === item.idPinjaman);
+    if (!linkedLoan) {
+      showToast('error', `Data pinjaman ${item.idPinjaman} tidak ditemukan.`);
+      return;
+    }
+    if (linkedLoan.status !== 'Berjalan' || linkedLoan.sisa <= 0) {
+      showToast(
+        'error',
+        `Pinjaman ${linkedLoan.idPinjaman} sudah berstatus ${linkedLoan.status}. Tolak setoran ini agar tidak tercatat ganda.`
+      );
+      return;
+    }
+
+    const existingCount = (dataset?.angsuran || []).filter(
+      (a) => a.idPinjaman === linkedLoan.idPinjaman
+    ).length;
+    const angsuranKe = existingCount + 1;
+    const totalBaru = linkedLoan.totalDibayar + item.jumlah;
+    const sisaBaru = Math.max(linkedLoan.sisa - item.jumlah, 0);
+    const statusBaru = sisaBaru <= 0 ? 'Lunas' : 'Berjalan';
+    const idAngsuran = 'ANG-' + Date.now();
+    const idKasMasuk = 'KM-' + (Date.now() + 1);
+    const keteranganGabungan = [
+      `Pembayaran pinjaman ${linkedLoan.idPinjaman}`,
+      item.metodeBayar,
+      item.keterangan,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
+    openConfirm({
+      title: 'Konfirmasi & Catat Pembayaran Angsuran?',
+      description:
+        'Menyetujui setoran ini akan memperbarui Pinjaman, mencatat Angsuran baru, dan menambah KasMasuk.',
+      details: [
+        `Anggota: ${namaAnggota} (${linkedLoan.idPinjaman})`,
+        `Nominal Bayar: ${rupiah(item.jumlah)} (Angsuran ke-${angsuranKe})`,
+        `Sisa Setelah Konfirmasi: ${rupiah(sisaBaru)} (${statusBaru})`,
+      ],
+      confirmLabel: 'Ya, Konfirmasi Angsuran',
+      onConfirm: () => {
+        const now = nowIsoShort();
+        return runConfirmedMutation(
+          async () => {
+            const token = getActiveSheetToken()!;
+            await updateRowValues(
+              activeSpreadsheetId,
+              token,
+              'KonfirmasiSetoran',
+              item.rowIndex,
+              [
+                item.idSetoran,
+                item.tanggal,
+                item.idAnggota,
+                item.jenisSetoran,
+                item.idPinjaman,
+                item.jumlah,
+                item.metodeBayar,
+                item.keterangan,
+                'Dikonfirmasi',
+                petugas,
+              ]
+            );
+            await updateRowValues(activeSpreadsheetId, token, 'Pinjaman', linkedLoan.rowIndex, [
+              linkedLoan.idPinjaman,
+              linkedLoan.tanggal,
+              linkedLoan.idAnggota,
+              linkedLoan.jumlah,
+              linkedLoan.tenor,
+              linkedLoan.angsuranPerBulan,
+              totalBaru,
+              sisaBaru,
+              statusBaru,
+            ]);
+            await appendRow(activeSpreadsheetId, token, 'Angsuran', [
+              idAngsuran,
+              now,
+              linkedLoan.idPinjaman,
+              linkedLoan.idAnggota,
+              angsuranKe,
+              item.jumlah,
+              sisaBaru,
+              petugas,
+            ]);
+            await appendRow(activeSpreadsheetId, token, 'KasMasuk', [
+              idKasMasuk,
+              now,
+              linkedLoan.idAnggota,
+              'Angsuran',
+              item.jumlah,
+              keteranganGabungan,
+              petugas,
+            ]);
+
+            setKwitansiModalData({
+              idAngsuran,
+              tanggal: now,
+              idPinjaman: linkedLoan.idPinjaman,
+              idAnggota: linkedLoan.idAnggota,
+              angsuranKe,
+              jumlah: item.jumlah,
+              sisa: sisaBaru,
+              user: petugas,
+              rowIndex: 0,
+            });
+          },
+          `Pembayaran angsuran ${namaAnggota} (${rupiah(item.jumlah)}) berhasil dikonfirmasi & kwitansi siap.`,
+          async (fresh) => {
+            await notifyWhatsAppGroupForMutasi({
+              arah: 'MASUK',
+              jenis: `Angsuran Ke-${angsuranKe}`,
+              jumlah: item.jumlah,
+              tanggal: now,
+              idAnggota: linkedLoan.idAnggota,
+              keterangan: `${keteranganGabungan} (Sisa: ${rupiah(sisaBaru)})`,
+              latestDataset: fresh,
+            });
+          }
+        );
+      },
+    });
+  };
+
+  // Tolak Setoran Anggota oleh Administrator / Bendahara
+  const handleTolakSetoran = (item: KonfirmasiSetoran) => {
+    if (item.status !== 'Menunggu') return;
+    const namaAnggota = memberNameLookup.get(item.idAnggota) || item.idAnggota;
+    const petugas = sessionUser?.nama || 'Admin';
+
+    openConfirm({
+      title: 'Tolak Konfirmasi Setoran Anggota?',
+      description:
+        'Status pengajuan setoran akan diubah menjadi Ditolak tanpa mencatat transaksi ke KasMasuk maupun Angsuran.',
+      details: [
+        `Anggota: ${namaAnggota}`,
+        `Jenis: ${item.jenisSetoran}${item.idPinjaman ? ` (${item.idPinjaman})` : ''}`,
+        `Nominal: ${rupiah(item.jumlah)}`,
+      ],
+      confirmLabel: 'Ya, Tolak Setoran',
+      variant: 'danger',
+      onConfirm: () =>
+        runConfirmedMutation(async () => {
+          const token = getActiveSheetToken()!;
+          await updateRowValues(
+            activeSpreadsheetId,
+            token,
+            'KonfirmasiSetoran',
+            item.rowIndex,
+            [
+              item.idSetoran,
+              item.tanggal,
+              item.idAnggota,
+              item.jenisSetoran,
+              item.idPinjaman,
+              item.jumlah,
+              item.metodeBayar,
+              item.keterangan,
+              'Ditolak',
+              petugas,
+            ]
+          );
+        }, `Setoran ${item.idSetoran} dari ${namaAnggota} telah ditolak.`),
+    });
+  };
+
   // Arsip Laporan Bulanan ke Sheet
   const handleArchiveMonthlyReport = (reportData: {
     periode: string;
@@ -1767,11 +2094,29 @@ export default function App() {
     return map;
   }, [dataset]);
 
+  const pendingSetoranCount = useMemo(
+    () => (dataset?.konfirmasiSetoran || []).filter((k) => k.status === 'Menunggu').length,
+    [dataset]
+  );
+
+  const myPendingSetoranCount = useMemo(() => {
+    if (!sessionUser?.idAnggota) return 0;
+    return (dataset?.konfirmasiSetoran || []).filter(
+      (k) => k.idAnggota === sessionUser.idAnggota && k.status === 'Menunggu'
+    ).length;
+  }, [dataset, sessionUser]);
+
   // Menu items based on role
   const navItems = useMemo(() => {
     if (!sessionUser) return [];
     const role = sessionUser.role;
-    const all: Array<{ id: PageId; label: string; icon: React.ReactNode; roles: string[] }> = [
+    const all: Array<{
+      id: PageId;
+      label: string;
+      icon: React.ReactNode;
+      roles: string[];
+      badgeCount?: number;
+    }> = [
       {
         id: 'dashboard',
         label: 'Ringkasan Keuangan',
@@ -1785,6 +2130,13 @@ export default function App() {
         roles: ['Anggota'],
       },
       {
+        id: 'setorSaya',
+        label: 'Setor Iuran & Angsuran',
+        icon: <ClipboardCheck className="h-4 w-4" />,
+        roles: ['Anggota'],
+        badgeCount: myPendingSetoranCount,
+      },
+      {
         id: 'laporan',
         label: 'Laporan Bulanan & WA',
         icon: <BarChart3 className="h-4 w-4" />,
@@ -1795,6 +2147,13 @@ export default function App() {
         label: 'Data Anggota',
         icon: <Users className="h-4 w-4" />,
         roles: ['Administrator'],
+      },
+      {
+        id: 'konfirmasiSetoran',
+        label: 'Konfirmasi Setoran',
+        icon: <ClipboardCheck className="h-4 w-4" />,
+        roles: ['Administrator', 'Bendahara'],
+        badgeCount: pendingSetoranCount,
       },
       {
         id: 'kasMasuk',
@@ -1834,7 +2193,7 @@ export default function App() {
       },
     ];
     return all.filter((item) => item.roles.includes(role));
-  }, [sessionUser]);
+  }, [sessionUser, pendingSetoranCount, myPendingSetoranCount]);
 
   const currentNavLabel =
     navItems.find((i) => i.id === activePage)?.label || 'Sistem Keuangan';
@@ -1947,16 +2306,23 @@ export default function App() {
                 key={item.id}
                 type="button"
                 onClick={() => setActivePage(item.id)}
-                className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
+                className={`flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
                   isActive
                     ? 'border border-white/18 bg-white/15 text-white shadow-xs'
                     : 'border border-transparent text-emerald-100/80 hover:bg-white/8 hover:text-white'
                 }`}
               >
-                <span className={isActive ? 'text-amber-300' : 'text-emerald-200/80'}>
-                  {item.icon}
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <span className={isActive ? 'text-amber-300' : 'text-emerald-200/80'}>
+                    {item.icon}
+                  </span>
+                  <span className="truncate">{item.label}</span>
                 </span>
-                <span className="truncate">{item.label}</span>
+                {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
+                  <span className="shrink-0 rounded-full bg-amber-400 px-2 py-0.5 font-mono text-[11px] font-bold text-[#103D1B]">
+                    {item.badgeCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -2045,7 +2411,12 @@ export default function App() {
                       >
                         {item.icon}
                       </span>
-                      <span className="line-clamp-2">{item.label}</span>
+                      <span className="line-clamp-2 flex-1">{item.label}</span>
+                      {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
+                        <span className="shrink-0 rounded-full bg-amber-500 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                          {item.badgeCount}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -2167,6 +2538,35 @@ export default function App() {
 
         {/* Viewport */}
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-4 pb-24 sm:px-5 lg:p-7">
+          {canQuickRecord &&
+            pendingSetoranCount > 0 &&
+            activePage !== 'konfirmasiSetoran' &&
+            (activePage === 'dashboard' || activePage === 'kasMasuk' || activePage === 'angsuran') && (
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/90 bg-amber-50 px-4 py-3.5 shadow-xs">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
+                    <Clock className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-amber-950">
+                      {pendingSetoranCount} Konfirmasi Setoran Anggota Menunggu Persetujuan
+                    </p>
+                    <p className="text-xs text-amber-800">
+                      Setoran iuran / angsuran dari anggota belum masuk kas sebelum dikonfirmasi.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActivePage('konfirmasiSetoran')}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1E5B2A] px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
+                >
+                  <ClipboardCheck className="h-4 w-4 text-amber-300" />
+                  Tinjau Konfirmasi ({pendingSetoranCount}) →
+                </button>
+              </div>
+            )}
+
           {activePage === 'dashboard' && adminMetrics && (
             <div className="space-y-6">
               {/* Primary Rekening Card + 3 KPI Cards */}
@@ -2602,6 +3002,22 @@ export default function App() {
             />
           )}
 
+          {activePage === 'konfirmasiSetoran' && canQuickRecord && (
+            <KonfirmasiSetoranView
+              dataset={dataset}
+              onKonfirmasiSetoran={handleKonfirmasiSetoran}
+              onTolakSetoran={handleTolakSetoran}
+            />
+          )}
+
+          {activePage === 'setorSaya' && (
+            <SetorAnggotaView
+              dataset={dataset}
+              idAnggota={sessionUser.idAnggota}
+              onAjukanSetoran={handleAjukanSetoranAnggota}
+            />
+          )}
+
           {activePage === 'anggotaSaya' && anggotaMetrics && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -2659,7 +3075,38 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {myPendingSetoranCount > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-xs">
+                  <div className="flex items-center gap-2.5 text-amber-900">
+                    <Clock className="h-4 w-4 shrink-0 text-amber-700" />
+                    <span>
+                      Anda memiliki <strong>{myPendingSetoranCount} pengajuan setoran</strong> yang sedang menunggu konfirmasi Admin/Bendahara.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActivePage('setorSaya')}
+                    className="font-semibold text-[#1E5B2A] hover:underline"
+                  >
+                    Lihat Status →
+                  </button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <button
+                  type="button"
+                  onClick={() => setActivePage('setorSaya')}
+                  className="group flex items-center gap-3 rounded-2xl border border-emerald-200 bg-[#EAF4EC]/60 p-4 text-left shadow-xs transition-all hover:border-[#1E5B2A]/45 hover:bg-[#EAF4EC]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1E5B2A] text-white">
+                    <ClipboardCheck className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Setor Iuran / Angsuran</p>
+                    <p className="text-xs text-slate-600">Kirim konfirmasi bayar ke pengurus</p>
+                  </div>
+                </button>
                 <button
                   type="button"
                   onClick={() => setActivePage('ajukanPinjaman')}
@@ -3527,16 +3974,21 @@ export default function App() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
+              className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[11px] font-semibold transition-colors ${
                 mobileMenuOpen ||
-                ['pinjaman', 'angsuran', 'anggota', 'pengaturan'].includes(activePage) ||
+                ['pinjaman', 'angsuran', 'anggota', 'pengaturan', 'konfirmasiSetoran'].includes(
+                  activePage
+                ) ||
                 (sessionUser.role === 'Administrator' && activePage === 'kasKeluar')
                   ? 'text-[#1E5B2A]'
                   : 'text-slate-500 active:text-slate-900'
               }`}
             >
-              <span className="flex h-7 w-10 items-center justify-center rounded-full">
+              <span className="relative flex h-7 w-10 items-center justify-center rounded-full">
                 <Menu className="h-5 w-5" />
+                {pendingSetoranCount > 0 && (
+                  <span className="absolute top-0.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
+                )}
               </span>
               <span>Menu</span>
             </button>
@@ -3545,9 +3997,26 @@ export default function App() {
           <div className="mx-auto flex max-w-lg items-center justify-around gap-1">
             {[
               { id: 'anggotaSaya' as PageId, label: 'Saldo', icon: <Wallet className="h-5 w-5" /> },
-              { id: 'ajukanPinjaman' as PageId, label: 'Pinjam', icon: <CreditCard className="h-5 w-5" /> },
-              { id: 'laporan' as PageId, label: 'Laporan', icon: <BarChart3 className="h-5 w-5" /> },
-              { id: 'pengaturan' as PageId, label: 'Akun', icon: <Settings className="h-5 w-5" /> },
+              {
+                id: 'setorSaya' as PageId,
+                label: 'Setor',
+                icon: <ClipboardCheck className="h-5 w-5" />,
+              },
+              {
+                id: 'ajukanPinjaman' as PageId,
+                label: 'Pinjam',
+                icon: <CreditCard className="h-5 w-5" />,
+              },
+              {
+                id: 'laporan' as PageId,
+                label: 'Laporan',
+                icon: <BarChart3 className="h-5 w-5" />,
+              },
+              {
+                id: 'pengaturan' as PageId,
+                label: 'Akun',
+                icon: <Settings className="h-5 w-5" />,
+              },
             ].map((tab) => {
               const active = activePage === tab.id;
               return (

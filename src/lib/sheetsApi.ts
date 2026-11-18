@@ -5,6 +5,7 @@ import {
   FinanceDataset,
   KasKeluar,
   KasMasuk,
+  KonfirmasiSetoran,
   LaporanBulanan,
   LogWhatsApp,
   Pinjaman,
@@ -61,6 +62,18 @@ export const STRUKTUR_SHEET: Record<string, string[]> = {
     'Tipe',
     'Status',
     'Ringkasan',
+  ],
+  KonfirmasiSetoran: [
+    'IdSetoran',
+    'Tanggal',
+    'IdAnggota',
+    'JenisSetoran',
+    'IdPinjaman',
+    'Jumlah',
+    'MetodeBayar',
+    'Keterangan',
+    'Status',
+    'DiprosesOleh',
   ],
 };
 
@@ -325,6 +338,7 @@ export async function loadAllFinanceData(
       angsuran: [],
       laporanBulanan: [],
       logWhatsApp: [],
+      konfirmasiSetoran: [],
     };
   }
 
@@ -461,6 +475,26 @@ export async function loadAllFinanceData(
     }))
     .filter((item) => item.idLog !== '');
 
+  const konfirmasiSetoran: KonfirmasiSetoran[] = (tabRows['KonfirmasiSetoran'] || [])
+    .slice(1)
+    .map((r, idx) => ({
+      idSetoran: String(r[0] || '').trim(),
+      tanggal: String(r[1] || '').trim(),
+      idAnggota: String(r[2] || '').trim(),
+      jenisSetoran:
+        String(r[3] || '').trim() === 'Angsuran'
+          ? ('Angsuran' as const)
+          : ('Simpanan' as const),
+      idPinjaman: String(r[4] || '').trim(),
+      jumlah: toNumber(r[5]),
+      metodeBayar: String(r[6] || '').trim() || 'Transfer Bank',
+      keterangan: String(r[7] || '').trim(),
+      status: String(r[8] || 'Menunggu').trim(),
+      diprosesOleh: String(r[9] || '').trim(),
+      rowIndex: idx + 2,
+    }))
+    .filter((item) => item.idSetoran !== '');
+
   return {
     spreadsheetTitle: meta.title,
     spreadsheetId,
@@ -474,6 +508,7 @@ export async function loadAllFinanceData(
     angsuran,
     laporanBulanan,
     logWhatsApp,
+    konfirmasiSetoran,
   };
 }
 
