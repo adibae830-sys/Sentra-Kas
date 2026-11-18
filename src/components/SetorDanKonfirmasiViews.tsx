@@ -6,7 +6,6 @@ import {
   Copy,
   CreditCard,
   Download,
-  Info,
   Layers,
   Maximize2,
   QrCode,
@@ -201,19 +200,6 @@ export const SetorAnggotaView: React.FC<SetorAnggotaViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3 rounded-2xl border border-amber-200/90 bg-amber-50/80 p-4 text-xs leading-relaxed text-amber-950">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-        <div>
-          <p className="font-bold text-amber-900">
-            Menunggu Verifikasi Admin / Bendahara
-          </p>
-          <p className="mt-0.5 text-amber-800">
-            Setoran iuran bulanan maupun pembayaran angsuran yang Anda kirim di sini masuk ke antrean konfirmasi terlebih dahulu dan{' '}
-            <strong>tidak langsung mengubah saldo kas atau sisa pinjaman</strong> sebelum dikonfirmasi oleh Administrator atau Bendahara.
-          </p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs sm:p-6 lg:col-span-5">
           <h3 className="font-editorial text-lg font-bold text-slate-900">
