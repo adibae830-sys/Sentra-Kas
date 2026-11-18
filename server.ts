@@ -10,6 +10,7 @@ import {
   executePortalRegister,
   getServiceAccountConfig,
 } from './api/_sheets.ts';
+import { executeGenerateTts } from './api/_tts.ts';
 
 dotenv.config();
 
@@ -262,6 +263,17 @@ async function startServer() {
   app.get('/api/sheets/status', (_req, res) => {
     const cfg = getServiceAccountConfig();
     res.json({ serviceAccountConfigured: Boolean(cfg) });
+  });
+
+  app.post('/api/tts/narrate', async (req, res) => {
+    try {
+      const result = await executeGenerateTts(req.body || {});
+      return res.status(result.status).json(result.body);
+    } catch (err) {
+      return res.status(500).json({
+        error: err instanceof Error ? err.message : 'Gagal membuat suara panduan.',
+      });
+    }
   });
 
   app.post('/api/sheets/login', async (req, res) => {

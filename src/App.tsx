@@ -55,7 +55,7 @@ import {
   KonfirmasiSetoranView,
   SetorAnggotaView,
 } from './components/SetorDanKonfirmasiViews';
-import { VideoPanduanModal } from './components/VideoPanduanModal';
+import { VideoPanduanModal, VideoTopic } from './components/VideoPanduanModal';
 import {
   buildWhatsAppMutasiGroupMessage,
   computeAdminDashboard,
@@ -237,6 +237,11 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickRecordOpen, setQuickRecordOpen] = useState(false);
   const [videoPanduanOpen, setVideoPanduanOpen] = useState(false);
+  const [videoPanduanTopic, setVideoPanduanTopic] = useState<VideoTopic>('setor');
+  const openVideoPanduan = (targetTopic: VideoTopic) => {
+    setVideoPanduanTopic(targetTopic);
+    setVideoPanduanOpen(true);
+  };
   const [hideBalance, setHideBalance] = useState(false);
 
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -3066,6 +3071,7 @@ export default function App() {
               onTolakPinjaman={handleTolakPinjaman}
               onUpdatePinjaman={handleUpdatePinjaman}
               onDeletePinjaman={handleDeletePinjaman}
+              onOpenVideoPanduanPinjaman={() => openVideoPanduan('pinjaman')}
             />
           )}
 
@@ -3084,7 +3090,7 @@ export default function App() {
               dataset={dataset}
               onKonfirmasiSetoran={handleKonfirmasiSetoran}
               onTolakSetoran={handleTolakSetoran}
-              onOpenVideoPanduan={() => setVideoPanduanOpen(true)}
+              onOpenVideoPanduan={() => openVideoPanduan('setor')}
             />
           )}
 
@@ -3093,7 +3099,7 @@ export default function App() {
               dataset={dataset}
               idAnggota={sessionUser.idAnggota}
               onAjukanSetoran={handleAjukanSetoranAnggota}
-              onOpenVideoPanduan={() => setVideoPanduanOpen(true)}
+              onOpenVideoPanduan={() => openVideoPanduan('setor')}
             />
           )}
 
@@ -3327,12 +3333,24 @@ export default function App() {
 
           {activePage === 'ajukanPinjaman' && (
             <div className="max-w-lg rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs">
-              <h3 className="font-editorial text-lg font-bold text-slate-900">
-                Form Pengajuan Pinjaman Anggota
-              </h3>
-              <p className="mt-1 text-xs text-slate-500">
-                Pengajuan akan masuk ke antrean Administrator untuk disetujui (ACC) atau ditolak.
-              </p>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-editorial text-lg font-bold text-slate-900">
+                    Form Pengajuan Pinjaman Anggota
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Pengajuan akan masuk ke antrean Administrator untuk disetujui (ACC) atau ditolak.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openVideoPanduan('pinjaman')}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1E5B2A] px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
+                >
+                  <Film className="h-3.5 w-3.5 text-amber-300" />
+                  Video Panduan
+                </button>
+              </div>
 
               <form onSubmit={handleAjukanPinjamanAnggota} className="mt-5 space-y-4">
                 <div>
@@ -3416,21 +3434,31 @@ export default function App() {
                   </span>
                   <div>
                     <p className="text-sm font-bold text-slate-900">
-                      Studio Video Presentasi · Cara Setor Anggota
+                      Studio Video Presentasi · Suara Panduan Wanita
                     </p>
                     <p className="mt-0.5 text-xs text-slate-600">
-                      Tonton pratinjau animasi 30 detik, unduh file video (MP4/WebM), dan bagikan ke Grup WhatsApp anggota.
+                      Tonton pratinjau animasi bersuara wanita, unduh file video (MP4/WebM), dan bagikan ke Grup WhatsApp anggota.
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setVideoPanduanOpen(true)}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
-                >
-                  <Film className="h-4 w-4 text-amber-300" />
-                  Buka Video Presentasi
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openVideoPanduan('setor')}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#1E5B2A] px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-[#154620]"
+                  >
+                    <Film className="h-4 w-4 text-amber-300" />
+                    Video Cara Setor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openVideoPanduan('pinjaman')}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-[#1E5B2A] bg-white px-4 py-2.5 text-xs font-semibold text-[#1E5B2A] shadow-xs transition-colors hover:bg-[#EAF4EC]"
+                  >
+                    <Film className="h-4 w-4" />
+                    Video Pengajuan Pinjaman
+                  </button>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
@@ -3787,6 +3815,7 @@ export default function App() {
 
       <VideoPanduanModal
         isOpen={videoPanduanOpen}
+        initialTopic={videoPanduanTopic}
         onClose={() => setVideoPanduanOpen(false)}
         onNotify={showToast}
       />
