@@ -2581,7 +2581,7 @@ export const VideoPanduanModal: React.FC<VideoPanduanModalProps> = ({
       let tempCtx: AudioContext | null = null;
       try {
         // Check status cleanly first so unconfigured servers never spam 503 in DevTools
-        const statusRes = await fetch('/api/tts/status');
+        const statusRes = await fetch('/api/tts/narrate');
         if (statusRes.ok) {
           const statusData = (await statusRes.json().catch(() => ({}))) as {
             configured?: boolean;

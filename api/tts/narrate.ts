@@ -1,5 +1,10 @@
 import { executeGenerateTts } from '../_tts.js';
 
+export function GET() {
+  const configured = Boolean((process.env.GEMINI_API_KEY || '').trim());
+  return Response.json({ configured });
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as {

@@ -270,7 +270,7 @@ async function startServer() {
     res.json({ serviceAccountConfigured: Boolean(cfg) });
   });
 
-  app.get('/api/tts/status', (_req, res) => {
+  app.get(['/api/tts/status', '/api/tts/narrate'], (_req, res) => {
     res.json({ configured: isTtsConfigured() });
   });
 
@@ -344,7 +344,7 @@ async function startServer() {
     });
   });
 
-  app.get('/api/notify/status', (_req, res) => {
+  app.get(['/api/notify/status', '/api/notify/setoran'], (_req, res) => {
     const cfg = getEmailConfig();
     res.json({
       configured: cfg.configured,

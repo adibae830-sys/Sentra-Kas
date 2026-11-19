@@ -318,7 +318,7 @@ export default function App() {
       .then((data) => setServiceAccountConfigured(Boolean(data?.serviceAccountConfigured)))
       .catch(() => {});
 
-    fetch('/api/notify/status')
+    fetch('/api/notify/setoran')
       .then((r) => r.json())
       .then((data) => {
         if (data && typeof data.configured === 'boolean') {
