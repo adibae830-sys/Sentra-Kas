@@ -14,7 +14,7 @@ import { executeGenerateTts, isTtsConfigured } from './api/_tts.ts';
 import {
   getEmailConfig,
   sendSetoranEmailNotification,
-  SetoranEmailPayload,
+  type SetoranEmailPayload,
 } from './api/_email.ts';
 
 dotenv.config();

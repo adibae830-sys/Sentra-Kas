@@ -1,4 +1,4 @@
-import { sendSetoranEmailNotification, SetoranEmailPayload } from '../_email.js';
+import { sendSetoranEmailNotification, type SetoranEmailPayload } from '../_email.js';
 
 export async function POST(req: Request) {
   try {
