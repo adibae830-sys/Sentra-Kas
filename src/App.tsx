@@ -2358,90 +2358,136 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-[#F4F6F3] text-slate-900">
-      {/* Sidebar Desktop - KSP SENTRA Forest Green */}
-      <aside className="no-print hidden w-64 shrink-0 flex-col border-r border-[#0D3015] bg-gradient-to-b from-[#103D1B] via-[#1B5727] to-[#1E5B2A] text-emerald-50 lg:flex">
-        <div className="border-b border-white/12 px-5 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-amber-300/50 bg-[#F7F5EE] p-0.5 shadow-xs">
-              <img
-                src="/assets/aistudio/image_1d167c98.png"
-                alt="Logo KSP SENTRA"
-                className="h-full w-full rounded-lg object-cover"
-              />
+      {/* Sidebar Desktop - Hover Expandable Icon Rail (KSP SENTRA Forest Green) */}
+      <div className="no-print relative hidden w-[74px] shrink-0 lg:block">
+        <aside className="group/sidebar fixed top-0 left-0 z-40 flex h-screen w-[74px] flex-col overflow-hidden border-r border-[#0D3015] bg-gradient-to-b from-[#103D1B] via-[#1B5727] to-[#1E5B2A] text-emerald-50 transition-[width,box-shadow] duration-200 ease-out hover:w-64 hover:shadow-2xl focus-within:w-64 focus-within:shadow-2xl">
+          <div className="shrink-0 border-b border-white/12 px-[14px] py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-amber-300/50 bg-[#F7F5EE] p-0.5 shadow-xs">
+                <img
+                  src="/assets/aistudio/image_1d167c98.png"
+                  alt="Logo KSP SENTRA"
+                  className="h-full w-full rounded-lg object-cover"
+                />
+              </div>
+              <div className="min-w-0 overflow-hidden opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                <p className="font-editorial truncate whitespace-nowrap text-base font-bold tracking-tight text-white">
+                  KSP SENTRA
+                </p>
+                <p className="truncate whitespace-nowrap text-[11px] font-medium text-emerald-100/85">
+                  Bersama Membangun Umat
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="font-editorial truncate text-lg font-bold tracking-tight text-white">
-                KSP SENTRA
-              </p>
-              <p className="truncate text-[11px] font-medium text-emerald-100/85">
-                Bersama Membangun Umat
+          </div>
+
+          <div className="shrink-0 border-b border-white/12 bg-white/5 px-[16px] py-3">
+            <div className="flex items-center gap-3">
+              <span
+                title={`${sessionUser.nama} (${sessionUser.role})`}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-white/12 text-xs font-extrabold tracking-wide text-amber-300"
+              >
+                {sessionUser.nama
+                  .trim()
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((part) => part[0]?.toUpperCase() || '')
+                  .join('') || 'KS'}
+              </span>
+              <div className="min-w-0 overflow-hidden opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                <p className="truncate whitespace-nowrap text-[10px] font-semibold tracking-[0.12em] text-emerald-100/75 uppercase">
+                  {sessionUser.role}
+                </p>
+                <p className="truncate whitespace-nowrap text-sm font-bold text-white">
+                  {sessionUser.nama}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-x-hidden overflow-y-auto">
+            <nav className="space-y-1 p-3">
+              {navItems.map((item) => {
+                const isActive = activePage === item.id;
+                const hasBadge = typeof item.badgeCount === 'number' && item.badgeCount > 0;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    title={item.label}
+                    aria-label={item.label}
+                    onClick={() => setActivePage(item.id)}
+                    className={`flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'border border-white/18 bg-white/15 text-white shadow-xs'
+                        : 'border border-transparent text-emerald-100/80 hover:bg-white/8 hover:text-white'
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span
+                        className={`relative flex h-5 w-6 shrink-0 items-center justify-center ${
+                          isActive ? 'text-amber-300' : 'text-emerald-200/85'
+                        }`}
+                      >
+                        {item.icon}
+                        {hasBadge && (
+                          <span className="absolute -top-0.5 right-0 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-[#164A21] group-hover/sidebar:hidden group-focus-within/sidebar:hidden" />
+                        )}
+                      </span>
+                      <span className="truncate opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                        {item.label}
+                      </span>
+                    </span>
+                    {hasBadge && (
+                      <span className="shrink-0 rounded-full bg-amber-400 px-2 py-0.5 font-mono text-[11px] font-bold text-[#103D1B] opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                        {item.badgeCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="mx-3 space-y-1.5 border-t border-white/12 pt-3 pb-4">
+              {canQuickRecord && (
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Buka Spreadsheet"
+                  aria-label="Buka Spreadsheet"
+                  className="flex w-full items-center gap-3 whitespace-nowrap rounded-xl border border-white/18 bg-white/8 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/15"
+                >
+                  <span className="flex h-5 w-6 shrink-0 items-center justify-center">
+                    <ExternalLink className="h-4 w-4 text-amber-300" />
+                  </span>
+                  <span className="truncate opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                    Buka Spreadsheet
+                  </span>
+                </a>
+              )}
+              <button
+                type="button"
+                title="Keluar Akun"
+                aria-label="Keluar Akun"
+                onClick={clearSavedAppSession}
+                className="flex w-full items-center gap-3 whitespace-nowrap rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-emerald-100/95 transition-colors hover:bg-red-500/20 hover:border-red-300/35 hover:text-white"
+              >
+                <span className="flex h-5 w-6 shrink-0 items-center justify-center">
+                  <LogOut className="h-4 w-4 text-amber-300" />
+                </span>
+                <span className="truncate opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                  Keluar Akun
+                </span>
+              </button>
+              <p className="flex items-center gap-2 px-3 pt-1 whitespace-nowrap text-[11px] text-emerald-100/60 opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+                <Lock className="h-3 w-3 shrink-0" />
+                <span>Sinkronisasi Terenkripsi</span>
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="border-b border-white/12 bg-white/5 px-5 py-4">
-          <p className="text-[10px] font-semibold tracking-[0.14em] text-emerald-100/75 uppercase">
-            Nasabah / Pengurus Aktif
-          </p>
-          <p className="mt-1 truncate text-sm font-bold text-white">{sessionUser.nama}</p>
-          <p className="mt-0.5 text-xs font-semibold text-amber-300">{sessionUser.role}</p>
-        </div>
-
-        <nav className="flex-1 space-y-1 p-3">
-          {navItems.map((item) => {
-            const isActive = activePage === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActivePage(item.id)}
-                className={`flex w-full items-center justify-between gap-2 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'border border-white/18 bg-white/15 text-white shadow-xs'
-                    : 'border border-transparent text-emerald-100/80 hover:bg-white/8 hover:text-white'
-                }`}
-              >
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span className={isActive ? 'text-amber-300' : 'text-emerald-200/80'}>
-                    {item.icon}
-                  </span>
-                  <span className="truncate">{item.label}</span>
-                </span>
-                {typeof item.badgeCount === 'number' && item.badgeCount > 0 && (
-                  <span className="shrink-0 rounded-full bg-amber-400 px-2 py-0.5 font-mono text-[11px] font-bold text-[#103D1B]">
-                    {item.badgeCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="space-y-2 border-t border-white/12 p-3">
-          <a
-            href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/18 bg-white/8 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/15"
-          >
-            <ExternalLink className="h-3.5 w-3.5 text-amber-300" />
-            Buka Spreadsheet
-          </a>
-          <button
-            type="button"
-            onClick={clearSavedAppSession}
-            className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold text-emerald-100/90 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Keluar Akun
-          </button>
-          <p className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-emerald-100/65">
-            <Lock className="h-3 w-3" />
-            Sinkronisasi Terenkripsi
-          </p>
-        </div>
-      </aside>
+        </aside>
+      </div>
 
       {/* Mobile Bottom Sheet Menu (Native App Feel) */}
       {mobileMenuOpen && (
@@ -2512,16 +2558,22 @@ export default function App() {
                 })}
               </nav>
 
-              <div className="mt-4 grid grid-cols-2 gap-2.5 border-t border-slate-100 pt-4">
-                <a
-                  href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 active:bg-slate-50"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 text-[#1E5B2A]" />
-                  Spreadsheet
-                </a>
+              <div
+                className={`mt-4 grid gap-2.5 border-t border-slate-100 pt-4 ${
+                  canQuickRecord ? 'grid-cols-2' : 'grid-cols-1'
+                }`}
+              >
+                {canQuickRecord && (
+                  <a
+                    href={`https://docs.google.com/spreadsheets/d/${activeSpreadsheetId}/edit`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 active:bg-slate-50"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 text-[#1E5B2A]" />
+                    Spreadsheet
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -3464,12 +3516,16 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
+              <div
+                className={`rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs ${
+                  canQuickRecord ? 'lg:col-span-6' : 'lg:col-span-12'
+                }`}
+              >
                 <h3 className="font-editorial text-lg font-bold text-slate-900">
                   Ubah Username & Password Akun
                 </h3>
                 <p className="mt-1 text-xs text-slate-500">
-                  Mengubah kredensial akun yang sedang login pada sheet Users.
+                  Mengubah kredensial akun yang sedang login pada sistem.
                 </p>
 
                 <form onSubmit={handleUpdateAkun} className="mt-4 space-y-3.5">
@@ -3518,52 +3574,54 @@ export default function App() {
                 </form>
               </div>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
-                <h3 className="font-editorial text-lg font-bold text-slate-900">
-                  Koneksi Spreadsheet Database
-                </h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Spreadsheet aktif yang terhubung ke sistem keuangan ini.
-                </p>
+              {canQuickRecord && (
+                <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-6">
+                  <h3 className="font-editorial text-lg font-bold text-slate-900">
+                    Koneksi Spreadsheet Database
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Spreadsheet aktif yang terhubung ke sistem keuangan ini.
+                  </p>
 
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
-                      Tautan / ID Spreadsheet
-                    </label>
-                    <input
-                      type="text"
-                      value={spreadsheetInput}
-                      onChange={(e) => setSpreadsheetInput(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => refreshDataset()}
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                    >
-                      Muat Ulang Data
-                    </button>
-                    {sessionUser.role === 'Administrator' && (
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">
+                        Tautan / ID Spreadsheet
+                      </label>
+                      <input
+                        type="text"
+                        value={spreadsheetInput}
+                        onChange={(e) => setSpreadsheetInput(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-xs text-slate-900"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
                       <button
                         type="button"
-                        onClick={handleRequestSetupDatabase}
-                        className="rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
+                        onClick={() => refreshDataset()}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                       >
-                        Verifikasi & Setup Tab Sheet
+                        Muat Ulang Data
                       </button>
-                    )}
-                  </div>
-                  <div className="border-t border-slate-100 pt-3 text-xs text-slate-500">
-                    Tab terdeteksi:{' '}
-                    <span className="font-mono text-slate-700">
-                      {dataset.availableTabs.join(', ') || '-'}
-                    </span>
+                      {sessionUser.role === 'Administrator' && (
+                        <button
+                          type="button"
+                          onClick={handleRequestSetupDatabase}
+                          className="rounded-xl bg-[#1E5B2A] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#154620]"
+                        >
+                          Verifikasi & Setup Tab Sheet
+                        </button>
+                      )}
+                    </div>
+                    <div className="border-t border-slate-100 pt-3 text-xs text-slate-500">
+                      Tab terdeteksi:{' '}
+                      <span className="font-mono text-slate-700">
+                        {dataset.availableTabs.join(', ') || '-'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {sessionUser.role === 'Administrator' && (
                 <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs lg:col-span-12">
