@@ -2358,9 +2358,8 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-[#F4F6F3] text-slate-900">
-      {/* Sidebar Desktop - Hover Expandable Icon Rail (KSP SENTRA Forest Green) */}
-      <div className="no-print relative hidden w-[74px] shrink-0 lg:block">
-        <aside className="group/sidebar fixed top-0 left-0 z-40 flex h-screen w-[74px] flex-col overflow-hidden border-r border-[#0D3015] bg-gradient-to-b from-[#103D1B] via-[#1B5727] to-[#1E5B2A] text-emerald-50 transition-[width,box-shadow] duration-200 ease-out hover:w-64 hover:shadow-2xl focus-within:w-64 focus-within:shadow-2xl">
+      {/* Sidebar Desktop - Hover Expandable Push Rail (KSP SENTRA Forest Green) */}
+      <aside className="group/sidebar no-print sticky top-0 z-30 hidden h-screen w-[74px] shrink-0 flex-col overflow-hidden border-r border-[#0D3015] bg-gradient-to-b from-[#103D1B] via-[#1B5727] to-[#1E5B2A] text-emerald-50 transition-[width] duration-200 ease-out hover:w-64 focus-within:w-64 lg:flex">
           <div className="shrink-0 border-b border-white/12 px-[14px] py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-amber-300/50 bg-[#F7F5EE] p-0.5 shadow-xs">
@@ -2486,8 +2485,7 @@ export default function App() {
               </p>
             </div>
           </div>
-        </aside>
-      </div>
+      </aside>
 
       {/* Mobile Bottom Sheet Menu (Native App Feel) */}
       {mobileMenuOpen && (
