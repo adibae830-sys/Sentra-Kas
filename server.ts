@@ -11,6 +11,11 @@ import {
   getServiceAccountConfig,
 } from './api/_sheets.ts';
 import { executeGenerateTts, isTtsConfigured } from './api/_tts.ts';
+import {
+  getEmailConfig,
+  sendSetoranEmailNotification,
+  SetoranEmailPayload,
+} from './api/_email.ts';
 
 dotenv.config();
 
@@ -337,6 +342,52 @@ async function startServer() {
       provider: cfg.provider,
       hasDefaultGroup: Boolean(cfg.defaultGroupId),
     });
+  });
+
+  app.get('/api/notify/status', (_req, res) => {
+    const cfg = getEmailConfig();
+    res.json({
+      configured: cfg.configured,
+      provider: cfg.provider,
+      recipientMasked: cfg.recipientMasked,
+    });
+  });
+
+  app.post('/api/notify/setoran', async (req, res) => {
+    try {
+      const body = (req.body || {}) as Partial<SetoranEmailPayload>;
+      if (!body.namaAnggota || !body.jumlah) {
+        return res
+          .status(400)
+          .json({ ok: false, sent: false, error: 'Data setoran tidak lengkap.' });
+      }
+      const result = await sendSetoranEmailNotification({
+        idSetoran: body.idSetoran || 'STR-' + Date.now(),
+        idAnggota: body.idAnggota || '-',
+        namaAnggota: body.namaAnggota,
+        jenisSetoran: body.jenisSetoran || 'Simpanan',
+        idPinjaman: body.idPinjaman,
+        jumlah: Number(body.jumlah),
+        jumlahSimpanan: Number(body.jumlahSimpanan || 0),
+        jumlahAngsuran: Number(body.jumlahAngsuran || 0),
+        metodeBayar: body.metodeBayar || 'Transfer Bank',
+        keterangan: body.keterangan,
+        tanggal: body.tanggal,
+        appUrl: body.appUrl,
+        isTest: Boolean(body.isTest),
+        overrideRecipient: body.overrideRecipient,
+      });
+      if (!result.ok || (body.isTest && !result.sent)) {
+        return res.status(422).json(result);
+      }
+      return res.json(result);
+    } catch (err) {
+      return res.status(500).json({
+        ok: false,
+        sent: false,
+        error: err instanceof Error ? err.message : 'Gagal mengirim email notifikasi.',
+      });
+    }
   });
 
   app.post('/api/whatsapp/send', async (req, res) => {
