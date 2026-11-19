@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { User } from 'firebase/auth';
 import {
   AlertCircle,
@@ -292,6 +292,15 @@ export default function App() {
   const [testNotifyEmail, setTestNotifyEmail] = useState('');
   const [isTestingEmailNotify, setIsTestingEmailNotify] = useState(false);
 
+  const isBackgroundSyncingRef = useRef(false);
+  const lastSilentSyncAtRef = useRef(0);
+  const prevPendingSetoranCountRef = useRef<number | null>(null);
+  const syncGuardRef = useRef({
+    isMutating: false,
+    isLoadingSheet: false,
+    isConfirmOpen: false,
+  });
+
   const showToast = useCallback((type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => {
@@ -475,66 +484,132 @@ export default function App() {
   }, []);
 
   const refreshDataset = useCallback(
-    async (explicitToken?: string): Promise<FinanceDataset | null> => {
+    async (
+      explicitToken?: string,
+      options?: { silent?: boolean }
+    ): Promise<FinanceDataset | null> => {
+      const silent = Boolean(options?.silent);
+      if (silent && isBackgroundSyncingRef.current) return null;
+
       const token = explicitToken || getActiveSheetToken();
       if (!token) {
-        setNeedsGoogleAuth(true);
+        if (!silent) setNeedsGoogleAuth(true);
         return null;
       }
-      setIsLoadingSheet(true);
-      setSheetError(null);
+
+      if (silent) {
+        isBackgroundSyncingRef.current = true;
+      } else {
+        setIsLoadingSheet(true);
+        setSheetError(null);
+      }
+
       try {
         const data = await loadAllFinanceData(activeSpreadsheetId, token);
         setDataset(data);
+        lastSilentSyncAtRef.current = Date.now();
 
         // Automatically restore saved Admin/Bendahara/Anggota session once sheet is loaded
-        const pendingSaved = readSavedAppSession();
-        if (pendingSaved) {
-          const matched = data.users.find(
-            (u) => u.username === pendingSaved.username && u.status === 'Aktif'
-          );
-          if (matched) {
-            let resolvedIdAnggota = matched.idAnggota;
-            if (matched.role === 'Anggota' && !resolvedIdAnggota) {
-              const byName = data.anggota.find(
-                (a) => a.nama.toLowerCase() === matched.nama.toLowerCase()
-              );
-              if (byName) resolvedIdAnggota = byName.id;
-            }
-            const restored: AppUser = { ...matched, idAnggota: resolvedIdAnggota };
-            setSessionUser((prev) => prev || restored);
+        if (!silent) {
+          const pendingSaved = readSavedAppSession();
+          if (pendingSaved) {
+            const matched = data.users.find(
+              (u) => u.username === pendingSaved.username && u.status === 'Aktif'
+            );
+            if (matched) {
+              let resolvedIdAnggota = matched.idAnggota;
+              if (matched.role === 'Anggota' && !resolvedIdAnggota) {
+                const byName = data.anggota.find(
+                  (a) => a.nama.toLowerCase() === matched.nama.toLowerCase()
+                );
+                if (byName) resolvedIdAnggota = byName.id;
+              }
+              const restored: AppUser = { ...matched, idAnggota: resolvedIdAnggota };
+              setSessionUser((prev) => prev || restored);
 
-            const savedPage = readSavedActivePage();
-            const defaultPage: PageId =
-              restored.role === 'Administrator'
-                ? 'dashboard'
-                : restored.role === 'Bendahara'
-                  ? 'kasMasuk'
-                  : 'anggotaSaya';
-            setActivePage((prev) => savedPage || prev || defaultPage);
+              const savedPage = readSavedActivePage();
+              const defaultPage: PageId =
+                restored.role === 'Administrator'
+                  ? 'dashboard'
+                  : restored.role === 'Bendahara'
+                    ? 'kasMasuk'
+                    : 'anggotaSaya';
+              setActivePage((prev) => savedPage || prev || defaultPage);
+            }
           }
         }
         return data;
       } catch (err) {
-        if (err instanceof SheetsAuthExpiredError) {
+        if (!silent) {
+          if (err instanceof SheetsAuthExpiredError) {
+            clearAccessToken();
+            setStoredPortalToken(null);
+            setNeedsGoogleAuth(true);
+            setSheetError(err.message);
+          } else {
+            setSheetError(
+              err instanceof Error
+                ? err.message
+                : 'Gagal memuat data dari Google Spreadsheet.'
+            );
+          }
+        } else if (err instanceof SheetsAuthExpiredError) {
           clearAccessToken();
           setStoredPortalToken(null);
           setNeedsGoogleAuth(true);
-          setSheetError(err.message);
-        } else {
-          setSheetError(
-            err instanceof Error
-              ? err.message
-              : 'Gagal memuat data dari Google Spreadsheet.'
-          );
         }
         return null;
       } finally {
-        setIsLoadingSheet(false);
+        if (silent) {
+          isBackgroundSyncingRef.current = false;
+        } else {
+          setIsLoadingSheet(false);
+        }
       }
     },
     [activeSpreadsheetId, getActiveSheetToken]
   );
+
+  useEffect(() => {
+    syncGuardRef.current = {
+      isMutating,
+      isLoadingSheet,
+      isConfirmOpen: confirmState.isOpen,
+    };
+  }, [isMutating, isLoadingSheet, confirmState.isOpen]);
+
+  useEffect(() => {
+    if (!sessionUser || !dataset || needsGoogleAuth) return;
+
+    const triggerSilentSync = (minGapMs: number) => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      const g = syncGuardRef.current;
+      if (g.isMutating || g.isLoadingSheet || g.isConfirmOpen) return;
+      if (Date.now() - lastSilentSyncAtRef.current < minGapMs) return;
+      void refreshDataset(undefined, { silent: true });
+    };
+
+    const onFocusOrVisible = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      triggerSilentSync(2500);
+    };
+
+    const intervalId = window.setInterval(() => {
+      triggerSilentSync(10000);
+    }, 12000);
+
+    window.addEventListener('focus', onFocusOrVisible);
+    document.addEventListener('visibilitychange', onFocusOrVisible);
+    window.addEventListener('online', onFocusOrVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', onFocusOrVisible);
+      document.removeEventListener('visibilitychange', onFocusOrVisible);
+      window.removeEventListener('online', onFocusOrVisible);
+    };
+  }, [sessionUser, dataset, needsGoogleAuth, refreshDataset]);
 
   // Restore saved Service Account Portal session on mount if present
   useEffect(() => {
@@ -2228,6 +2303,27 @@ export default function App() {
   );
 
   const pendingSetoranCount = pendingSetoranItems.length;
+
+  useEffect(() => {
+    if (
+      !sessionUser ||
+      (sessionUser.role !== 'Administrator' && sessionUser.role !== 'Bendahara')
+    ) {
+      prevPendingSetoranCountRef.current = null;
+      return;
+    }
+    if (
+      prevPendingSetoranCountRef.current !== null &&
+      pendingSetoranCount > prevPendingSetoranCountRef.current &&
+      !isMutating
+    ) {
+      showToast(
+        'success',
+        'Ada pengajuan setoran baru dari anggota! Cek Antrean ACC Setoran.'
+      );
+    }
+    prevPendingSetoranCountRef.current = pendingSetoranCount;
+  }, [pendingSetoranCount, sessionUser, isMutating, showToast]);
 
   const myPendingSetoranCount = useMemo(() => {
     if (!sessionUser?.idAnggota) return 0;
