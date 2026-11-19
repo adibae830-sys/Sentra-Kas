@@ -244,7 +244,7 @@ export default function App() {
     setVideoPanduanTopic(targetTopic);
     setVideoPanduanOpen(true);
   };
-  const [hideBalance, setHideBalance] = useState(false);
+  const [hideBalance, setHideBalance] = useState(true);
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isMutating, setIsMutating] = useState(false);
@@ -3184,13 +3184,19 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setHideBalance((prev) => !prev)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-[11px] font-semibold text-emerald-50 hover:bg-white/20"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-50 transition-colors hover:bg-white/20"
                       aria-label={hideBalance ? 'Tampilkan saldo' : 'Sembunyikan saldo'}
                     >
                       {hideBalance ? (
-                        <Eye className="h-3.5 w-3.5" />
+                        <>
+                          <Eye className="h-3.5 w-3.5" />
+                          Tampilkan
+                        </>
                       ) : (
-                        <EyeOff className="h-3.5 w-3.5" />
+                        <>
+                          <EyeOff className="h-3.5 w-3.5" />
+                          Sembunyikan
+                        </>
                       )}
                     </button>
                   </div>
